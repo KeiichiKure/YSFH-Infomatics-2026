@@ -90,7 +90,7 @@ export function CharacterLab() {
           <i aria-hidden="true">→</i>
           <div><span>③ UTF-8のバイト列</span><strong>{hexBytes(utf8)}</strong><small>保存・送信用に並べたデータ</small></div>
           <p><b>たとえるなら、コードポイントは生徒に割り当てる「出席番号」、バイト列はその番号をコンピュータへ渡すための「書き方」です。</b>同じ文字番号でも、UTF-8やUTF-16など書き方の規則が変われば、保存されるデータの並びも変わります。</p>
-          <a href="https://www.unicode.org/standard/WhatIsUnicode.html" target="_blank" rel="noreferrer">発展：Unicode公式の説明を見る ↗</a>
+          <a href="https://developer.mozilla.org/ja/docs/Glossary/Code_point" target="_blank" rel="noreferrer">発展：日本語でコードポイントの説明を見る ↗</a>
         </div>
         <div className="utf8-box">
           <div><p className="step-label">UTF-8で保存</p><h3>U+{sample.unicodeHex} → {utf8.length}バイト</h3></div>

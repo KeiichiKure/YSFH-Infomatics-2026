@@ -216,7 +216,7 @@ button, input { font: inherit; }
 .print-callout-four { grid-template-columns: auto auto 1fr; }
 .bit-switches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 7px; }
 .bit-place-values { display: grid; grid-template-columns: repeat(8, 1fr); gap: 7px; margin-bottom: 7px; }
-.bit-place-values span { color: var(--teal); font: 900 15px/1.2 Consolas, monospace; text-align: center; }
+.bit-place-values span { color: var(--teal); font: 900 20px/1.15 Consolas, monospace; text-align: center; }
 .bit-switches button { min-width: 0; padding: 8px 3px 12px; border: 2px solid var(--line); border-radius: 13px; background: #f6f9f7; cursor: pointer; }
 .bit-switches button.on { border-color: var(--teal); color: white; background: var(--teal); }
 .bit-switches span, .bit-switches b, .bit-switches small { display: block; }
@@ -229,7 +229,7 @@ button, input { font: inherit; }
 .bit-aligned-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 7px; }
 .bit-place-values { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 .bit-place-values span { display: grid; place-items: center; min-width: 0; }
-.bit-place-values small { display: block; color: var(--muted); font: 700 8px sans-serif; }
+.bit-place-values small { display: block; margin-top: 2px; color: var(--muted); font: 800 10px sans-serif; }
 .bit-multiplication-row { margin-top: 8px; }
 .bit-multiplication-row span { display: grid; place-items: center; min-width: 0; padding: 7px 2px; border-radius: 9px; color: var(--muted); background: #f3f7f4; }
 .bit-multiplication-row small, .bit-multiplication-row b { display: block; }
@@ -244,28 +244,29 @@ button, input { font: inherit; }
 .bit-total i { align-self: center; color: var(--coral); font-size: 22px; font-style: normal; }
 .bit-total strong { color: var(--teal); font: 900 30px Consolas, monospace; }
 .bit-total span { grid-column: 1 / -1; color: var(--muted); font-size: 9px; font-weight: 800; }
-.nibble-explanation { min-width: 0; margin-top: 22px; overflow-x: auto; padding: 18px 2px 12px; border-top: 1px dashed #b9c9c4; }
-.nibble-explanation > * { min-width: 730px; }
-.nibble-position-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-right: 118px; }
+.nibble-explanation-scroll { display: flex; align-items: stretch; gap: 12px; margin-top: 22px; overflow-x: auto; padding: 18px 2px 12px; border-top: 1px dashed #b9c9c4; }
+.nibble-explanation { min-width: 620px; flex: 1 0 620px; }
+.nibble-position-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .nibble-position-row span { position: relative; padding: 7px 10px; color: var(--teal); background: #e8f3ed; font-size: 11px; font-weight: 900; text-align: center; }
 .nibble-position-row span:first-child { border-radius: 10px 3px 3px 10px; }
 .nibble-position-row span:last-child { border-radius: 3px 10px 10px 3px; }
 .nibble-position-row span::after { content: ''; position: absolute; left: 6%; right: 6%; bottom: -7px; height: 7px; border: 2px solid var(--coral); border-top: 0; }
-.nibble-bit-row { grid-template-columns: repeat(8, minmax(0, 1fr)); margin: 13px 118px 0 0; }
+.nibble-bit-row { grid-template-columns: repeat(8, minmax(0, 1fr)); margin-top: 13px; }
 .nibble-bit-row span { display: grid; place-items: center; min-height: 46px; border: 2px solid var(--teal); background: white; font: 900 22px Consolas, monospace; }
 .nibble-bit-row span.upper { border-color: var(--teal); }
 .nibble-bit-row span.lower { border-color: var(--coral); }
-.nibble-conversion-row { display: grid; grid-template-columns: 1fr 1fr 108px; gap: 10px; margin-top: 10px; }
+.nibble-conversion-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .nibble-conversion-row > div { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 70px; padding: 10px; border-radius: 12px; background: #f3f7f4; }
 .nibble-conversion-row b, .nibble-conversion-row strong, .nibble-conversion-row em { font: 900 20px Consolas, monospace; }
 .nibble-conversion-row strong { color: var(--ink); }
 .nibble-conversion-row em { display: grid; place-items: center; min-width: 42px; min-height: 42px; border-radius: 9px; color: white; background: var(--teal); font-style: normal; }
 .nibble-conversion-row i { color: var(--coral); font-size: 12px; font-style: normal; }
 .nibble-conversion-row sub, .number-readout-summary sub { font-size: 9px; }
-.nibble-conversion-row > p { display: grid; grid-template-columns: 1fr 1fr; place-content: center; margin: 0; padding: 8px; border-radius: 12px; color: white; background: var(--ink); text-align: center; }
-.nibble-conversion-row > p span { font: 900 22px Consolas, monospace; }
-.nibble-conversion-row > p i { grid-column: 1 / -1; color: #d7e4df; font-size: 8px; }
-.nibble-conversion-row > p strong { grid-column: 1 / -1; color: var(--yellow); font: 900 24px Consolas, monospace; }
+.nibble-total { display: grid; grid-template-columns: 1fr 1fr; place-content: center; min-width: 102px; margin: 0; padding: 8px; border-radius: 12px; color: white; background: var(--ink); text-align: center; }
+.nibble-total span { font: 900 22px Consolas, monospace; }
+.nibble-total i { grid-column: 1 / -1; color: #d7e4df; font-size: 8px; font-style: normal; }
+.nibble-total strong { grid-column: 1 / -1; color: var(--yellow); font: 900 24px Consolas, monospace; }
+.nibble-total sub { font-size: 9px; }
 .number-readout-summary { margin-top: 18px; padding: 10px; border: 1px solid #ead78a; border-radius: 16px; background: #fff4c8; }
 .number-readout-summary div { background: rgba(255,255,255,.7); }
 .weighted-sum { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding: 15px; border-radius: 15px; background: #eef4f0; }
@@ -410,6 +411,9 @@ button, input { font: inherit; }
 .symbol-identity code { color: var(--teal); font: 900 14px Consolas, monospace; }
 .symbol-identity > i { color: var(--coral); font-size: 24px; font-style: normal; font-weight: 900; }
 .ascii-glyph { font-family: Arial, Helvetica, sans-serif !important; font-variant-ligatures: none; }
+.symbol-identity .ascii-glyph { font-size: 42px; line-height: 1; }
+.yen-history-grid .ascii-glyph { font-size: 30px; line-height: 1; }
+.symbol-grid .ascii-glyph { font-size: 24px; line-height: 1; }
 .yen-backslash-details { margin-top: 14px; border: 1px solid var(--line); border-radius: 13px; background: white; }
 .yen-backslash-details summary { padding: 13px 16px; color: var(--teal); cursor: pointer; font-size: 12px; font-weight: 900; }
 .yen-backslash-details[open] summary { border-bottom: 1px solid var(--line); }
@@ -573,7 +577,7 @@ button, input { font: inherit; }
   .print-callout em { grid-column: 2; }
   .number-readout, .conversion-output, .quiz-answer-grid { grid-template-columns: 1fr; }
   .bit-place-values { gap: 4px; }
-  .bit-place-values span { font-size: 12px; }
+  .bit-place-values span { font-size: 17px; }
   .weighted-sum > span { min-width: 52px; flex-basis: 52px; }
   .hex-bridge > div { grid-template-columns: 1fr auto auto auto; padding: 9px; }
   .disc-bits .physical-bit { min-height: 148px; }

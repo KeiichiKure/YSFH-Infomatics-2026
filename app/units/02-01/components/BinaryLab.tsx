@@ -33,9 +33,6 @@ export function BinaryLab() {
                 </button>
               ))}
             </div>
-            <div className="bit-aligned-grid bit-multiplication-row" aria-label="各ビットと位の重みの掛け算">
-              {bits.map((bit, index) => <span key={weights[index]}><small>{bit}×{weights[index]}</small><b>{bit ? weights[index] : 0}</b></span>)}
-            </div>
             <div className="bit-aligned-grid bit-addition-row" aria-hidden="true">
               {bits.map((bit, index) => <span key={weights[index]} className={bit ? 'active' : 'inactive'}>{bit ? weights[index] : 0}{index < 7 && <i>＋</i>}</span>)}
             </div>
@@ -43,16 +40,18 @@ export function BinaryLab() {
           <div className="bit-total"><i aria-hidden="true">＝</i><strong>{decimal}</strong><span>10進数</span></div>
         </div>
 
-        <div className="nibble-explanation">
-          <div className="nibble-position-row" aria-hidden="true"><span>上位4ビット</span><span>下位4ビット</span></div>
-          <div className="bit-aligned-grid nibble-bit-row">
-            {bits.map((bit, index) => <span key={index} className={index < 4 ? 'upper' : 'lower'}>{bit}</span>)}
-          </div>
-          <div className="nibble-conversion-row">
+        <div className="nibble-explanation-scroll">
+          <div className="nibble-explanation">
+            <div className="nibble-position-row" aria-hidden="true"><span>上位4ビット</span><span>下位4ビット</span></div>
+            <div className="bit-aligned-grid nibble-bit-row">
+              {bits.map((bit, index) => <span key={index} className={index < 4 ? 'upper' : 'lower'}>{bit}</span>)}
+            </div>
+            <div className="nibble-conversion-row">
             <div><b>{upperBits}<sub>2</sub></b><i>＝</i><strong>{upperDecimal}<sub>10</sub></strong><i>＝</i><em>{upperHex}<sub>16</sub></em></div>
             <div><b>{lowerBits}<sub>2</sub></b><i>＝</i><strong>{lowerDecimal}<sub>10</sub></strong><i>＝</i><em>{lowerHex}<sub>16</sub></em></div>
-            <p><span>{upperHex}</span><span>{lowerHex}</span><i>を並べると</i><strong>{upperHex}{lowerHex}<sub>16</sub></strong></p>
+            </div>
           </div>
+          <p className="nibble-total"><span>{upperHex}</span><span>{lowerHex}</span><i>を並べると</i><strong>{upperHex}{lowerHex}<sub>16</sub></strong></p>
         </div>
 
         <div className="number-readout number-readout-summary">
@@ -61,7 +60,6 @@ export function BinaryLab() {
           <div><span>16進数では</span><strong>{upperHex}{lowerHex}<sub>16</sub></strong></div>
         </div>
 
-        <div className="byte-equation"><span className="bracket" aria-hidden="true" /><b>8個のビット</b><i>=</i><b>1バイト</b></div>
         <div className="print-callout print-callout-four">
           <span>プリント ⑤</span><strong>ビット</strong><em>情報量の最小単位</em>
           <span>プリント ⑥</span><strong>8ビット</strong><em>8個まとめる</em>
