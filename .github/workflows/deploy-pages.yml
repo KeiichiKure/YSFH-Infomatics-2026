@@ -1,0 +1,70 @@
+name: GitHub Pagesへ公開
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ソースを取得
+        uses: actions/checkout@v6
+
+      - name: pnpmを準備
+        uses: pnpm/action-setup@v6
+
+      - name: Node.jsを準備
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 公開URLを計算
+        id: paths
+        shell: bash
+        run: |
+          repo="${GITHUB_REPOSITORY#*/}"
+          if [[ "$repo" == *.github.io ]]; then
+            echo "base_path=" >> "$GITHUB_OUTPUT"
+            echo "site_url=https://${GITHUB_REPOSITORY_OWNER}.github.io" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_path=/$repo" >> "$GITHUB_OUTPUT"
+            echo "site_url=https://${GITHUB_REPOSITORY_OWNER}.github.io/$repo" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 依存関係をインストール
+        run: pnpm install --frozen-lockfile
+
+      - name: 静的サイトを生成
+        run: pnpm build
+        env:
+          PAGES_BASE_PATH: ${{ steps.paths.outputs.base_path }}
+          NEXT_PUBLIC_SITE_URL: ${{ steps.paths.outputs.site_url }}
+
+      - name: Pages用ファイルをアップロード
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: out
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: GitHub Pagesへ反映
+        id: deployment
+        uses: actions/deploy-pages@v5
+
