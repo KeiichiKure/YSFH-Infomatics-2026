@@ -435,6 +435,7 @@ button, input { font: inherit; }
 .lesson-footer b { color: var(--ink); font-size: 14px; }
 .lesson-footer p { margin: 0; }
 .lesson-footer a { color: var(--teal); font-weight: 800; }
+.lesson-footer > div:last-child { display: grid; justify-items: end; gap: 5px; }
 
 @media (max-width: 860px) {
   .home-hero { grid-template-columns: 1fr; }

@@ -85,7 +85,7 @@ export default function AnalogDigitalUnit() {
           <footer className="lesson-footer">
             <div><b>理数情報ラボ</b><span>高校 情報Ⅰ · 2学期補助教材</span></div>
             <p>図解と操作画面は本教材用に独自作成しています。規格に関する補足はUnicode Standard、JIS・SIの一般的な規格情報に基づきます。</p>
-            <Link href="/">単元一覧へ戻る ↑</Link>
+            <div><Link href="/third-party-notices.txt">第三者ライセンス</Link><Link href="/">単元一覧へ戻る ↑</Link></div>
           </footer>
         </article>
       </div>
