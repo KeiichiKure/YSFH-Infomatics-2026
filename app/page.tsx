@@ -19,10 +19,10 @@ export default function Home() {
             答えを覚える前に、まず動かしてみる。理数情報の学びを、自分のペースで深めるウェブ教材です。
           </p>
           <div className="hero-actions">
-            <Link className="primary-button" href="/units/02-01/">
-              今日の学習をはじめる <span aria-hidden="true">→</span>
+            <Link className="primary-button" href="/units/02-02/">
+              02-02の学習をはじめる <span aria-hidden="true">→</span>
             </Link>
-            <span className="hero-note">目安 35分 · スマホ／PC対応</span>
+            <span className="hero-note">目安 40分 · スマホ／PC対応</span>
           </div>
         </div>
         <div className="hero-visual" aria-label="連続的な波が0と1のデジタルデータへ変わるイメージ">
@@ -54,14 +54,15 @@ export default function Home() {
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
-        <div className="unit-card unit-card-muted" aria-disabled="true">
+        <Link className="unit-card unit-card-active" href="/units/02-02/">
           <span className="unit-number">02-02</span>
           <div>
             <h3>情報のデジタル化</h3>
-            <p>音・画像・動画のデジタル表現</p>
+            <span className="textbook-page">教科書 pp.57–61</span>
+            <p>標本化、画像、動画、立体表現を操作でつなぐ</p>
           </div>
-          <span className="unit-status">準備中</span>
-        </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
       </section>
     </main>
   );

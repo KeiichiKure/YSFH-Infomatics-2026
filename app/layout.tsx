@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 const title = '理数情報ラボ｜触ってわかる情報Ⅰ';
-const description = 'アナログとデジタル、進数、文字コードを体験的に学ぶ高校生向けウェブ教材';
+const description = 'アナログとデジタル、標本化、画像・動画表現を体験的に学ぶ高校生向けウェブ教材';
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 const socialImage = `${siteUrl}/og.jpg`;
 
