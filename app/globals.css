@@ -125,7 +125,9 @@ button, input { font: inherit; }
 .discovery-box p { margin: 0; color: var(--muted); font-size: 12px; font-weight: 800; }
 .discovery-box h3 { margin: 2px 0 0; font-size: 18px; line-height: 1.6; }
 .discovery-box mark { padding: 0 .18em; color: var(--ink); background: transparent; border-bottom: 4px solid var(--coral); }
-.print-badge { padding: 6px 10px; border-radius: 999px; color: white; background: var(--ink); font-size: 11px; font-weight: 800; }
+.print-badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 6px 5px 11px; border-radius: 13px; color: white; background: var(--ink); font-weight: 800; }
+.print-badge small { font-size: 10px; letter-spacing: .02em; }
+.print-badge b { display: grid; place-items: center; min-width: 34px; height: 32px; padding: 0 7px; border-radius: 9px; color: var(--ink); background: white; font: 900 17px/1 Consolas, monospace; }
 
 .lesson-nav { position: sticky; top: 0; align-self: start; }
 .lesson-nav li:hover { color: var(--teal); background: #edf4ef; }
@@ -211,6 +213,9 @@ button, input { font: inherit; }
 .concept-strip mark { padding: 2px 5px; background: #fff0c7; font-weight: 900; }
 .print-callout { display: grid; grid-template-columns: auto auto 1fr auto auto 1fr; align-items: center; gap: 8px 12px; margin-top: 22px; padding-top: 20px; border-top: 1px dashed #b9c9c4; }
 .print-callout span { padding: 4px 8px; border-radius: 999px; color: white; background: var(--ink); font-size: 10px; font-weight: 800; }
+.print-callout .print-number { display: inline-flex; align-items: center; gap: 6px; padding: 4px 5px 4px 9px; border-radius: 12px; }
+.print-callout .print-number small { font-size: 9px; }
+.print-callout .print-number b { display: grid; place-items: center; min-width: 31px; height: 29px; padding: 0 6px; border-radius: 8px; color: var(--ink); background: white; font: 900 16px/1 Consolas, monospace; }
 .print-callout strong { color: var(--coral); }
 .print-callout em { color: var(--muted); font-size: 11px; font-style: normal; }
 .print-callout-four { grid-template-columns: auto auto 1fr; }
@@ -347,6 +352,9 @@ button, input { font: inherit; }
 .quiz-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; }
 .quiz-heading h3 { margin: 2px 0; font-size: 25px; }
 .quiz-heading > span { padding: 5px 10px; border-radius: 999px; background: #e6f0e3; color: var(--teal); font-size: 12px; font-weight: 800; }
+.quiz-heading > .print-badge { gap: 7px; padding: 5px 6px 5px 11px; border-radius: 13px; color: white; background: var(--ink); }
+.quiz-heading > .print-badge small { color: white; font-size: 10px; }
+.quiz-heading > .print-badge b { color: var(--ink); font-size: 17px; }
 .quiz-given { display: flex; align-items: center; gap: 14px; margin: 22px 0 16px; padding: 16px 20px; border-radius: 14px; background: var(--ink); color: white; }
 .quiz-given span { color: #dce8e2; font-size: 11px; }
 .quiz-given strong { font-size: 23px; }
@@ -521,9 +529,9 @@ button, input { font: inherit; }
 .term-grid details { min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: white; }
 .term-grid summary { display: flex; align-items: center; gap: 8px; min-height: 54px; padding: 10px; cursor: pointer; list-style: none; }
 .term-grid summary::-webkit-details-marker { display: none; }
-.term-grid summary span { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 8px; color: white; background: var(--coral); font-size: 11px; }
+.term-grid summary span { display: grid; place-items: center; min-width: 42px; height: 38px; padding: 0 6px; border-radius: 10px; color: white; background: var(--coral); font: 900 17px/1 Consolas, monospace; }
 .term-grid summary strong { font-size: 14px; }
-.term-grid details p { margin: 0; padding: 0 12px 12px 47px; color: var(--muted); font-size: 11px; }
+.term-grid details p { margin: 0; padding: 0 12px 12px 60px; color: var(--muted); font-size: 11px; }
 .final-challenge { margin-top: 28px; padding: clamp(22px, 4vw, 34px); border: 2px solid var(--ink); border-radius: 20px; background: #fff0c7; box-shadow: 8px 8px 0 #e8dba8; }
 .final-challenge h3 { margin: 5px 0 16px; font-size: 25px; }
 .final-challenge ol { padding-left: 22px; }

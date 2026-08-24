@@ -97,7 +97,7 @@ export function CharacterLab() {
           <div className="byte-blocks" aria-label={`UTF-8で${utf8.length}バイト`}>{utf8.map((byte, index) => <span key={`${byte}-${index}`}><b>{byte.toString(16).toUpperCase().padStart(2, '0')}</b><small>{byte.toString(2).padStart(8, '0')}</small></span>)}</div>
         </div>
         <div className="variable-length"><div><span>A</span><b>1 byte</b></div><div><span>é</span><b>2 bytes</b></div><div><span>あ</span><b>3 bytes</b></div><div><span>😀</span><b>4 bytes</b></div><p><mark>可変長</mark>：文字によって使うバイト数が変わる</p></div>
-        <div className="print-callout print-callout-four"><span>プリント ㉕</span><strong>1バイト</strong><em>英数字や記号など</em><span>プリント ㉖</span><strong>2バイト</strong><em>JIS系での漢字など</em><span>プリント ㉙</span><strong>可変長</strong><em>現在のUTF-8は1～4バイト</em></div>
+        <div className="print-callout print-callout-four"><span className="print-number"><small>プリント</small><b>25</b></span><strong>1バイト</strong><em>英数字や記号など</em><span className="print-number"><small>プリント</small><b>26</b></span><strong>2バイト</strong><em>JIS系での漢字など</em><span className="print-number"><small>プリント</small><b>29</b></span><strong>可変長</strong><em>現在のUTF-8は1～4バイト</em></div>
 
         <div className="symbol-identity" aria-label="円記号とバックスラッシュの区別">
           <div><span>円記号</span><strong>¥</strong><code>U+00A5</code></div>
@@ -130,11 +130,11 @@ export function CharacterLab() {
           <div className="broken-text"><span>誤った表示結果</span><strong>{mojibake || '—'}</strong></div>
         </div>
         <p className="correct-decoding">同じバイト列を保存時と同じ<strong>{mojibakeDirection === 'utf8-to-sjis' ? 'UTF-8' : 'Shift_JIS'}</strong>で読めば「{mojibakeSource || '—'}」に戻ります。</p>
-        <div className="discovery-box compact"><span className="discovery-icon" aria-hidden="true">!</span><div><p>原因は文字そのものではなく…</p><h3>保存時と表示時で<strong>文字コード</strong>の約束が違うために起こる<mark>文字化け</mark>。</h3></div><span className="print-badge">㉗</span></div>
+        <div className="discovery-box compact"><span className="discovery-icon" aria-hidden="true">!</span><div><p>原因は文字そのものではなく…</p><h3>保存時と表示時で<strong>文字コード</strong>の約束が違うために起こる<mark>文字化け</mark>。</h3></div><span className="print-badge"><small>プリント</small><b>27</b></span></div>
       </div>
 
       <div className="machine-dependent-lab">
-        <div className="quiz-heading"><div><p className="step-label">環境を切り替える</p><h3><mark>機種依存文字</mark>は、なぜ注意が必要？</h3></div><span className="print-badge">プリント ㉘</span></div>
+        <div className="quiz-heading"><div><p className="step-label">環境を切り替える</p><h3><mark>機種依存文字</mark>は、なぜ注意が必要？</h3></div><span className="print-badge"><small>プリント</small><b>28</b></span></div>
         <p>大切なのは、コンピュータが文字の形を保存しているのではなく、<strong>数値を「対応表」で文字へ変換している</strong>ことです。古い規格の空いていた領域を各社が独自に使うと、同じ数値でも環境ごとに結果が変わりました。</p>
         <div className="legacy-sample-picker" aria-label="比較する機種依存文字">
           {legacyExamples.map((item, index) => <button type="button" key={item.code} className={legacySampleIndex === index ? 'selected' : ''} aria-pressed={legacySampleIndex === index} onClick={() => setLegacySampleIndex(index)}><strong>{item.char}</strong><span>{item.name}</span></button>)}

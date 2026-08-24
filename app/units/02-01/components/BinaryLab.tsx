@@ -61,9 +61,9 @@ export function BinaryLab() {
         </div>
 
         <div className="print-callout print-callout-four">
-          <span>プリント ⑤</span><strong>ビット</strong><em>情報量の最小単位</em>
-          <span>プリント ⑥</span><strong>8ビット</strong><em>8個まとめる</em>
-          <span>プリント ⑦</span><strong>1バイト</strong><em>8ビットのまとまり</em>
+          <span className="print-number"><small>プリント</small><b>5</b></span><strong>ビット</strong><em>情報量の最小単位</em>
+          <span className="print-number"><small>プリント</small><b>6</b></span><strong>8ビット</strong><em>8個まとめる</em>
+          <span className="print-number"><small>プリント</small><b>7</b></span><strong>1バイト</strong><em>8ビットのまとまり</em>
         </div>
       </div>
 

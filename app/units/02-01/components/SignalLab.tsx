@@ -157,7 +157,7 @@ export function SignalLab() {
         <div className="discovery-box">
           <span className="discovery-icon" aria-hidden="true">!</span>
           <div><p>今の操作を言葉にすると…</p><h3><mark>連続的</mark>なアナログ量を、測る時刻と値の段階で区切り、<mark>離散的</mark>なデジタル値にした。</h3></div>
-          <span className="print-badge">プリント ①・②</span>
+          <span className="print-badge"><small>プリント</small><b>1・2</b></span>
         </div>
       </div>
       <details className="learn-more">
@@ -200,7 +200,7 @@ export function MediaLab() {
         {medium === 'disc' && <div className="disc-legend"><span><i className="land" />ランド：平らな面</span><span><i className="pit" />ピット：へこんだ部分</span><strong>高さが変わる位置を1として読み取る</strong></div>}
         <p className="action-hint">各マスをクリックすると、0と1が切り替わります。</p>
         <div className="concept-strip"><div><b>表し方</b><span>電圧・磁気・光の変化</span></div><i aria-hidden="true">→</i><div><b>意味</b><span>0 または 1</span></div><i aria-hidden="true">→</i><div><b>数の表現</b><span><mark>2進法</mark>・<mark>2進数</mark></span></div></div>
-        <div className="print-callout"><span>プリント ③</span><strong>2進法</strong><em>0と1の組合せで数を表す方法</em><span>プリント ④</span><strong>2進数</strong><em>2進法で表した数値</em></div>
+        <div className="print-callout"><span className="print-number"><small>プリント</small><b>3</b></span><strong>2進法</strong><em>0と1の組合せで数を表す方法</em><span className="print-number"><small>プリント</small><b>4</b></span><strong>2進数</strong><em>2進法で表した数値</em></div>
       </div>
     </section>
   );

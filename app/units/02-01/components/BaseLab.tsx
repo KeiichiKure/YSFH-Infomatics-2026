@@ -49,12 +49,12 @@ function ConversionSteps({ value, base }: { value: number; base: Base }) {
 }
 
 const practiceSets = [
-  { given: '10進数 120', answers: [{ label: '⑬ 2進数', value: '01111000' }, { label: '⑭ 16進数', value: '78' }] },
-  { given: '10進数 255', answers: [{ label: '⑮ 2進数', value: '11111111' }, { label: '⑯ 16進数', value: 'FF' }] },
-  { given: '2進数 11100011', answers: [{ label: '⑰ 10進数', value: '227' }, { label: '⑱ 16進数', value: 'E3' }] },
-  { given: '2進数 01101011', answers: [{ label: '⑲ 10進数', value: '107' }, { label: '⑳ 16進数', value: '6B' }] },
-  { given: '16進数 FD', answers: [{ label: '㉑ 10進数', value: '253' }, { label: '㉒ 2進数', value: '11111101' }] },
-  { given: '16進数 AC', answers: [{ label: '㉓ 10進数', value: '172' }, { label: '㉔ 2進数', value: '10101100' }] },
+  { given: '10進数 120', answers: [{ label: '13　2進数', value: '01111000' }, { label: '14　16進数', value: '78' }] },
+  { given: '10進数 255', answers: [{ label: '15　2進数', value: '11111111' }, { label: '16　16進数', value: 'FF' }] },
+  { given: '2進数 11100011', answers: [{ label: '17　10進数', value: '227' }, { label: '18　16進数', value: 'E3' }] },
+  { given: '2進数 01101011', answers: [{ label: '19　10進数', value: '107' }, { label: '20　16進数', value: '6B' }] },
+  { given: '16進数 FD', answers: [{ label: '21　10進数', value: '253' }, { label: '22　2進数', value: '11111101' }] },
+  { given: '16進数 AC', answers: [{ label: '23　10進数', value: '172' }, { label: '24　2進数', value: '10101100' }] },
 ];
 
 function practiceAnswerIsCorrect(label: string, response: string, expected: string) {
@@ -111,11 +111,11 @@ export function BaseLab() {
         {value !== null && <ConversionSteps value={value} base={base} />}
         <div className="nibble-tip expanded-nibbles" style={{ gridTemplateColumns: `repeat(${Math.max(2, binaryGroups.length)}, 1fr)` }}>{value === null ? <><span>----</span><span>----</span></> : binaryGroups.map((group, index) => <span key={`${group}-${index}`}>{group}</span>)}<i>4ビットずつ区切ると、16進数{outputHexWidth}桁になる</i></div>
         <p className="converter-capacity">通常のプリント問題は8ビットで扱います。発展として、ここでは<strong>32ビット符号なし整数（0～4294967295、16進数でFFFFFFFF）</strong>まで試せます。</p>
-        <div className="print-callout"><span>プリント ⑨・⑩</span><strong>10進法・10進数</strong><em>0～9の10種類</em><span>プリント ⑪・⑫</span><strong>16進法・16進数</strong><em>0～9とA～Fの16種類</em></div>
+        <div className="print-callout"><span className="print-number"><small>プリント</small><b>9・10</b></span><strong>10進法・10進数</strong><em>0～9の10種類</em><span className="print-number"><small>プリント</small><b>11・12</b></span><strong>16進法・16進数</strong><em>0～9とA～Fの16種類</em></div>
       </div>
 
       <div className="worksheet-quiz">
-        <div className="quiz-heading"><div><p className="step-label">プリント連動</p><h3>⑬～㉔を自力で変換</h3></div><span>{quizIndex + 1} / {practiceSets.length}</span></div>
+        <div className="quiz-heading"><div><p className="step-label">プリント連動</p><h3>13～24を自力で変換</h3></div><span>{quizIndex + 1} / {practiceSets.length}</span></div>
         <div className="quiz-given"><span>問題</span><strong>{current.given}</strong></div>
         <div className="quiz-answer-grid">
           {current.answers.map((answer, index) => <label key={answer.label} className={checked ? (answerResults[index] ? 'answer-correct' : 'answer-wrong') : ''}><span>{answer.label}</span><input value={responses[index]} onChange={(event) => { const next = [...responses]; next[index] = event.target.value; setResponses(next); setChecked(false); }} /><small>{checked ? (answerResults[index] ? (answer.label.includes('2進数') && responses[index].trim().length < 8 ? '正解！ 8ビット表記なら左を0で補おう' : '正解！') : 'もう一度、途中式を確認') : (answer.label.includes('2進数') ? '先頭の0は省略しても正解です' : '入力してください')}</small></label>)}
