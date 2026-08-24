@@ -49,6 +49,7 @@ export default function Home() {
           <span className="unit-number">02-01</span>
           <div>
             <h3>アナログとデジタル</h3>
+            <span className="textbook-page">教科書 pp.54–56</span>
             <p>波形、ビット、進数、文字コードを体験でつなぐ</p>
           </div>
           <span className="unit-status">学習する →</span>

@@ -1,6 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import { useMemo, useState } from 'react';
+import understoodMascot from '@/public/mascots/student-understood.png';
 
 type Base = 2 | 10 | 16;
 
@@ -41,6 +43,14 @@ const practiceSets = [
   { given: '16進数 AC', answers: [{ label: '㉓ 10進数', value: '172' }, { label: '㉔ 2進数', value: '10101100' }] },
 ];
 
+function practiceAnswerIsCorrect(label: string, response: string, expected: string) {
+  const text = response.trim();
+  if (!text) return false;
+  if (label.includes('2進数')) return /^[01]+$/.test(text) && parseInt(text, 2) === parseInt(expected, 2);
+  if (label.includes('16進数')) return /^[0-9a-fA-F]+$/.test(text) && parseInt(text, 16) === parseInt(expected, 16);
+  return /^\d+$/.test(text) && parseInt(text, 10) === parseInt(expected, 10);
+}
+
 export function BaseLab() {
   const [base, setBase] = useState<Base>(10);
   const [input, setInput] = useState('120');
@@ -49,21 +59,22 @@ export function BaseLab() {
   const [responses, setResponses] = useState(['', '']);
   const [checked, setChecked] = useState(false);
   const current = practiceSets[quizIndex];
-  const allCorrect = checked && current.answers.every((answer, index) => responses[index].trim().toUpperCase() === answer.value);
+  const answerResults = current.answers.map((answer, index) => practiceAnswerIsCorrect(answer.label, responses[index], answer.value));
+  const allCorrect = checked && answerResults.every(Boolean);
   const changeBase = (next: Base) => {
     const currentValue = parseValue(input, base) ?? 120;
     setBase(next);
     setInput(currentValue.toString(next).toUpperCase());
   };
-  const nextQuestion = () => {
-    setQuizIndex((index) => (index + 1) % practiceSets.length);
+  const moveQuestion = (offset: number) => {
+    setQuizIndex((index) => (index + offset + practiceSets.length) % practiceSets.length);
     setResponses(['', '']);
     setChecked(false);
   };
 
   return (
     <section className="learning-section" id="bases">
-      <div className="section-kicker"><span>04</span><p>進法の関係</p></div>
+      <div className="section-kicker"><span>04</span><p>進法の関係 · 教科書 p.55</p></div>
       <div className="section-title-row"><div><p className="step-label">変換する</p><h2>同じ数を、3つの顔で見る</h2></div><p className="section-question">答えだけでなく、変換の道筋を説明できるようになろう。</p></div>
       <div className="converter-panel">
         <div className="converter-input">
@@ -87,10 +98,11 @@ export function BaseLab() {
         <div className="quiz-heading"><div><p className="step-label">プリント連動</p><h3>⑬～㉔を自力で変換</h3></div><span>{quizIndex + 1} / {practiceSets.length}</span></div>
         <div className="quiz-given"><span>問題</span><strong>{current.given}</strong></div>
         <div className="quiz-answer-grid">
-          {current.answers.map((answer, index) => <label key={answer.label}><span>{answer.label}</span><input value={responses[index]} onChange={(event) => { const next = [...responses]; next[index] = event.target.value; setResponses(next); setChecked(false); }} /><small>{checked ? (responses[index].trim().toUpperCase() === answer.value ? '正解！' : 'もう一度、途中式を確認') : '入力してください'}</small></label>)}
+          {current.answers.map((answer, index) => <label key={answer.label} className={checked ? (answerResults[index] ? 'answer-correct' : 'answer-wrong') : ''}><span>{answer.label}</span><input value={responses[index]} onChange={(event) => { const next = [...responses]; next[index] = event.target.value; setResponses(next); setChecked(false); }} /><small>{checked ? (answerResults[index] ? (answer.label.includes('2進数') && responses[index].trim().length < 8 ? '正解！ 8ビット表記なら左を0で補おう' : '正解！') : 'もう一度、途中式を確認') : (answer.label.includes('2進数') ? '先頭の0は省略しても正解です' : '入力してください')}</small></label>)}
         </div>
-        <div className="quiz-actions"><button type="button" className="check-button" onClick={() => setChecked(true)}>答えを確認</button><button type="button" className="text-button" onClick={nextQuestion}>{allCorrect ? '次の問題へ →' : '別の問題へ'}</button></div>
+        <div className="quiz-actions quiz-actions-three"><button type="button" className="text-button" onClick={() => moveQuestion(-1)}>← 前の問題へ</button><button type="button" className="check-button" onClick={() => setChecked(true)}>答えを確認</button><button type="button" className="text-button" onClick={() => moveQuestion(1)}>{allCorrect ? '次の問題へ →' : '別の問題へ →'}</button></div>
         <p className={`quiz-feedback ${allCorrect ? 'success' : ''}`} aria-live="polite">{checked ? (allCorrect ? '2つとも正解です。変換の流れがつながりました。' : '上の変換ラボに同じ値を入れて、途中式を確かめよう。') : '必要なら上の変換ラボをヒントとして使ってかまいません。'}</p>
+        {allCorrect && <div className="success-celebration" role="status"><span aria-hidden="true">◎</span><div><strong>すばらしい！</strong><p>2つの進数変換、どちらも正解です。</p></div><Image className="celebration-mascot" src={understoodMascot} alt="正解を喜ぶ生徒のマスコット" /></div>}
       </div>
     </section>
   );

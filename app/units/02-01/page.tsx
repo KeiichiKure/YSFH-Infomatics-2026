@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import thinkingMascot from '@/public/mascots/student-thinking.png';
 import { BaseLab } from './components/BaseLab';
 import { BinaryLab } from './components/BinaryLab';
 import { CharacterLab } from './components/CharacterLab';
@@ -24,13 +26,13 @@ export default function AnalogDigitalUnit() {
           <span className="brand-mark" aria-hidden="true">01</span>
           <span>理数情報ラボ</span>
         </Link>
-        <span className="lesson-progress">02-01 · アナログとデジタル</span>
+        <span className="lesson-progress">02-01 · アナログとデジタル · 教科書 pp.54–56</span>
       </header>
 
       <div className="lesson-shell">
         <nav className="lesson-nav" aria-label="単元内メニュー">
           <Link href="/">← 単元一覧</Link>
-          <p>アナログとデジタル</p>
+          <p>アナログとデジタル<br /><small>教科書 pp.54–56</small></p>
           <ol>
             <li><a href="#signal">1　波を区切る</a></li>
             <li><a href="#media">2　0と1の世界</a></li>
@@ -45,9 +47,14 @@ export default function AnalogDigitalUnit() {
         <article className="lesson-content">
           <section className="lesson-intro">
             <p className="eyebrow">UNIT 02-01 · ANALOG &amp; DIGITAL</p>
+            <span className="textbook-page">教科書 pp.54–56</span>
             <h1>見えない情報を、<br />0と1に変えてみよう。</h1>
             <p>波形、スイッチ、数、文字。ばらばらに見える内容を「0と1で表す」という一本の線でつなぎます。</p>
             <div className="mission-box"><span>今日のミッション</span><strong>デジタル表現の仕組みを、操作と途中式を使って説明できる。</strong></div>
+            <aside className="mascot-guide">
+              <Image src={thinkingMascot} alt="考えている生徒のマスコット" priority />
+              <p><b>迷ったら、まず動かしてみよう。</b><span>予想と違ったところが、いちばん大切な発見です。</span></p>
+            </aside>
             <div className="learning-paths" aria-label="学び方を選ぶ">
               <a href="#signal"><span>はじめて</span><b>上から順番に試す</b><small>おすすめ</small></a>
               <a href="#bases"><span>練習したい</span><b>進数変換へ進む</b><small>プリント連動</small></a>
