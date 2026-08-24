@@ -261,12 +261,11 @@ button, input { font: inherit; }
 .nibble-conversion-row strong { color: var(--ink); }
 .nibble-conversion-row em { display: grid; place-items: center; min-width: 42px; min-height: 42px; border-radius: 9px; color: white; background: var(--teal); font-style: normal; }
 .nibble-conversion-row i { color: var(--coral); font-size: 12px; font-style: normal; }
-.nibble-conversion-row sub, .number-readout-summary sub { font-size: 9px; }
+.base-notation { display: inline !important; margin-left: 2px; color: inherit !important; font: 800 .46em/1 sans-serif !important; white-space: nowrap; }
 .nibble-total { display: grid; grid-template-columns: 1fr 1fr; place-content: center; min-width: 102px; margin: 0; padding: 8px; border-radius: 12px; color: white; background: var(--ink); text-align: center; }
 .nibble-total span { font: 900 22px Consolas, monospace; }
 .nibble-total i { grid-column: 1 / -1; color: #d7e4df; font-size: 8px; font-style: normal; }
 .nibble-total strong { grid-column: 1 / -1; color: var(--yellow); font: 900 24px Consolas, monospace; }
-.nibble-total sub { font-size: 9px; }
 .number-readout-summary { margin-top: 18px; padding: 10px; border: 1px solid #ead78a; border-radius: 16px; background: #fff4c8; }
 .number-readout-summary div { background: rgba(255,255,255,.7); }
 .weighted-sum { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding: 15px; border-radius: 15px; background: #eef4f0; }
@@ -336,6 +335,14 @@ button, input { font: inherit; }
 .nibble-tip { display: grid; grid-template-columns: 1fr 1fr; max-width: 430px; gap: 6px; margin: 18px auto 0; text-align: center; }
 .nibble-tip span { padding: 9px; border-radius: 8px; color: white; background: var(--teal); font: 900 21px Consolas, monospace; letter-spacing: .12em; }
 .nibble-tip i { grid-column: 1 / -1; color: var(--muted); font-size: 11px; font-style: normal; }
+.nibble-tip.four-nibbles { grid-template-columns: repeat(4, 1fr); max-width: 720px; }
+.nibble-tip.expanded-nibbles { width: 100%; max-width: 100%; overflow-x: auto; }
+.nibble-tip.expanded-nibbles span { min-width: 56px; }
+.hex-weight-expression { display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px 0; }
+.hex-weight-expression span { white-space: nowrap; }
+.hex-weight-expression b { margin-left: 7px; }
+.converter-capacity { margin: 13px 0 0; padding: 9px 12px; border-radius: 9px; color: var(--muted); background: #eef4f0; font-size: 11px; }
+.converter-capacity strong { color: var(--teal); }
 .worksheet-quiz { margin-top: 26px; }
 .quiz-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; }
 .quiz-heading h3 { margin: 2px 0; font-size: 25px; }

@@ -47,17 +47,17 @@ export function BinaryLab() {
               {bits.map((bit, index) => <span key={index} className={index < 4 ? 'upper' : 'lower'}>{bit}</span>)}
             </div>
             <div className="nibble-conversion-row">
-            <div><b>{upperBits}<sub>2</sub></b><i>＝</i><strong>{upperDecimal}<sub>10</sub></strong><i>＝</i><em>{upperHex}<sub>16</sub></em></div>
-            <div><b>{lowerBits}<sub>2</sub></b><i>＝</i><strong>{lowerDecimal}<sub>10</sub></strong><i>＝</i><em>{lowerHex}<sub>16</sub></em></div>
+            <div><b>{upperBits}<small className="base-notation">（2）</small></b><i>＝</i><strong>{upperDecimal}<small className="base-notation">（10）</small></strong><i>＝</i><em>{upperHex}<small className="base-notation">（16）</small></em></div>
+            <div><b>{lowerBits}<small className="base-notation">（2）</small></b><i>＝</i><strong>{lowerDecimal}<small className="base-notation">（10）</small></strong><i>＝</i><em>{lowerHex}<small className="base-notation">（16）</small></em></div>
             </div>
           </div>
-          <p className="nibble-total"><span>{upperHex}</span><span>{lowerHex}</span><i>を並べると</i><strong>{upperHex}{lowerHex}<sub>16</sub></strong></p>
+          <p className="nibble-total"><span>{upperHex}</span><span>{lowerHex}</span><i>を並べると</i><strong>{upperHex}{lowerHex}<small className="base-notation">（16）</small></strong></p>
         </div>
 
         <div className="number-readout number-readout-summary">
-          <div><span>だから 2進数</span><strong>{bits.join('')}<sub>2</sub></strong></div>
-          <div><span>10進数では</span><strong>{decimal}<sub>10</sub></strong></div>
-          <div><span>16進数では</span><strong>{upperHex}{lowerHex}<sub>16</sub></strong></div>
+          <div><span>だから 2進数</span><strong>{bits.join('')}<small className="base-notation">（2）</small></strong></div>
+          <div><span>10進数では</span><strong>{decimal}<small className="base-notation">（10）</small></strong></div>
+          <div><span>16進数では</span><strong>{upperHex}{lowerHex}<small className="base-notation">（16）</small></strong></div>
         </div>
 
         <div className="print-callout print-callout-four">

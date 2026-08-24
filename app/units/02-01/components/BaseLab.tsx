@@ -5,13 +5,25 @@ import { useMemo, useState } from 'react';
 import understoodMascot from '@/public/mascots/student-understood.png';
 
 type Base = 2 | 10 | 16;
+const MAX_VALUE = 0xFFFFFFFF;
+
+function bitWidthFor(value: number) {
+  if (value <= 0xFF) return 8;
+  if (value <= 0xFFFF) return 16;
+  if (value <= 0xFFFFFF) return 24;
+  return 32;
+}
+
+function displayHexDigit(digit: string) {
+  return /[A-F]/.test(digit) ? `${digit}（${parseInt(digit, 16)}）` : digit;
+}
 
 function parseValue(text: string, base: Base) {
   const normalized = text.trim();
-  const patterns = { 2: /^[01]{1,8}$/, 10: /^\d{1,3}$/, 16: /^[0-9a-fA-F]{1,2}$/ };
+  const patterns = { 2: /^[01]{1,32}$/, 10: /^\d{1,10}$/, 16: /^[0-9a-fA-F]{1,8}$/ };
   if (!patterns[base].test(normalized)) return null;
   const value = parseInt(normalized, base);
-  return value >= 0 && value <= 255 ? value : null;
+  return value >= 0 && value <= MAX_VALUE ? value : null;
 }
 
 function ConversionSteps({ value, base }: { value: number; base: Base }) {
@@ -26,12 +38,14 @@ function ConversionSteps({ value, base }: { value: number; base: Base }) {
     return <div className="division-steps"><p>2で割り、余りを<strong>下から上へ</strong>読む</p>{steps.map((step) => <div key={step.n}><span>{step.n}</span><i>÷ 2 =</i><b>{step.q}</b><em>余り {step.r}</em></div>)}</div>;
   }
   if (base === 2) {
-    const binary = value.toString(2).padStart(8, '0');
-    const active = binary.split('').map((digit, index) => ({ digit, power: 7 - index })).filter((item) => item.digit === '1');
+    const width = bitWidthFor(value);
+    const binary = value.toString(2).padStart(width, '0');
+    const active = binary.split('').map((digit, index) => ({ digit, power: width - 1 - index })).filter((item) => item.digit === '1');
     return <div className="weight-steps"><p>1が立っている桁の重みを足す</p><div>{active.length ? active.map((item, index) => <span key={item.power}>{index > 0 && ' + '}2<sup>{item.power}</sup></span>) : <span>0</span>}<b> = {value}</b></div></div>;
   }
-  const hex = value.toString(16).toUpperCase().padStart(2, '0');
-  return <div className="weight-steps"><p>各桁に16の重みを掛ける</p><div><span>{hex[0]} × 16<sup>1</sup> + {hex[1]} × 16<sup>0</sup></span><b> = {value}</b></div></div>;
+  const width = bitWidthFor(value) / 4;
+  const hex = value.toString(16).toUpperCase().padStart(width, '0');
+  return <div className="weight-steps"><p>各桁に16の重みを掛ける。A～Fは、かっこ内に10進数の値も示します。</p><div className="hex-weight-expression">{hex.split('').map((digit, index) => <span key={`${digit}-${index}`}>{index > 0 && ' ＋ '}{displayHexDigit(digit)} × 16<sup>{hex.length - 1 - index}</sup></span>)}<b> ＝ {value}</b></div></div>;
 }
 
 const practiceSets = [
@@ -59,6 +73,11 @@ export function BaseLab() {
   const [responses, setResponses] = useState(['', '']);
   const [checked, setChecked] = useState(false);
   const current = practiceSets[quizIndex];
+  const outputBitWidth = value === null ? 8 : bitWidthFor(value);
+  const outputHexWidth = outputBitWidth / 4;
+  const outputBinary = value === null ? null : value.toString(2).padStart(outputBitWidth, '0');
+  const outputHex = value === null ? null : value.toString(16).toUpperCase().padStart(outputHexWidth, '0');
+  const binaryGroups = outputBinary?.match(/.{4}/g) ?? [];
   const answerResults = current.answers.map((answer, index) => practiceAnswerIsCorrect(answer.label, responses[index], answer.value));
   const allCorrect = checked && answerResults.every(Boolean);
   const changeBase = (next: Base) => {
@@ -81,16 +100,17 @@ export function BaseLab() {
           <div className="segmented-control" aria-label="入力する進法">
             {[10, 2, 16].map((item) => <button type="button" key={item} className={base === item ? 'selected' : ''} aria-pressed={base === item} onClick={() => changeBase(item as Base)}>{item}進数から</button>)}
           </div>
-          <label><span>0～255の値を入力</span><input value={input} onChange={(event) => setInput(event.target.value)} inputMode={base === 16 ? 'text' : 'numeric'} aria-invalid={value === null} /></label>
-          {value === null && <p className="input-error" role="alert">この進法で表せる0～255の値を入力してください。</p>}
+          <label><span>0～4294967295の値を入力（16進数はFFFFFFFFまで）</span><input value={input} onChange={(event) => setInput(event.target.value)} inputMode={base === 16 ? 'text' : 'numeric'} aria-invalid={value === null} /></label>
+          {value === null && <p className="input-error" role="alert">2進数32桁・10進数4294967295・16進数FFFFFFFFまでの範囲で入力してください。</p>}
         </div>
         <div className="conversion-output" aria-live="polite">
           <div><span>10進数</span><strong>{value === null ? '—' : value}</strong></div>
-          <div><span>2進数（8ビット）</span><strong>{value === null ? '—' : value.toString(2).padStart(8, '0')}</strong></div>
-          <div><span>16進数</span><strong>{value === null ? '—' : value.toString(16).toUpperCase().padStart(2, '0')}</strong></div>
+          <div><span>2進数（{outputBitWidth}ビット表示）</span><strong>{outputBinary ?? '—'}</strong></div>
+          <div><span>16進数</span><strong>{outputHex ?? '—'}</strong></div>
         </div>
         {value !== null && <ConversionSteps value={value} base={base} />}
-        <div className="nibble-tip"><span>{value === null ? '----' : value.toString(2).padStart(8, '0').slice(0, 4)}</span><span>{value === null ? '----' : value.toString(2).padStart(8, '0').slice(4)}</span><i>4ビットずつ区切ると、16進数2桁になる</i></div>
+        <div className="nibble-tip expanded-nibbles" style={{ gridTemplateColumns: `repeat(${Math.max(2, binaryGroups.length)}, 1fr)` }}>{value === null ? <><span>----</span><span>----</span></> : binaryGroups.map((group, index) => <span key={`${group}-${index}`}>{group}</span>)}<i>4ビットずつ区切ると、16進数{outputHexWidth}桁になる</i></div>
+        <p className="converter-capacity">通常のプリント問題は8ビットで扱います。発展として、ここでは<strong>32ビット符号なし整数（0～4294967295、16進数でFFFFFFFF）</strong>まで試せます。</p>
         <div className="print-callout"><span>プリント ⑨・⑩</span><strong>10進法・10進数</strong><em>0～9の10種類</em><span>プリント ⑪・⑫</span><strong>16進法・16進数</strong><em>0～9とA～Fの16種類</em></div>
       </div>
 
