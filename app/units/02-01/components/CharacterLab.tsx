@@ -16,11 +16,11 @@ const samples = [
 
 const invalidFilenameChars = ['\\', '/', ':', '*', '?', '"', '<', '>', '|'];
 const symbolChoices = ['\\', '@', '/', '#', ':', '*', '-', '?', '"', '_', '<', '+', '>', '.', '|', '&'];
-const legacySymbols = [
-  { char: '①', name: '丸数字1', code: 'U+2460' },
-  { char: '㈱', name: 'かっこ株式会社', code: 'U+3231' },
-  { char: '㍻', name: '元号「平成」', code: 'U+337B' },
-  { char: 'Ⅰ', name: 'ローマ数字1', code: 'U+2160' },
+const legacyExamples = [
+  { char: '①', name: '丸数字1', bytes: '87 40', code: 'U+2460' },
+  { char: '㈱', name: 'かっこ株式会社', bytes: '87 8A', code: 'U+3231' },
+  { char: '㍻', name: '元号「平成」', bytes: '87 7E', code: 'U+337B' },
+  { char: 'Ⅰ', name: 'ローマ数字1', bytes: '87 54', code: 'U+2160' },
 ];
 
 function bytesOf(text: string) {
@@ -50,7 +50,8 @@ export function CharacterLab() {
   const sjisAsUtf8 = useMemo(() => new TextDecoder('utf-8').decode(Uint8Array.from(sjisBytes)), [sjisBytes]);
   const shownBytes = mojibakeDirection === 'utf8-to-sjis' ? utf8Bytes : sjisBytes;
   const mojibake = mojibakeDirection === 'utf8-to-sjis' ? utf8AsSjis : sjisAsUtf8;
-  const [machineMode, setMachineMode] = useState<'legacy' | 'unicode'>('legacy');
+  const [legacySampleIndex, setLegacySampleIndex] = useState(0);
+  const legacySample = legacyExamples[legacySampleIndex];
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
   const [filenameChecked, setFilenameChecked] = useState(false);
   const filenameCorrect = filenameChecked && selectedSymbols.length === invalidFilenameChars.length && invalidFilenameChars.every((char) => selectedSymbols.includes(char));
@@ -82,9 +83,14 @@ export function CharacterLab() {
             <div><span>Unicodeコードポイント</span><strong>U+{sample.unicodeHex}</strong><small>文字に割り当てた番号</small></div>
           </div>
         </div>
-        <div className="codepoint-note">
-          <b>U+0041 の読み方</b>
-          <p><code>U+</code>は「Unicodeのコードポイントを16進数で書く」という目印。<strong>0041</strong>が文字Aのコードポイントで、保存時のバイト列とは別物です。</p>
+        <div className="codepoint-explainer">
+          <div><span>① 文字</span><strong>{sample.char}</strong><small>人そのもの</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>② コードポイント</span><strong>U+{sample.unicodeHex}</strong><small>世界共通の「文字番号」</small></div>
+          <i aria-hidden="true">→</i>
+          <div><span>③ UTF-8のバイト列</span><strong>{hexBytes(utf8)}</strong><small>保存・送信用に並べたデータ</small></div>
+          <p><b>たとえるなら、コードポイントは生徒に割り当てる「出席番号」、バイト列はその番号をコンピュータへ渡すための「書き方」です。</b>同じ文字番号でも、UTF-8やUTF-16など書き方の規則が変われば、保存されるデータの並びも変わります。</p>
+          <a href="https://www.unicode.org/standard/WhatIsUnicode.html" target="_blank" rel="noreferrer">発展：Unicode公式の説明を見る ↗</a>
         </div>
         <div className="utf8-box">
           <div><p className="step-label">UTF-8で保存</p><h3>U+{sample.unicodeHex} → {utf8.length}バイト</h3></div>
@@ -99,6 +105,16 @@ export function CharacterLab() {
           <div><span>バックスラッシュ</span><strong><BackslashGlyph /></strong><code>U+005C</code></div>
         </div>
         <p className="standard-note">※ 日本語の古い文字コードや一部のフォントでは、コード値5Cの字形を円記号のように表示することがあります。名称とコード値まで見れば、2つを区別できます。</p>
+        <details className="yen-backslash-details">
+          <summary>発展：なぜ同じ「5C」から円記号とバックスラッシュが現れるの？</summary>
+          <div className="yen-history-grid">
+            <div><span>ASCIIの対応表</span><code>5C</code><strong><BackslashGlyph /></strong><small>バックスラッシュを割り当てた</small></div>
+            <div><span>JIS X 0201のローマ字集合</span><code>5C</code><strong>¥</strong><small>同じ位置に円記号を割り当てた</small></div>
+            <div><span>Unicode</span><code>U+005C</code><strong><BackslashGlyph /></strong><small>バックスラッシュ</small></div>
+            <div><span>Unicode</span><code>U+00A5</code><strong>¥</strong><small>円記号</small></div>
+          </div>
+          <p>昔の日本語環境は、ASCIIとJISの「5Cの約束の違い」を引き継ぎました。そのためWindowsの日本語フォントなどでは、内部的にはU+005Cでも字形が円記号に見える場合があります。現在のUnicodeでは2文字に別々の番号があります。</p>
+        </details>
       </div>
 
       <div className="mojibake-lab">
@@ -119,15 +135,19 @@ export function CharacterLab() {
 
       <div className="machine-dependent-lab">
         <div className="quiz-heading"><div><p className="step-label">環境を切り替える</p><h3><mark>機種依存文字</mark>は、なぜ注意が必要？</h3></div><span className="print-badge">プリント ㉘</span></div>
-        <p>古い日本語環境では、メーカー独自の文字領域などを使ったため、別の機種へ送ると表示されない・別の文字になることがありました。</p>
-        <div className="segmented-control machine-mode" aria-label="表示環境">
-          <button type="button" className={machineMode === 'legacy' ? 'selected' : ''} aria-pressed={machineMode === 'legacy'} onClick={() => setMachineMode('legacy')}>旧来の別環境</button>
-          <button type="button" className={machineMode === 'unicode' ? 'selected' : ''} aria-pressed={machineMode === 'unicode'} onClick={() => setMachineMode('unicode')}>Unicode環境</button>
+        <p>大切なのは、コンピュータが文字の形を保存しているのではなく、<strong>数値を「対応表」で文字へ変換している</strong>ことです。古い規格の空いていた領域を各社が独自に使うと、同じ数値でも環境ごとに結果が変わりました。</p>
+        <div className="legacy-sample-picker" aria-label="比較する機種依存文字">
+          {legacyExamples.map((item, index) => <button type="button" key={item.code} className={legacySampleIndex === index ? 'selected' : ''} aria-pressed={legacySampleIndex === index} onClick={() => setLegacySampleIndex(index)}><strong>{item.char}</strong><span>{item.name}</span></button>)}
         </div>
-        <div className={`legacy-symbol-grid ${machineMode}`}>
-          {legacySymbols.map((item) => <div key={item.code}><strong>{machineMode === 'legacy' ? '□' : item.char}</strong><span>{item.name}</span><code>{machineMode === 'legacy' ? '表示できないことがある' : item.code}</code></div>)}
+        <div className="same-code-banner"><span>同じバイト列</span><strong>{legacySample.bytes}</strong><i aria-hidden="true">↓ 対応表が違うと…</i></div>
+        <div className="environment-mapping-grid">
+          <div className="mapping-card environment-a"><span>環境A</span><b>Windows-31Jの拡張表</b><strong>{legacySample.char}</strong><small>{legacySample.name}として表示</small></div>
+          <div className="mapping-card environment-b"><span>環境B</span><b>別会社の独自拡張</b><strong>★</strong><small>別の文字になる模式例</small></div>
+          <div className="mapping-card standard-jis"><span>標準だけ</span><b>JIS X 0208</b><strong>□</strong><small>割り当てがなく表示不能</small></div>
+          <div className="mapping-card unicode-map"><span>現在</span><b>Unicode</b><strong>{legacySample.char}</strong><small>{legacySample.code}で一意に指定</small></div>
         </div>
-        <p className="machine-conclusion">Unicodeではそれぞれにコードポイントがあります。ただし、古い文字コード・OS・フォントが混ざる場面では今も表示差に注意し、共有文書では一般的な表記への置き換えも検討します。</p>
+        <p className="mapping-caution">※ 環境Bの「★」は仕組みを示す模式例で、特定会社の実際の割り当てではありません。ポイントは、同じバイト列でも参照する対応表が違えば、別文字・未定義になり得ることです。</p>
+        <p className="machine-conclusion">Unicodeでは文字ごとに世界共通のコードポイントを決めることで、この衝突を減らしました。ただし、古い文字コード・OS・フォントが混ざる場面では今も表示差に注意が必要です。</p>
       </div>
 
       <div className="filename-challenge">

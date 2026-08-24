@@ -101,7 +101,7 @@ export function BaseLab() {
           {current.answers.map((answer, index) => <label key={answer.label} className={checked ? (answerResults[index] ? 'answer-correct' : 'answer-wrong') : ''}><span>{answer.label}</span><input value={responses[index]} onChange={(event) => { const next = [...responses]; next[index] = event.target.value; setResponses(next); setChecked(false); }} /><small>{checked ? (answerResults[index] ? (answer.label.includes('2進数') && responses[index].trim().length < 8 ? '正解！ 8ビット表記なら左を0で補おう' : '正解！') : 'もう一度、途中式を確認') : (answer.label.includes('2進数') ? '先頭の0は省略しても正解です' : '入力してください')}</small></label>)}
         </div>
         <div className="quiz-actions quiz-actions-three"><button type="button" className="text-button" onClick={() => moveQuestion(-1)}>← 前の問題へ</button><button type="button" className="check-button" onClick={() => setChecked(true)}>答えを確認</button><button type="button" className="text-button" onClick={() => moveQuestion(1)}>{allCorrect ? '次の問題へ →' : '別の問題へ →'}</button></div>
-        <p className={`quiz-feedback ${allCorrect ? 'success' : ''}`} aria-live="polite">{checked ? (allCorrect ? '2つとも正解です。変換の流れがつながりました。' : '上の変換ラボに同じ値を入れて、途中式を確かめよう。') : '必要なら上の変換ラボをヒントとして使ってかまいません。'}</p>
+        {!allCorrect && <p className="quiz-feedback" aria-live="polite">{checked ? '上の変換ラボに同じ値を入れて、途中式を確かめよう。' : '必要なら上の変換ラボをヒントとして使ってかまいません。'}</p>}
         {allCorrect && <div className="success-celebration" role="status"><span aria-hidden="true">◎</span><div><strong>すばらしい！</strong><p>2つの進数変換、どちらも正解です。</p></div><Image className="celebration-mascot" src={understoodMascot} alt="正解を喜ぶ生徒のマスコット" /></div>}
       </div>
     </section>
