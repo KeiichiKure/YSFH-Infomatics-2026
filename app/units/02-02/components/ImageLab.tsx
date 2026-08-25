@@ -233,4 +233,3 @@ export function ImageLab() {
     </section>
   );
 }
-

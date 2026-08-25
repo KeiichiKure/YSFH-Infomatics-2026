@@ -273,4 +273,3 @@ export function SamplingLab() {
     </section>
   );
 }
-
