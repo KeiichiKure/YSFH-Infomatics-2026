@@ -2,10 +2,30 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-function formatSize(bytes: number) {
-  if (bytes < 1024) return `${Math.round(bytes)} B`;
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+function formatExact(value: number, maximumFractionDigits: number) {
+  return value.toLocaleString('ja-JP', { maximumFractionDigits });
+}
+
+function SizeConversions({ bytes }: { bytes: number }) {
+  const exactBytes = Math.round(bytes);
+  const binaryKB = exactBytes / 1024;
+  const binaryMB = exactBytes / 1024 ** 2;
+  const decimalKB = exactBytes / 1000;
+  const decimalMB = exactBytes / 1000 ** 2;
+
+  return (
+    <div className="size-conversions">
+      <div className="size-conversion textbook-conversion">
+        <div><b>教科書の換算（1024倍）</b><small>1 MB ＝ 1024 KB ／ 1 KB ＝ 1024 B</small></div>
+        <p><span>{exactBytes.toLocaleString()} ÷ 1,024</span><strong>＝ {formatExact(binaryKB, 10)} KB <small>（KiB）</small></strong></p>
+        <p><span>{exactBytes.toLocaleString()} ÷ 1,048,576</span><strong>＝ {formatExact(binaryMB, 20)} MB <small>（MiB）</small></strong></p>
+      </div>
+      <div className="size-conversion decimal-conversion">
+        <div><b>1000倍で換算する場合</b><small>1 MB ＝ 1000 kB ／ 1 kB ＝ 1000 B</small></div>
+        <p><strong>{formatExact(decimalKB, 3)} kB</strong><span>／</span><strong>{formatExact(decimalMB, 6)} MB</strong></p>
+      </div>
+    </div>
+  );
 }
 
 export function DataSizeLab() {
@@ -96,7 +116,7 @@ export function DataSizeLab() {
           <label><span>録音時間 <output>{seconds}秒</output></span><input type="range" min="1" max="60" value={seconds} onChange={(event) => setSeconds(Number(event.target.value))} /></label>
           <label><span>量子化ビット数</span><select value={audioBits} onChange={(event) => setAudioBits(Number(event.target.value))}><option value="8">8 bit</option><option value="16">16 bit</option><option value="24">24 bit</option></select></label>
           <label><span>チャンネル</span><select value={channels} onChange={(event) => setChannels(Number(event.target.value))}><option value="1">モノラル</option><option value="2">ステレオ</option></select></label>
-          <div className="size-formula"><span>{sampleRate.toLocaleString()} × {seconds} × {audioBits} × {channels} ÷ 8</span><b>{Math.round(audioBytes).toLocaleString()} B</b><strong>＝ {formatSize(audioBytes)}</strong></div>
+          <div className="size-formula"><span>{sampleRate.toLocaleString()} × {seconds} × {audioBits} × {channels} ÷ 8</span><b>＝ {Math.round(audioBytes).toLocaleString()} B</b><SizeConversions bytes={audioBytes} /></div>
         </div>
         <div className="size-card">
           <p className="step-label">IMAGE</p><h3>静止画像のデータ量</h3>
@@ -104,7 +124,7 @@ export function DataSizeLab() {
           <div className="linked-dimension"><span>縦の画素数</span><output>{height}</output><small>横：縦 ＝ 4：3を保って自動計算</small></div>
           <label><span>1色の量子化ビット数</span><select value={colorBits} onChange={(event) => setColorBits(Number(event.target.value))}><option value="1">1 bit</option><option value="2">2 bit</option><option value="4">4 bit</option><option value="8">8 bit</option></select></label>
           <div className="quality-preview"><canvas ref={imagePreviewRef} aria-label={width + 'かける' + height + '画素、RGB各色' + colorBits + 'ビットで再現した画像'} /><p><b>画質プレビュー</b><span>画素数を減らすとカクカクに、1色のビット数を減らすと色の段差が見えます。</span></p></div>
-          <div className="size-formula"><span>{width} × {height} × {colorBits} × 3色 ÷ 8</span><b>{Math.round(imageBytes).toLocaleString()} B</b><strong>＝ {formatSize(imageBytes)}</strong></div>
+          <div className="size-formula"><span>{width} × {height} × {colorBits} × 3色 ÷ 8</span><b>＝ {Math.round(imageBytes).toLocaleString()} B</b><SizeConversions bytes={imageBytes} /></div>
         </div>
       </div>
       <p className="teacher-note">ここでは圧縮前のデータ量を計算しています。次の単元「02-03 データの圧縮」で、保存時に小さくする仕組みへつなげます。</p>
