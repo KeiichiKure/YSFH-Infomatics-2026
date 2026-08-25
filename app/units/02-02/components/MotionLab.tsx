@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import arStreetPhoto from '@/public/images/02-02/ar-street-photo.jpg';
+import mrClassroomPhoto from '@/public/images/02-02/mr-classroom-photo.jpg';
 
 export function MotionLab() {
   const [frameRate, setFrameRate] = useState(12);
@@ -52,7 +55,7 @@ export function MotionLab() {
       <div className="depth-lab">
         <div className="lab-heading"><div><p className="step-label">3D CUES</p><h3>平面に奥行きをつくる</h3></div><span className="print-badge"><small>プリント</small><b>20・21</b></span></div>
         <div className="depth-layout">
-          <div className={'depth-stage ' + (perspective ? 'has-perspective ' : '') + (occlusion ? 'has-occlusion ' : 'no-occlusion ') + (shading ? 'has-shading' : '')} aria-label="3DCGの奥行き表現の模式図">
+          <div className={'depth-stage sphere-stage ' + (perspective ? 'has-perspective ' : 'no-perspective ') + (occlusion ? 'has-occlusion ' : 'no-occlusion ') + (shading ? 'has-shading' : 'no-shading')} aria-label="球体を使った3DCGの奥行き表現">
             <div className="depth-object depth-back"><span>奥</span></div>
             <div className="depth-object depth-middle"><span>中</span></div>
             <div className="depth-object depth-front"><span>手前</span></div>
@@ -72,10 +75,22 @@ export function MotionLab() {
           <div className="eye-pair"><div><span>左目の像</span><i style={{ transform: 'translateX(' + parallax / 2 + 'px)' }} /></div><div><span>右目の像</span><i style={{ transform: 'translateX(' + -parallax / 2 + 'px)' }} /></div><strong>{parallax === 0 ? 'ずれ0：平面的に感じやすい' : '像を重ねる → 手前に感じる（奥行き ' + depthAmount + '）'}</strong></div>
         </div>
 
-        <div className="reality-cards">
-          <div className="reality-card"><span>VR</span><div className="reality-scene vr-scene"><i className="vr-sky" /><i className="vr-mountain one" /><i className="vr-mountain two" /><b>視界のすべてが仮想空間</b></div><strong>仮想現実</strong><small>現実の景色を隠し、画像で作った空間に入る。</small></div>
-          <div className="reality-card"><span>AR</span><div className="reality-scene ar-scene"><i className="real-road" /><i className="ar-arrow">→</i><b>駅まで120m</b></div><strong>拡張現実</strong><small>現実の写真や映像の上に、案内やデータを重ねる。</small></div>
-          <div className="reality-card"><span>MR</span><div className="reality-scene mr-scene"><i className="real-table" /><i className="virtual-cube" /><b>机の上に固定された立体</b></div><strong>複合現実</strong><small>仮想物体が現実の場所や物に合わせて存在し、回り込める。</small></div>
+        <div className="reality-cards reality-cards-large">
+          <div className="reality-card">
+            <div className="reality-card-copy"><span>VR</span><div><strong>仮想現実</strong><small>現実の景色をすべて隠し、CGだけで作られた空間に入ります。</small></div></div>
+            <div className="reality-scene vr-scene"><i className="vr-sky" /><i className="vr-mountain one" /><i className="vr-mountain two" /><b>見えているもの：すべて仮想</b></div>
+            <p><b>例：</b>ゴーグルを着けて、CGで作られた海底や宇宙を360度見回す。</p>
+          </div>
+          <div className="reality-card">
+            <div className="reality-card-copy"><span>AR</span><div><strong>拡張現実</strong><small>現実の写真やカメラ映像の上へ、案内や数値を平面的に重ねます。</small></div></div>
+            <div className="reality-scene ar-scene"><Image className="reality-photo" src={arStreetPhoto} alt="現実の日本の街路の写真" fill sizes="(max-width: 860px) 100vw, 55vw" /><div className="ar-route-overlay"><i>↑</i><b>目的地まで120m</b></div><em>現実の街路（写真）＋ 仮想の案内表示</em></div>
+            <p><b>例：</b>スマートフォンのカメラで見た道路に、進む方向の矢印を表示する。</p>
+          </div>
+          <div className="reality-card">
+            <div className="reality-card-copy"><span>MR</span><div><strong>複合現実</strong><small>仮想の立体が現実の机や床の位置を理解し、そこに固定されているように振る舞います。</small></div></div>
+            <div className="reality-scene mr-scene"><Image className="reality-photo" src={mrClassroomPhoto} alt="現実の理科室と実験机の写真" fill sizes="(max-width: 860px) 100vw, 55vw" /><div className="mr-anchor-ring" /><div className="mr-molecule"><i /><i /><i /><i /></div><b>机に固定された仮想分子模型</b><em>現実の教室（写真）＋ 空間に固定した仮想立体</em></div>
+            <p><b>例：</b>理科室の机に仮想の分子模型を置き、近づいたり横へ回り込んだりして観察する。</p>
+          </div>
         </div>
       </div>
     </section>

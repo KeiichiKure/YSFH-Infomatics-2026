@@ -14,11 +14,11 @@ export function DataSizeLab() {
   const [audioBits, setAudioBits] = useState(16);
   const [channels, setChannels] = useState(2);
   const [width, setWidth] = useState(640);
-  const [height, setHeight] = useState(480);
-  const [colorBits, setColorBits] = useState(24);
+  const [colorBits, setColorBits] = useState(8);
   const imagePreviewRef = useRef<HTMLCanvasElement>(null);
+  const height = Math.round(width * 3 / 4);
   const audioBytes = sampleRate * seconds * audioBits * channels / 8;
-  const imageBytes = width * height * colorBits / 8;
+  const imageBytes = width * height * colorBits * 3 / 8;
 
   useEffect(() => {
     const canvas = imagePreviewRef.current;
@@ -64,7 +64,7 @@ export function DataSizeLab() {
       sourceContext.fillRect(sampleWidth * 0.39, sampleHeight * 0.59, sampleWidth * 0.08, sampleHeight * 0.1);
 
       const image = sourceContext.getImageData(0, 0, sampleWidth, sampleHeight);
-      const perChannelBits = colorBits <= 3 ? 1 : colorBits <= 8 ? 2 : colorBits <= 16 ? 5 : 8;
+      const perChannelBits = colorBits;
       const levels = 2 ** perChannelBits;
       const step = 255 / Math.max(1, levels - 1);
       for (let index = 0; index < image.data.length; index += 4) {
@@ -92,19 +92,19 @@ export function DataSizeLab() {
       <div className="data-size-grid">
         <div className="size-card">
           <p className="step-label">AUDIO</p><h3>音声のデータ量</h3>
-          <label><span>録音時間 <output>{seconds}秒</output></span><input type="range" min="1" max="60" value={seconds} onChange={(event) => setSeconds(Number(event.target.value))} /></label>
           <label><span>標本化周波数</span><select value={sampleRate} onChange={(event) => setSampleRate(Number(event.target.value))}><option value="8000">8 kHz</option><option value="44100">44.1 kHz</option><option value="96000">96 kHz</option></select></label>
+          <label><span>録音時間 <output>{seconds}秒</output></span><input type="range" min="1" max="60" value={seconds} onChange={(event) => setSeconds(Number(event.target.value))} /></label>
           <label><span>量子化ビット数</span><select value={audioBits} onChange={(event) => setAudioBits(Number(event.target.value))}><option value="8">8 bit</option><option value="16">16 bit</option><option value="24">24 bit</option></select></label>
           <label><span>チャンネル</span><select value={channels} onChange={(event) => setChannels(Number(event.target.value))}><option value="1">モノラル</option><option value="2">ステレオ</option></select></label>
-          <div className="size-formula"><span>{sampleRate.toLocaleString()} × {seconds} × {audioBits} × {channels} ÷ 8</span><strong>{formatSize(audioBytes)}</strong></div>
+          <div className="size-formula"><span>{sampleRate.toLocaleString()} × {seconds} × {audioBits} × {channels} ÷ 8</span><b>{Math.round(audioBytes).toLocaleString()} B</b><strong>＝ {formatSize(audioBytes)}</strong></div>
         </div>
         <div className="size-card">
           <p className="step-label">IMAGE</p><h3>静止画像のデータ量</h3>
           <label><span>横の画素数 <output>{width}</output></span><input type="range" min="80" max="1920" step="80" value={width} onChange={(event) => setWidth(Number(event.target.value))} /></label>
-          <label><span>縦の画素数 <output>{height}</output></span><input type="range" min="60" max="1080" step="60" value={height} onChange={(event) => setHeight(Number(event.target.value))} /></label>
-          <label><span>1画素のビット数</span><select value={colorBits} onChange={(event) => setColorBits(Number(event.target.value))}><option value="3">3 bit</option><option value="8">8 bit</option><option value="16">16 bit</option><option value="24">24 bit</option><option value="32">32 bit</option></select></label>
-          <div className="quality-preview"><canvas ref={imagePreviewRef} aria-label={width + 'かける' + height + '画素、' + colorBits + 'ビット色で再現した画像'} /><p><b>画質プレビュー</b><span>画素数を減らすとカクカクに、色のビット数を減らすと色の段差が見えます。</span></p></div>
-          <div className="size-formula"><span>{width} × {height} × {colorBits} ÷ 8</span><strong>{formatSize(imageBytes)}</strong></div>
+          <div className="linked-dimension"><span>縦の画素数</span><output>{height}</output><small>横：縦 ＝ 4：3を保って自動計算</small></div>
+          <label><span>1色の量子化ビット数</span><select value={colorBits} onChange={(event) => setColorBits(Number(event.target.value))}><option value="1">1 bit</option><option value="2">2 bit</option><option value="4">4 bit</option><option value="8">8 bit</option></select></label>
+          <div className="quality-preview"><canvas ref={imagePreviewRef} aria-label={width + 'かける' + height + '画素、RGB各色' + colorBits + 'ビットで再現した画像'} /><p><b>画質プレビュー</b><span>画素数を減らすとカクカクに、1色のビット数を減らすと色の段差が見えます。</span></p></div>
+          <div className="size-formula"><span>{width} × {height} × {colorBits} × 3色 ÷ 8</span><b>{Math.round(imageBytes).toLocaleString()} B</b><strong>＝ {formatSize(imageBytes)}</strong></div>
         </div>
       </div>
       <p className="teacher-note">ここでは圧縮前のデータ量を計算しています。次の単元「02-03 データの圧縮」で、保存時に小さくする仕組みへつなげます。</p>

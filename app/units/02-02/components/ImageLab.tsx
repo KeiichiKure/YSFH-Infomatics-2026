@@ -96,6 +96,9 @@ export function ImageLab() {
   const [yellow, setYellow] = useState(0);
   const [densityIndex, setDensityIndex] = useState(4);
   const [gradationBits, setGradationBits] = useState(8);
+  const [quantRed, setQuantRed] = useState(0.82);
+  const [quantGreen, setQuantGreen] = useState(0.38);
+  const [quantBlue, setQuantBlue] = useState(1);
   const rasterCanvasRef = useRef<HTMLCanvasElement>(null);
   const vectorCanvasRef = useRef<HTMLCanvasElement>(null);
   const resolutionCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -103,6 +106,13 @@ export function ImageLab() {
   const zoom = zoomLevels[zoomIndex];
   const density = densityLevels[densityIndex];
   const gradations = 2 ** gradationBits;
+  const quantMax = gradations - 1;
+  const quantRedLevel = Math.round(quantRed * quantMax);
+  const quantGreenLevel = Math.round(quantGreen * quantMax);
+  const quantBlueLevel = Math.round(quantBlue * quantMax);
+  const quantRedValue = Math.round(quantRedLevel / quantMax * 255);
+  const quantGreenValue = Math.round(quantGreenLevel / quantMax * 255);
+  const quantBlueValue = Math.round(quantBlueLevel / quantMax * 255);
   const subtractiveRed = Math.round(255 * (1 - cyan / 100));
   const subtractiveGreen = Math.round(255 * (1 - magenta / 100));
   const subtractiveBlue = Math.round(255 * (1 - yellow / 100));
@@ -157,13 +167,19 @@ export function ImageLab() {
     const canvas = gradationCanvasRef.current;
     if (!canvas) return;
     const draw = () => {
-      const output = setupCanvas(canvas, 92);
+      const output = setupCanvas(canvas, 180);
       if (!output) return;
-      for (let x = 0; x < output.width; x += 1) {
-        const ratio = x / Math.max(1, output.width - 1);
-        const value = Math.round(ratio * (gradations - 1)) / Math.max(1, gradations - 1) * 255;
-        output.context.fillStyle = 'rgb(' + value + ',' + value + ',' + value + ')';
-        output.context.fillRect(x, 0, 1, output.height);
+      const bandHeight = output.height / 3;
+      for (let band = 0; band < 3; band += 1) {
+        for (let x = 0; x < output.width; x += 1) {
+          const ratio = x / Math.max(1, output.width - 1);
+          const value = Math.round(ratio * (gradations - 1)) / Math.max(1, gradations - 1) * 255;
+          output.context.fillStyle = band === 0 ? 'rgb(' + value + ',0,0)' : band === 1 ? 'rgb(0,' + value + ',0)' : 'rgb(0,0,' + value + ')';
+          output.context.fillRect(x, band * bandHeight, 1, bandHeight);
+        }
+        output.context.fillStyle = 'rgba(255,255,255,.92)';
+        output.context.font = '900 13px "BIZ UDPGothic", sans-serif';
+        output.context.fillText(['R 赤', 'G 緑', 'B 青'][band], 10, band * bandHeight + 21);
       }
     };
     draw();
@@ -194,7 +210,7 @@ export function ImageLab() {
       <div className="rgb-lab">
         <div className="lab-heading"><div><p className="step-label">COLOR MIXER</p><h3>光の三原色を混ぜる</h3></div><span className="print-badge"><small>プリント</small><b>12・13</b></span></div>
         <div className="rgb-stage">
-          <div className="rgb-circles" aria-label="赤、緑、青の光を重ねる模式図"><i className="red" style={{ opacity: red / 255 }} /><i className="green" style={{ opacity: green / 255 }} /><i className="blue" style={{ opacity: blue / 255 }} /><strong style={{ background: 'rgb(' + red + ',' + green + ',' + blue + ')' }}>重なり</strong></div>
+          <div className="rgb-circles" aria-label="赤、緑、青の光を重ねる模式図"><i className="red" style={{ opacity: red / 255 }} /><i className="green" style={{ opacity: green / 255 }} /><i className="blue" style={{ opacity: blue / 255 }} /><span className="mix-focus" aria-hidden="true" /></div>
           <div className="rgb-controls">
             <label className="red"><span>R 赤 <output>{red}</output></span><input type="range" min="0" max="255" value={red} onChange={(event) => setRed(Number(event.target.value))} /></label>
             <label className="green"><span>G 緑 <output>{green}</output></span><input type="range" min="0" max="255" value={green} onChange={(event) => setGreen(Number(event.target.value))} /></label>
@@ -207,7 +223,7 @@ export function ImageLab() {
         <div className="subtractive-lab">
           <div className="lab-heading"><div><p className="step-label">INK MIXER</p><h3>色の三原色を混ぜる</h3></div><span className="mixing-type">減法混色</span></div>
           <div className="rgb-stage">
-            <div className="cmy-circles" aria-label="シアン、マゼンタ、イエローの色材を重ねる模式図"><i className="cyan" style={{ opacity: cyan / 100 }} /><i className="magenta" style={{ opacity: magenta / 100 }} /><i className="yellow" style={{ opacity: yellow / 100 }} /><strong style={{ background: 'rgb(' + subtractiveRed + ',' + subtractiveGreen + ',' + subtractiveBlue + ')' }}>重なり</strong></div>
+            <div className="cmy-circles" aria-label="シアン、マゼンタ、イエローの色材を重ねる模式図"><i className="cyan" style={{ opacity: cyan / 100 }} /><i className="magenta" style={{ opacity: magenta / 100 }} /><i className="yellow" style={{ opacity: yellow / 100 }} /><span className="mix-focus dark" aria-hidden="true" /></div>
             <div className="rgb-controls cmy-controls">
               <label className="cyan"><span>C シアン <output>{cyan}%</output></span><input type="range" min="0" max="100" value={cyan} onChange={(event) => setCyan(Number(event.target.value))} /></label>
               <label className="magenta"><span>M マゼンタ <output>{magenta}%</output></span><input type="range" min="0" max="100" value={magenta} onChange={(event) => setMagenta(Number(event.target.value))} /></label>
@@ -227,7 +243,20 @@ export function ImageLab() {
         </div>
         <div className="resolution-stage resolution-stage-rich">
           <div><div className="resolution-canvas-frame"><canvas ref={resolutionCanvasRef} aria-label={density + '画素、1色' + gradationBits + 'ビットで表した風景'} /></div><b>{density} × {Math.round(density * 0.67)}画素の見え方</b><small>画素を減らすと輪郭が四角くなります</small></div>
-          <div><canvas ref={gradationCanvasRef} className="gradation-canvas" aria-label={gradationBits + 'ビット、' + gradations + '階調のグラデーション'} /><b>{gradationBits} bit ＝ {gradations}階調</b><small>{gradationBits >= 8 ? '256段階では境目がほぼ見えない滑らかなグラデーション' : '段階の境目を目で探してみよう'} · RGB各8 bitなら24ビットフルカラー</small></div>
+          <div><canvas ref={gradationCanvasRef} className="gradation-canvas rgb-gradation-canvas" aria-label={gradationBits + 'ビット、' + gradations + '階調の赤緑青グラデーション'} /><b>RGBそれぞれ {gradationBits} bit ＝ {gradations}階調</b><small>{gradationBits >= 8 ? '各色256段階では境目がほぼ見えない滑らかなグラデーション' : '赤・緑・青それぞれの段階の境目を探してみよう'} · RGB各8 bitなら24ビットフルカラー</small></div>
+        </div>
+        <div className="quantized-rgb-lab">
+          <div className="lab-heading"><div><p className="step-label">BIT-DEPTH COLOR MIXER</p><h3>{gradationBits} bitの光を混ぜてみる</h3></div><output>各色 {gradations}段階</output></div>
+          <p>上で選んだ量子化ビット数が、この3本のレバーにも反映されます。1 bitなら各色は消灯／点灯の2段階だけです。</p>
+          <div className="rgb-stage">
+            <div className="rgb-circles quantized-circles" aria-label={gradationBits + 'ビットで赤緑青を混ぜる模式図'}><i className="red" style={{ opacity: quantRedValue / 255 }} /><i className="green" style={{ opacity: quantGreenValue / 255 }} /><i className="blue" style={{ opacity: quantBlueValue / 255 }} /><span className="mix-focus" aria-hidden="true" /></div>
+            <div className="rgb-controls quantized-controls">
+              <label className="red"><span>R 赤 <output>段階 {quantRedLevel}/{quantMax} → {quantRedValue}</output></span><input type="range" min="0" max={quantMax} value={quantRedLevel} onChange={(event) => setQuantRed(Number(event.target.value) / quantMax)} /></label>
+              <label className="green"><span>G 緑 <output>段階 {quantGreenLevel}/{quantMax} → {quantGreenValue}</output></span><input type="range" min="0" max={quantMax} value={quantGreenLevel} onChange={(event) => setQuantGreen(Number(event.target.value) / quantMax)} /></label>
+              <label className="blue"><span>B 青 <output>段階 {quantBlueLevel}/{quantMax} → {quantBlueValue}</output></span><input type="range" min="0" max={quantMax} value={quantBlueLevel} onChange={(event) => setQuantBlue(Number(event.target.value) / quantMax)} /></label>
+              <div className="mixed-color" style={{ background: 'rgb(' + quantRedValue + ',' + quantGreenValue + ',' + quantBlueValue + ')' }}><span>{gradationBits} bitで混ぜた光</span><code>rgb({quantRedValue}, {quantGreenValue}, {quantBlueValue})</code></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
