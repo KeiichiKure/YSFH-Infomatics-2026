@@ -221,7 +221,15 @@ export function SamplingLab() {
           {sampleCodes.map((sample, index) => <div key={sample.time + '-' + index}><span>標本{index + 1}</span><b>{sample.level.toLocaleString()}</b><code>{binary(sample.level, quantizationBits)}</code></div>)}
         </div>
         <p className="data-tradeoff">1秒分の値だけで <strong>{(samplingFrequency * quantizationBits).toLocaleString()} bit</strong>。標本化周波数や量子化ビット数を増やすと元の波に近づきますが、データ量も増えます。</p>
-        <div className="print-callout print-callout-four"><span className="print-number"><small>プリント</small><b>1・2</b></span><strong>波・振幅</strong><em>連続するアナログ量</em><span className="print-number"><small>プリント</small><b>3～6</b></span><strong>標本化・量子化</strong><em>標本点、ビット数、誤差</em><span className="print-number"><small>プリント</small><b>7・8</b></span><strong>周波数・周期</strong><em>1秒間の波の数と1個分の時間</em><span className="print-number"><small>プリント</small><b>9・10</b></span><strong>標本化定理</strong><em>元の周波数の2倍より大きく</em></div>
+        <div className="print-callout print-callout-four"><span className="print-number"><small>プリント</small><b>1・2</b></span><strong>波・振幅</strong><em>波の大きさが連続して変わるアナログ量</em></div>
+        <p className="print-term-title">プリント3～6｜大事な言葉を1つずつ確認</p>
+        <div className="print-callout print-callout-four print-term-breakdown">
+          <span className="print-number"><small>プリント</small><b>3</b></span><strong>サンプリング（標本化）</strong><em>アナログ量を一定の時間間隔で取り出すこと</em>
+          <span className="print-number"><small>プリント</small><b>4</b></span><strong>標本点</strong><em>サンプリングによって取り出した1つ1つの値</em>
+          <span className="print-number"><small>プリント</small><b>5</b></span><strong>量子化ビット数</strong><em>1つの標本値を何段階で表すかを決めるビット数</em>
+          <span className="print-number"><small>プリント</small><b>6</b></span><strong>量子化誤差</strong><em>元の標本値と、段階にそろえた量子化後の値との差</em>
+        </div>
+        <div className="print-callout print-callout-four"><span className="print-number"><small>プリント</small><b>7・8</b></span><strong>周波数・周期</strong><em>1秒間の波の数と、波1個分にかかる時間</em><span className="print-number"><small>プリント</small><b>9・10</b></span><strong>標本化定理</strong><em>元の最高周波数の2倍より大きい周波数で標本化する</em></div>
       </div>
     </section>
   );

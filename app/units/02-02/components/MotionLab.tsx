@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import Image from 'next/image';
 import arStreetPhoto from '@/public/images/02-02/ar-street-photo.jpg';
 import mrClassroomPhoto from '@/public/images/02-02/mr-classroom-photo.jpg';
+import realityHand from '@/public/images/02-02/reality-hand.png';
+
+type RealityHandState = { x: number; y: number; visible: boolean };
 
 export function MotionLab() {
   const [frameRate, setFrameRate] = useState(12);
@@ -14,6 +17,8 @@ export function MotionLab() {
   const [occlusion, setOcclusion] = useState(true);
   const [shading, setShading] = useState(true);
   const [parallax, setParallax] = useState(18);
+  const [arHand, setArHand] = useState<RealityHandState>({ x: 50, y: 42, visible: false });
+  const [mrHand, setMrHand] = useState<RealityHandState>({ x: 52, y: 42, visible: false });
 
   useEffect(() => {
     if (!playing) return;
@@ -38,6 +43,16 @@ export function MotionLab() {
       const frameIndex = Math.floor(value * frameRate + 0.000001);
       return Math.max(0, frameIndex + direction) / frameRate;
     });
+  };
+  const moveRealityHand = (event: ReactPointerEvent<HTMLDivElement>, target: 'ar' | 'mr') => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const next = {
+      x: Math.max(5, Math.min(95, ((event.clientX - bounds.left) / bounds.width) * 100)),
+      y: Math.max(4, Math.min(88, ((event.clientY - bounds.top) / bounds.height) * 100)),
+      visible: true,
+    };
+    if (target === 'ar') setArHand(next);
+    else setMrHand(next);
   };
 
   return (
@@ -96,20 +111,26 @@ export function MotionLab() {
           </div>
           <div className="reality-card">
             <div className="reality-card-copy"><span>AR</span><div><strong>拡張現実</strong><small>現実の写真やカメラ映像の上へ、案内や数値を平面的に重ねます。現実空間の奥行きまでは扱いません。</small></div></div>
-            <div className="reality-scene ar-scene"><Image className="reality-photo" src={arStreetPhoto} alt="現実の日本の街路の写真" fill sizes="(max-width: 860px) 100vw, 55vw" /><div className="ar-route-overlay"><i>↑</i><b>目的地まで120m</b></div><em>現実の街路（写真）＋ 仮想の案内表示</em></div>
-            <p><b>ARの特徴：</b>矢印はカメラ画面の上に貼り付けた表示。現実の物との前後関係はありません。</p>
+            <div className="reality-scene ar-scene interactive-reality-scene" tabIndex={0} aria-label="ARの案内表示。マウスを動かして、手を重ねても案内が隠れないことを確認" onPointerMove={(event) => moveRealityHand(event, 'ar')} onPointerEnter={() => setArHand((value) => ({ ...value, visible: true }))} onPointerLeave={() => setArHand((value) => ({ ...value, visible: false }))} onFocus={() => setArHand((value) => ({ ...value, visible: true }))} onBlur={() => setArHand((value) => ({ ...value, visible: false }))}>
+              <Image className="reality-photo" src={arStreetPhoto} alt="現実の日本の街路の写真" fill sizes="(max-width: 860px) 100vw, 55vw" />
+              <Image className={'reality-hand ar-reality-hand ' + (arHand.visible ? 'is-visible' : '')} src={realityHand} alt="" aria-hidden="true" width={170} height={255} style={{ left: arHand.x + '%', top: arHand.y + '%' }} />
+              <div className="ar-route-overlay"><i>↑</i><b>目的地まで120m</b></div>
+              <b className="reality-hover-hint">マウスを矢印へ：手を重ねても表示は隠れない</b>
+              <em>AR：案内表示は手より前に残る</em>
+            </div>
+            <p><b>ARの特徴：</b>手は現実の映像の一部ですが、案内は画面の上へ重ねるため、手を重ねても隠れません。</p>
           </div>
           <div className="reality-card">
             <div className="reality-card-copy"><span>MR</span><div><strong>複合現実</strong><small>仮想の立体が現実の机や教科書との位置関係を理解します。手前の現実物体に隠れるため、同じ空間にあるように見えます。</small></div></div>
-            <div className="reality-scene mr-scene">
+            <div className="reality-scene mr-scene interactive-reality-scene" tabIndex={0} aria-label="MRの仮想分子模型。マウスを動かして、手で模型が隠れることを確認" onPointerMove={(event) => moveRealityHand(event, 'mr')} onPointerEnter={() => setMrHand((value) => ({ ...value, visible: true }))} onPointerLeave={() => setMrHand((value) => ({ ...value, visible: false }))} onFocus={() => setMrHand((value) => ({ ...value, visible: true }))} onBlur={() => setMrHand((value) => ({ ...value, visible: false }))}>
               <Image className="reality-photo" src={mrClassroomPhoto} alt="現実の理科室と実験机の写真" fill sizes="(max-width: 860px) 100vw, 55vw" />
               <div className="mr-anchor-ring" />
               <div className="mr-molecule"><i /><i /><i /><i /></div>
-              <Image className="reality-photo mr-foreground-photo" src={mrClassroomPhoto} alt="" aria-hidden="true" fill sizes="(max-width: 860px) 100vw, 55vw" />
-              <b className="mr-occlusion-label">現実の教科書が手前 → 仮想模型の一部が隠れる</b>
-              <em>現実の教室（写真）＋ 前後関係をもつ仮想立体</em>
+              <Image className={'reality-hand mr-reality-hand ' + (mrHand.visible ? 'is-visible' : '')} src={realityHand} alt="" aria-hidden="true" width={170} height={255} style={{ left: mrHand.x + '%', top: mrHand.y + '%' }} />
+              <b className="reality-hover-hint">マウスを模型へ：現実の手が模型を隠す</b>
+              <em>MR：手と仮想模型に前後関係がある</em>
             </div>
-            <p><b>MRの特徴：</b>現実の教科書が仮想模型より手前にあると判定し、模型を隠す「遮蔽（オクルージョン）」が起こります。</p>
+            <p><b>MRの特徴：</b>現実の手が仮想模型より手前にあると判定し、重なった部分で模型を隠す「遮蔽（オクルージョン）」が起こります。</p>
           </div>
         </div>
         <div className="print-callout">
