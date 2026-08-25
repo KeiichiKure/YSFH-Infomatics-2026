@@ -6,6 +6,14 @@ function binary(value: number, bits: number) {
   return value.toString(2).padStart(bits, '0');
 }
 
+function periodLabel(frequency: number) {
+  if (frequency === 1) return '1秒';
+  const seconds = 1 / frequency;
+  if (seconds >= 0.1) return `1/${frequency.toLocaleString()}秒 ≈ ${seconds.toFixed(3)}秒`;
+  if (seconds >= 0.001) return `1/${frequency.toLocaleString()}秒 ≈ ${(seconds * 1000).toFixed(seconds >= 0.01 ? 1 : 2)} ms`;
+  return `1/${frequency.toLocaleString()}秒 ≈ ${(seconds * 1_000_000).toFixed(seconds >= 0.0001 ? 0 : 1)} µs`;
+}
+
 function prepareCanvas(canvas: HTMLCanvasElement, height: number) {
   const width = Math.max(320, canvas.getBoundingClientRect().width);
   const dpr = window.devicePixelRatio || 1;
@@ -180,11 +188,13 @@ export function SamplingLab() {
         <div className="digit-controls digit-controls-expanded">
           <div className="range-card">
             <span>元の波の周波数 <output>{waveFrequency} Hz</output></span>
+            <small className="period-readout">（元の波の周期：{periodLabel(waveFrequency)}）</small>
             <input aria-label="元の波の周波数" type="range" min="1" max="20" value={waveFrequency} onChange={(event) => { setWaveFrequency(Number(event.target.value)); setGraphZoom(1); }} />
             <div className="preset-row">{[1, 3, 6, 12, 20].map((value) => <button type="button" className={waveFrequency === value ? 'is-active' : ''} key={value} onClick={() => { setWaveFrequency(value); setGraphZoom(1); }}>{value} Hz</button>)}</div>
           </div>
           <div className="range-card">
             <span>標本化周波数 <output>{samplingFrequency.toLocaleString()} Hz</output></span>
+            <small className="period-readout">（標本化周期：{periodLabel(samplingFrequency)}）</small>
             <small>4〜24 Hzは1 Hzずつ細かく動かせます</small>
             <input aria-label="標本化周波数4から24ヘルツ" type="range" min="4" max="24" value={Math.min(samplingFrequency, 24)} onChange={(event) => { setSamplingFrequency(Number(event.target.value)); setGraphZoom(1); }} />
             <div className="preset-row">{[48, 240, 2400, 24000].map((value) => <button type="button" className={samplingFrequency === value ? 'is-active' : ''} key={value} onClick={() => { setSamplingFrequency(value); setGraphZoom(1); }}>{value.toLocaleString()} Hz</button>)}</div>

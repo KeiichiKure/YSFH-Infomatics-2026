@@ -233,6 +233,10 @@ export function ImageLab() {
           </div>
           <p className="data-tradeoff">インクは光を吸収するため、混ぜるほど暗くなります。印刷では締まった黒を表すKを加えてCMYKとします。</p>
         </div>
+        <div className="print-callout">
+          <span className="print-number"><small>プリント</small><b>12</b></span><strong>光の三原色</strong><em>赤（R）・緑（G）・青（B）の光で色を表す</em>
+          <span className="print-number"><small>プリント</small><b>13</b></span><strong>加法混色</strong><em>光を加えるほど明るくなり、3色を最大にすると白になる</em>
+        </div>
       </div>
 
       <div className="resolution-lab">
@@ -247,16 +251,27 @@ export function ImageLab() {
         </div>
         <div className="quantized-rgb-lab">
           <div className="lab-heading"><div><p className="step-label">BIT-DEPTH COLOR MIXER</p><h3>{gradationBits} bitの光を混ぜてみる</h3></div><output>各色 {gradations}段階</output></div>
-          <p>上で選んだ量子化ビット数が、この3本のレバーにも反映されます。1 bitなら各色は消灯／点灯の2段階だけです。</p>
+          <p>この欄でも1色の量子化ビット数を変えられます。上のグラデーションと同じ値に連動し、1 bitなら各色は消灯／点灯の2段階だけです。</p>
+          <div className="range-card quantized-bit-control">
+            <span>1色の量子化ビット数 <output>{gradationBits} bit（各色 {gradations}段階）</output></span>
+            <input aria-label="混色実験の1色の量子化ビット数" type="range" min="1" max="8" value={gradationBits} onChange={(event) => setGradationBits(Number(event.target.value))} />
+            <div className="preset-row">{[1, 2, 4, 5, 8].map((value) => <button type="button" className={gradationBits === value ? 'is-active' : ''} key={value} onClick={() => setGradationBits(value)}>{value} bit</button>)}</div>
+          </div>
           <div className="rgb-stage">
             <div className="rgb-circles quantized-circles" aria-label={gradationBits + 'ビットで赤緑青を混ぜる模式図'}><i className="red" style={{ opacity: quantRedValue / 255 }} /><i className="green" style={{ opacity: quantGreenValue / 255 }} /><i className="blue" style={{ opacity: quantBlueValue / 255 }} /><span className="mix-focus" aria-hidden="true" /></div>
             <div className="rgb-controls quantized-controls">
-              <label className="red"><span>R 赤 <output>段階 {quantRedLevel}/{quantMax} → {quantRedValue}</output></span><input type="range" min="0" max={quantMax} value={quantRedLevel} onChange={(event) => setQuantRed(Number(event.target.value) / quantMax)} /></label>
-              <label className="green"><span>G 緑 <output>段階 {quantGreenLevel}/{quantMax} → {quantGreenValue}</output></span><input type="range" min="0" max={quantMax} value={quantGreenLevel} onChange={(event) => setQuantGreen(Number(event.target.value) / quantMax)} /></label>
-              <label className="blue"><span>B 青 <output>段階 {quantBlueLevel}/{quantMax} → {quantBlueValue}</output></span><input type="range" min="0" max={quantMax} value={quantBlueLevel} onChange={(event) => setQuantBlue(Number(event.target.value) / quantMax)} /></label>
-              <div className="mixed-color" style={{ background: 'rgb(' + quantRedValue + ',' + quantGreenValue + ',' + quantBlueValue + ')' }}><span>{gradationBits} bitで混ぜた光</span><code>rgb({quantRedValue}, {quantGreenValue}, {quantBlueValue})</code></div>
+              <label className="red"><span>R 赤 <output>段階値 {quantRedLevel} / {quantMax}</output></span><input type="range" min="0" max={quantMax} value={quantRedLevel} onChange={(event) => setQuantRed(Number(event.target.value) / quantMax)} /></label>
+              <label className="green"><span>G 緑 <output>段階値 {quantGreenLevel} / {quantMax}</output></span><input type="range" min="0" max={quantMax} value={quantGreenLevel} onChange={(event) => setQuantGreen(Number(event.target.value) / quantMax)} /></label>
+              <label className="blue"><span>B 青 <output>段階値 {quantBlueLevel} / {quantMax}</output></span><input type="range" min="0" max={quantMax} value={quantBlueLevel} onChange={(event) => setQuantBlue(Number(event.target.value) / quantMax)} /></label>
+              <div className="mixed-color" style={{ background: 'rgb(' + quantRedValue + ',' + quantGreenValue + ',' + quantBlueValue + ')' }}><span>{gradationBits} bitで混ぜた光</span><code>RGB段階値（{quantRedLevel}, {quantGreenLevel}, {quantBlueLevel}）</code></div>
             </div>
           </div>
+        </div>
+        <div className="print-callout print-callout-four">
+          <span className="print-number"><small>プリント</small><b>14</b></span><strong>画素数</strong><em>画像をつくる画素の数。多いほど細部を表しやすい</em>
+          <span className="print-number"><small>プリント</small><b>15</b></span><strong>解像度</strong><em>一定の長さに並ぶ画素の密度。高いほど輪郭が細かい</em>
+          <span className="print-number"><small>プリント</small><b>16</b></span><strong>階調</strong><em>1色の明るさを表せる段階数。n bitなら2のn乗段階</em>
+          <span className="print-number"><small>プリント</small><b>17</b></span><strong>24ビットフルカラー</strong><em>RGBを各8 bit、合計24 bitで表す色</em>
         </div>
       </div>
     </section>
