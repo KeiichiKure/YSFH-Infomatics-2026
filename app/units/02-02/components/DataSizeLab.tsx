@@ -2,8 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-function formatApprox(value: number) {
-  return value.toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+function formatConversion(value: number) {
+  const rounded = Math.round(value * 10) / 10;
+  return {
+    text: rounded.toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    isApproximate: Math.abs(value - rounded) > 1e-9,
+  };
 }
 
 function SizeConversions({ bytes }: { bytes: number }) {
@@ -12,20 +16,24 @@ function SizeConversions({ bytes }: { bytes: number }) {
   const binaryMB = exactBytes / 1024 ** 2;
   const decimalKB = exactBytes / 1000;
   const decimalMB = exactBytes / 1000 ** 2;
+  const binaryKBDisplay = formatConversion(binaryKB);
+  const binaryMBDisplay = formatConversion(binaryMB);
+  const decimalKBDisplay = formatConversion(decimalKB);
+  const decimalMBDisplay = formatConversion(decimalMB);
 
   return (
     <div className="size-conversions">
       <div className="size-conversion textbook-conversion">
         <div><b>教科書の換算（1024倍）</b><small>1 MB ＝ 1024 KB ／ 1 KB ＝ 1024 B</small></div>
-        {binaryKB >= 1 && <p><span>{exactBytes.toLocaleString()} ÷ 1,024</span><strong>＝ 約 {formatApprox(binaryKB)} KB <small>（KiB）</small></strong></p>}
-        {binaryMB >= 1 && <p><span>{exactBytes.toLocaleString()} ÷ 1,048,576</span><strong>＝ 約 {formatApprox(binaryMB)} MB <small>（MiB）</small></strong></p>}
+        {binaryKB >= 1 && <p><span>{exactBytes.toLocaleString()} ÷ 1,024</span><strong>＝ {binaryKBDisplay.isApproximate && '約 '}{binaryKBDisplay.text} KB <small>（KiB）</small></strong></p>}
+        {binaryMB >= 1 && <p><span>{exactBytes.toLocaleString()} ÷ 1,048,576</span><strong>＝ {binaryMBDisplay.isApproximate && '約 '}{binaryMBDisplay.text} MB <small>（MiB）</small></strong></p>}
       </div>
       <div className="size-conversion decimal-conversion">
         <div><b>1000倍で換算する場合</b><small>1 MB ＝ 1000 kB ／ 1 kB ＝ 1000 B</small></div>
         {(decimalKB >= 1 || decimalMB >= 1) && <p>
-          {decimalKB >= 1 && <strong>約 {formatApprox(decimalKB)} kB</strong>}
+          {decimalKB >= 1 && <strong>{decimalKBDisplay.isApproximate && '約 '}{decimalKBDisplay.text} kB</strong>}
           {decimalKB >= 1 && decimalMB >= 1 && <span>／</span>}
-          {decimalMB >= 1 && <strong>約 {formatApprox(decimalMB)} MB</strong>}
+          {decimalMB >= 1 && <strong>{decimalMBDisplay.isApproximate && '約 '}{decimalMBDisplay.text} MB</strong>}
         </p>}
       </div>
     </div>

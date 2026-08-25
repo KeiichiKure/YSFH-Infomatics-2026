@@ -1036,6 +1036,7 @@ button, input { font: inherit; }
 .size-conversion p strong small { color: #d4e4de; font-size: 10px; }
 .textbook-conversion p strong { font-size: clamp(13px, 1.25vw, 16px); white-space: nowrap; }
 .decimal-conversion p { grid-template-columns: 1fr auto 1fr; }
+.decimal-conversion p strong { font-size: clamp(13px, 1.25vw, 16px); white-space: nowrap; }
 .decimal-conversion p strong:first-child { text-align: left; }
 .decimal-conversion p span { text-align: center; }
 
