@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${Math.round(bytes)} B`;
@@ -16,8 +16,74 @@ export function DataSizeLab() {
   const [width, setWidth] = useState(640);
   const [height, setHeight] = useState(480);
   const [colorBits, setColorBits] = useState(24);
+  const imagePreviewRef = useRef<HTMLCanvasElement>(null);
   const audioBytes = sampleRate * seconds * audioBits * channels / 8;
   const imageBytes = width * height * colorBits / 8;
+
+  useEffect(() => {
+    const canvas = imagePreviewRef.current;
+    if (!canvas) return;
+    const draw = () => {
+      const displayWidth = Math.max(280, canvas.getBoundingClientRect().width);
+      const displayHeight = 220;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(displayWidth * dpr);
+      canvas.height = Math.round(displayHeight * dpr);
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const sampleWidth = Math.max(8, Math.min(160, Math.round(width / 12)));
+      const sampleHeight = Math.max(6, Math.min(100, Math.round(height / 12)));
+      const source = document.createElement('canvas');
+      source.width = sampleWidth;
+      source.height = sampleHeight;
+      const sourceContext = source.getContext('2d');
+      if (!sourceContext) return;
+      const sky = sourceContext.createLinearGradient(0, 0, 0, sampleHeight);
+      sky.addColorStop(0, '#bfe7ef');
+      sky.addColorStop(1, '#f7d783');
+      sourceContext.fillStyle = sky;
+      sourceContext.fillRect(0, 0, sampleWidth, sampleHeight);
+      sourceContext.fillStyle = '#ffe17c';
+      sourceContext.beginPath();
+      sourceContext.arc(sampleWidth * 0.78, sampleHeight * 0.22, sampleHeight * 0.11, 0, Math.PI * 2);
+      sourceContext.fill();
+      sourceContext.fillStyle = '#78a98f';
+      sourceContext.beginPath();
+      sourceContext.moveTo(0, sampleHeight);
+      sourceContext.quadraticCurveTo(sampleWidth * 0.27, sampleHeight * 0.48, sampleWidth * 0.55, sampleHeight * 0.83);
+      sourceContext.quadraticCurveTo(sampleWidth * 0.8, sampleHeight * 0.58, sampleWidth, sampleHeight * 0.76);
+      sourceContext.lineTo(sampleWidth, sampleHeight);
+      sourceContext.closePath();
+      sourceContext.fill();
+      sourceContext.fillStyle = '#e88466';
+      sourceContext.beginPath();
+      sourceContext.arc(sampleWidth * 0.43, sampleHeight * 0.42, sampleHeight * 0.17, 0, Math.PI * 2);
+      sourceContext.fill();
+      sourceContext.fillStyle = '#203553';
+      sourceContext.fillRect(sampleWidth * 0.39, sampleHeight * 0.59, sampleWidth * 0.08, sampleHeight * 0.1);
+
+      const image = sourceContext.getImageData(0, 0, sampleWidth, sampleHeight);
+      const perChannelBits = colorBits <= 3 ? 1 : colorBits <= 8 ? 2 : colorBits <= 16 ? 5 : 8;
+      const levels = 2 ** perChannelBits;
+      const step = 255 / Math.max(1, levels - 1);
+      for (let index = 0; index < image.data.length; index += 4) {
+        image.data[index] = Math.round(image.data[index] / step) * step;
+        image.data[index + 1] = Math.round(image.data[index + 1] / step) * step;
+        image.data[index + 2] = Math.round(image.data[index + 2] / step) * step;
+      }
+      sourceContext.putImageData(image, 0, 0);
+      context.clearRect(0, 0, displayWidth, displayHeight);
+      context.imageSmoothingEnabled = false;
+      const ratio = Math.min(displayWidth / sampleWidth, displayHeight / sampleHeight);
+      const targetWidth = sampleWidth * ratio;
+      const targetHeight = sampleHeight * ratio;
+      context.drawImage(source, (displayWidth - targetWidth) / 2, (displayHeight - targetHeight) / 2, targetWidth, targetHeight);
+    };
+    draw();
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
+  }, [colorBits, height, width]);
 
   return (
     <section className="learning-section" id="data-size">
@@ -34,9 +100,10 @@ export function DataSizeLab() {
         </div>
         <div className="size-card">
           <p className="step-label">IMAGE</p><h3>静止画像のデータ量</h3>
-          <label><span>横の画素数 <output>{width}</output></span><input type="range" min="160" max="1920" step="160" value={width} onChange={(event) => setWidth(Number(event.target.value))} /></label>
-          <label><span>縦の画素数 <output>{height}</output></span><input type="range" min="120" max="1080" step="120" value={height} onChange={(event) => setHeight(Number(event.target.value))} /></label>
-          <label><span>1画素のビット数</span><select value={colorBits} onChange={(event) => setColorBits(Number(event.target.value))}><option value="8">8 bit</option><option value="24">24 bit</option><option value="32">32 bit</option></select></label>
+          <label><span>横の画素数 <output>{width}</output></span><input type="range" min="80" max="1920" step="80" value={width} onChange={(event) => setWidth(Number(event.target.value))} /></label>
+          <label><span>縦の画素数 <output>{height}</output></span><input type="range" min="60" max="1080" step="60" value={height} onChange={(event) => setHeight(Number(event.target.value))} /></label>
+          <label><span>1画素のビット数</span><select value={colorBits} onChange={(event) => setColorBits(Number(event.target.value))}><option value="3">3 bit</option><option value="8">8 bit</option><option value="16">16 bit</option><option value="24">24 bit</option><option value="32">32 bit</option></select></label>
+          <div className="quality-preview"><canvas ref={imagePreviewRef} aria-label={width + 'かける' + height + '画素、' + colorBits + 'ビット色で再現した画像'} /><p><b>画質プレビュー</b><span>画素数を減らすとカクカクに、色のビット数を減らすと色の段差が見えます。</span></p></div>
           <div className="size-formula"><span>{width} × {height} × {colorBits} ÷ 8</span><strong>{formatSize(imageBytes)}</strong></div>
         </div>
       </div>
@@ -44,3 +111,4 @@ export function DataSizeLab() {
     </section>
   );
 }
+

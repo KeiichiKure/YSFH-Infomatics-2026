@@ -20,7 +20,7 @@ const terms = [
   ['3', 'サンプリング', '一定間隔でアナログ量を取り出す標本化'], ['4', '標本点', '標本化で取り出したアナログ量'],
   ['5', '量子化ビット数', '量子化の段階数を決めるビット数'], ['6', '量子化誤差', '標本点と量子化後の段階値のずれ'],
   ['7', '周波数', '1秒間に通過する波の数'], ['8', '周期', '1個の波が伝わる時間'],
-  ['9', '標本化定理', '元の最高周波数の2倍を超える周波数で標本化する'], ['10', '6', '3 Hzの波なら6 Hzより大きくする'],
+  ['9', '標本化定理', '元の最高周波数の2倍を超える周波数で標本化する'],
   ['11', 'ピクセル', 'ラスタ画像を構成する画素'], ['12', '光の三原色', '赤・緑・青の光'],
   ['13', '加法混色', '光を混ぜるほど白へ近づく混色'], ['14', '画素数', '縦横に配置された画素の数'],
   ['15', '解像度', '1インチあたりの画素の密度'], ['16', '階調', '各色の明るさの段階数'],
@@ -58,7 +58,7 @@ export default function DigitalizationUnit() {
           <DataSizeLab />
           <section className="learning-section checkpoint" id="checkpoint-02-02">
             <div className="section-kicker"><span>05</span><p>プリント最終確認</p></div>
-            <div className="section-title-row"><div><p className="step-label">言葉にする</p><h2>①〜㉑を体験とつなごう</h2></div><p className="section-question">番号を見て答えを思い出してから、カードを開こう。</p></div>
+            <div className="section-title-row"><div><p className="step-label">言葉にする</p><h2>重要語を体験とつなごう</h2></div><p className="section-question">番号を見て答えを思い出してから、カードを開こう。</p></div>
             <div className="term-grid">{terms.map(([number, term, meaning]) => <details key={number}><summary><span>{number}</span><strong>{term}</strong></summary><p>{meaning}</p></details>)}</div>
             <div className="final-challenge digit-final"><Image src={understoodMascot} alt="理解して手を挙げる生徒のマスコット" /><div><p className="step-label">最後の問い</p><h3>元の情報に近づけると、なぜデータ量が増える？</h3><ol><li>1秒間に取り出す標本点の数</li><li>1つの値を表す量子化ビット数</li><li>画像の画素数や動画のフレーム数</li></ol><p>この3つを使って60秒で説明できたら、今日のミッション達成です。</p></div></div>
           </section>
@@ -68,3 +68,4 @@ export default function DigitalizationUnit() {
     </main>
   );
 }
+

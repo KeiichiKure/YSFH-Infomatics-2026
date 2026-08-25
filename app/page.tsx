@@ -14,7 +14,7 @@ export default function Home() {
       <section className="home-hero">
         <div className="home-hero-copy">
           <p className="eyebrow">RISU JOHO · INTERACTIVE LEARNING</p>
-          <h1>触って、比べて、<br />しくみを見つけよう。</h1>
+          <h1><span>触って、比べて、</span><span>しくみを見つけよう。</span></h1>
           <p className="hero-lead">
             答えを覚える前に、まず動かしてみる。理数情報の学びを、自分のペースで深めるウェブ教材です。
           </p>
@@ -67,4 +67,5 @@ export default function Home() {
     </main>
   );
 }
+
 

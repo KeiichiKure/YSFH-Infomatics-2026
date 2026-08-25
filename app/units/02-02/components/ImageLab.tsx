@@ -1,71 +1,236 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-const rasterPattern = Array.from({ length: 64 }, (_, index) => {
-  const x = index % 8;
-  const y = Math.floor(index / 8);
-  return Math.abs(x - y) <= 1 || (x > 4 && y < 3);
-});
+function setupCanvas(canvas: HTMLCanvasElement, height: number) {
+  const width = Math.max(280, canvas.getBoundingClientRect().width);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.clearRect(0, 0, width, height);
+  return { context, width, height };
+}
+
+function drawScene(context: CanvasRenderingContext2D, width: number, height: number, zoom = 1) {
+  context.save();
+  context.translate(width / 2, height / 2);
+  context.scale(zoom, zoom);
+  context.translate(-width / 2, -height / 2);
+  const sky = context.createLinearGradient(0, 0, 0, height);
+  sky.addColorStop(0, '#bfe7ef');
+  sky.addColorStop(0.68, '#f7e6a7');
+  sky.addColorStop(1, '#f6cf7a');
+  context.fillStyle = sky;
+  context.fillRect(0, 0, width, height);
+  context.fillStyle = '#ffe07a';
+  context.beginPath();
+  context.arc(width * 0.78, height * 0.22, height * 0.11, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = '#84b89a';
+  context.beginPath();
+  context.moveTo(0, height * 0.78);
+  context.quadraticCurveTo(width * 0.18, height * 0.46, width * 0.42, height * 0.75);
+  context.quadraticCurveTo(width * 0.7, height * 0.48, width, height * 0.7);
+  context.lineTo(width, height);
+  context.lineTo(0, height);
+  context.closePath();
+  context.fill();
+  context.fillStyle = '#397c70';
+  context.beginPath();
+  context.moveTo(0, height * 0.88);
+  context.quadraticCurveTo(width * 0.25, height * 0.65, width * 0.53, height * 0.88);
+  context.quadraticCurveTo(width * 0.72, height * 0.7, width, height * 0.83);
+  context.lineTo(width, height);
+  context.lineTo(0, height);
+  context.closePath();
+  context.fill();
+  context.fillStyle = '#e88466';
+  context.beginPath();
+  context.arc(width * 0.45, height * 0.36, height * 0.16, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = '#f4c44f';
+  context.beginPath();
+  context.moveTo(width * 0.45, height * 0.2);
+  context.lineTo(width * 0.45, height * 0.52);
+  context.lineTo(width * 0.35, height * 0.36);
+  context.closePath();
+  context.fill();
+  context.strokeStyle = '#203553';
+  context.lineWidth = Math.max(1.5, width * 0.008);
+  context.beginPath();
+  context.moveTo(width * 0.4, height * 0.5);
+  context.lineTo(width * 0.43, height * 0.65);
+  context.moveTo(width * 0.5, height * 0.5);
+  context.lineTo(width * 0.47, height * 0.65);
+  context.stroke();
+  context.fillStyle = '#9a633d';
+  context.fillRect(width * 0.41, height * 0.63, width * 0.08, height * 0.07);
+  context.restore();
+}
+
+function quantizeScene(context: CanvasRenderingContext2D, width: number, height: number, bits: number) {
+  const data = context.getImageData(0, 0, width, height);
+  const channelLevels = 2 ** bits;
+  const step = 255 / Math.max(1, channelLevels - 1);
+  for (let index = 0; index < data.data.length; index += 4) {
+    data.data[index] = Math.round(data.data[index] / step) * step;
+    data.data[index + 1] = Math.round(data.data[index + 1] / step) * step;
+    data.data[index + 2] = Math.round(data.data[index + 2] / step) * step;
+  }
+  context.putImageData(data, 0, 0);
+}
+
+const zoomLevels = [1, 2, 4, 8, 16, 32];
+const densityLevels = [8, 16, 32, 64, 128, 256];
 
 export function ImageLab() {
-  const [zoom, setZoom] = useState(4);
+  const [zoomIndex, setZoomIndex] = useState(0);
   const [red, setRed] = useState(255);
-  const [green, setGreen] = useState(170);
-  const [blue, setBlue] = useState(80);
-  const [density, setDensity] = useState(8);
-  const [gradationBits, setGradationBits] = useState(3);
-  const pixels = useMemo(() => Array.from({ length: density * density }, (_, index) => {
-    const x = index % density;
-    const y = Math.floor(index / density);
-    const line = Math.abs(x - y) <= Math.max(0, Math.floor(density / 10));
-    const cross = x > density * 0.58 && y < density * 0.35;
-    return line || cross;
-  }), [density]);
+  const [green, setGreen] = useState(130);
+  const [blue, setBlue] = useState(255);
+  const [cyan, setCyan] = useState(20);
+  const [magenta, setMagenta] = useState(60);
+  const [yellow, setYellow] = useState(0);
+  const [densityIndex, setDensityIndex] = useState(4);
+  const [gradationBits, setGradationBits] = useState(8);
+  const rasterCanvasRef = useRef<HTMLCanvasElement>(null);
+  const vectorCanvasRef = useRef<HTMLCanvasElement>(null);
+  const resolutionCanvasRef = useRef<HTMLCanvasElement>(null);
+  const gradationCanvasRef = useRef<HTMLCanvasElement>(null);
+  const zoom = zoomLevels[zoomIndex];
+  const density = densityLevels[densityIndex];
   const gradations = 2 ** gradationBits;
+  const subtractiveRed = Math.round(255 * (1 - cyan / 100));
+  const subtractiveGreen = Math.round(255 * (1 - magenta / 100));
+  const subtractiveBlue = Math.round(255 * (1 - yellow / 100));
+
+  useEffect(() => {
+    const rasterCanvas = rasterCanvasRef.current;
+    const vectorCanvas = vectorCanvasRef.current;
+    if (!rasterCanvas || !vectorCanvas) return;
+    const draw = () => {
+      const raster = setupCanvas(rasterCanvas, 230);
+      const vector = setupCanvas(vectorCanvas, 230);
+      if (!raster || !vector) return;
+      const source = document.createElement('canvas');
+      source.width = 180;
+      source.height = 120;
+      const sourceContext = source.getContext('2d');
+      if (!sourceContext) return;
+      drawScene(sourceContext, source.width, source.height);
+      const cropWidth = source.width / zoom;
+      const cropHeight = source.height / zoom;
+      raster.context.imageSmoothingEnabled = zoom === 1;
+      raster.context.drawImage(source, (source.width - cropWidth) / 2, (source.height - cropHeight) / 2, cropWidth, cropHeight, 0, 0, raster.width, raster.height);
+      drawScene(vector.context, vector.width, vector.height, zoom);
+    };
+    draw();
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
+  }, [zoom]);
+
+  useEffect(() => {
+    const canvas = resolutionCanvasRef.current;
+    if (!canvas) return;
+    const draw = () => {
+      const output = setupCanvas(canvas, 260);
+      if (!output) return;
+      const source = document.createElement('canvas');
+      source.width = density;
+      source.height = Math.max(6, Math.round(density * 0.67));
+      const sourceContext = source.getContext('2d');
+      if (!sourceContext) return;
+      drawScene(sourceContext, source.width, source.height);
+      quantizeScene(sourceContext, source.width, source.height, gradationBits);
+      output.context.imageSmoothingEnabled = false;
+      output.context.drawImage(source, 0, 0, output.width, output.height);
+    };
+    draw();
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
+  }, [density, gradationBits]);
+
+  useEffect(() => {
+    const canvas = gradationCanvasRef.current;
+    if (!canvas) return;
+    const draw = () => {
+      const output = setupCanvas(canvas, 92);
+      if (!output) return;
+      for (let x = 0; x < output.width; x += 1) {
+        const ratio = x / Math.max(1, output.width - 1);
+        const value = Math.round(ratio * (gradations - 1)) / Math.max(1, gradations - 1) * 255;
+        output.context.fillStyle = 'rgb(' + value + ',' + value + ',' + value + ')';
+        output.context.fillRect(x, 0, 1, output.height);
+      }
+    };
+    draw();
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
+  }, [gradations]);
 
   return (
     <section className="learning-section" id="images">
       <div className="section-kicker"><span>02</span><p>画像のデジタル化 · 教科書 pp.58–59</p></div>
       <div className="section-title-row">
         <div><p className="step-label">点と色を比べる</p><h2>画像を拡大すると何が見える？</h2></div>
-        <p className="section-question">画像形式、光の三原色、解像度、階調を別々に動かして確かめよう。</p>
+        <p className="section-question">画像形式、光と色の三原色、解像度、階調を別々に動かして確かめよう。</p>
       </div>
 
       <div className="image-format-lab">
-        <div className="lab-heading"><div><p className="step-label">ZOOM</p><h3>ラスタ形式とベクタ形式</h3></div><label><span>拡大率 {zoom}倍</span><input type="range" min="1" max="8" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label></div>
-        <div className="format-compare">
-          <div><span>ラスタ形式</span><div className="raster-frame" style={{ width: `${128 + zoom * 12}px` }}>{rasterPattern.map((active, index) => <i key={index} className={active ? 'active' : ''} />)}</div><b>画素も一緒に大きくなる</b><small>写真向き · bmp / jpg / gif / png</small></div>
-          <div><span>ベクタ形式</span><div className="vector-frame" style={{ transform: `scale(${0.72 + zoom * 0.035})` }}><i /><b>V</b></div><b>倍率に合わせて描き直す</b><small>ロゴ・図形向き · svg / dxf</small></div>
+        <div className="lab-heading"><div><p className="step-label">ZOOM</p><h3>ラスタ形式とベクタ形式</h3></div><output className="zoom-output">{zoom}倍</output></div>
+        <div className="zoom-steps" aria-label="拡大率を選ぶ">{zoomLevels.map((value, index) => <button type="button" className={zoomIndex === index ? 'is-active' : ''} key={value} onClick={() => setZoomIndex(index)}>{value}×</button>)}</div>
+        <label className="zoom-slider"><span>拡大率</span><input type="range" min="0" max={zoomLevels.length - 1} value={zoomIndex} onChange={(event) => setZoomIndex(Number(event.target.value))} /></label>
+        <div className="format-compare format-canvas-compare">
+          <div><span>ラスタ形式</span><div className="format-canvas-frame"><canvas ref={rasterCanvasRef} aria-label={zoom + '倍に拡大したラスタ画像'} /></div><b>{zoom === 1 ? 'ふつうに見ると滑らか' : '画素の角がギザギザに見える'}</b><small>写真向き · bmp / jpg / gif / png</small></div>
+          <div><span>ベクタ形式</span><div className="format-canvas-frame"><canvas ref={vectorCanvasRef} aria-label={zoom + '倍に拡大して描き直したベクタ画像'} /></div><b>何倍でも輪郭を描き直して滑らか</b><small>ロゴ・図形向き · svg / dxf</small></div>
         </div>
+        <p className="zoom-note">外側の枠と見出しは固定したまま、同じ風景の中央だけを拡大しています。</p>
         <div className="print-callout"><span className="print-number"><small>プリント</small><b>11</b></span><strong>画素（ピクセル）</strong><em>ラスタ画像をつくる点</em></div>
       </div>
 
       <div className="rgb-lab">
         <div className="lab-heading"><div><p className="step-label">COLOR MIXER</p><h3>光の三原色を混ぜる</h3></div><span className="print-badge"><small>プリント</small><b>12・13</b></span></div>
         <div className="rgb-stage">
-          <div className="rgb-circles" aria-label="赤、緑、青の光を重ねる模式図"><i className="red" /><i className="green" /><i className="blue" /><strong style={{ color: `rgb(${red},${green},${blue})` }}>●</strong></div>
+          <div className="rgb-circles" aria-label="赤、緑、青の光を重ねる模式図"><i className="red" style={{ opacity: red / 255 }} /><i className="green" style={{ opacity: green / 255 }} /><i className="blue" style={{ opacity: blue / 255 }} /><strong style={{ background: 'rgb(' + red + ',' + green + ',' + blue + ')' }}>重なり</strong></div>
           <div className="rgb-controls">
             <label className="red"><span>R 赤 <output>{red}</output></span><input type="range" min="0" max="255" value={red} onChange={(event) => setRed(Number(event.target.value))} /></label>
             <label className="green"><span>G 緑 <output>{green}</output></span><input type="range" min="0" max="255" value={green} onChange={(event) => setGreen(Number(event.target.value))} /></label>
             <label className="blue"><span>B 青 <output>{blue}</output></span><input type="range" min="0" max="255" value={blue} onChange={(event) => setBlue(Number(event.target.value))} /></label>
-            <div className="mixed-color" style={{ background: `rgb(${red},${green},${blue})` }}><span>混ぜた光</span><code>rgb({red}, {green}, {blue})</code></div>
+            <div className="mixed-color" style={{ background: 'rgb(' + red + ',' + green + ',' + blue + ')' }}><span>混ぜた光</span><code>rgb({red}, {green}, {blue})</code></div>
           </div>
         </div>
-        <p className="data-tradeoff">光は混ぜるほど明るくなり、白へ近づきます。これが<strong>加法混色</strong>です。</p>
+        <p className="data-tradeoff">0にするとその光が消え、255に近づくほど明るくなります。光は混ぜるほど白へ近づく<strong>加法混色</strong>です。</p>
+
+        <div className="subtractive-lab">
+          <div className="lab-heading"><div><p className="step-label">INK MIXER</p><h3>色の三原色を混ぜる</h3></div><span className="mixing-type">減法混色</span></div>
+          <div className="rgb-stage">
+            <div className="cmy-circles" aria-label="シアン、マゼンタ、イエローの色材を重ねる模式図"><i className="cyan" style={{ opacity: cyan / 100 }} /><i className="magenta" style={{ opacity: magenta / 100 }} /><i className="yellow" style={{ opacity: yellow / 100 }} /><strong style={{ background: 'rgb(' + subtractiveRed + ',' + subtractiveGreen + ',' + subtractiveBlue + ')' }}>重なり</strong></div>
+            <div className="rgb-controls cmy-controls">
+              <label className="cyan"><span>C シアン <output>{cyan}%</output></span><input type="range" min="0" max="100" value={cyan} onChange={(event) => setCyan(Number(event.target.value))} /></label>
+              <label className="magenta"><span>M マゼンタ <output>{magenta}%</output></span><input type="range" min="0" max="100" value={magenta} onChange={(event) => setMagenta(Number(event.target.value))} /></label>
+              <label className="yellow"><span>Y イエロー <output>{yellow}%</output></span><input type="range" min="0" max="100" value={yellow} onChange={(event) => setYellow(Number(event.target.value))} /></label>
+              <div className="mixed-color" style={{ background: 'rgb(' + subtractiveRed + ',' + subtractiveGreen + ',' + subtractiveBlue + ')' }}><span>紙に重ねた色</span><code>CMY({cyan}, {magenta}, {yellow})</code></div>
+            </div>
+          </div>
+          <p className="data-tradeoff">インクは光を吸収するため、混ぜるほど暗くなります。印刷では締まった黒を表すKを加えてCMYKとします。</p>
+        </div>
       </div>
 
       <div className="resolution-lab">
-        <div className="lab-heading"><div><p className="step-label">PIXEL &amp; GRADATION</p><h3>細かさと色の段階を変える</h3></div><span className="print-badge"><small>プリント</small><b>14～17</b></span></div>
+        <div className="lab-heading"><div><p className="step-label">PIXEL &amp; GRADATION</p><h3>画素数と色の段階を変える</h3></div><span className="print-badge"><small>プリント</small><b>14～17</b></span></div>
         <div className="resolution-controls">
-          <label><span>一辺の画素数 <output>{density}画素</output></span><input type="range" min="4" max="16" value={density} onChange={(event) => setDensity(Number(event.target.value))} /></label>
-          <label><span>1色の量子化ビット数 <output>{gradationBits} bit</output></span><input type="range" min="1" max="8" value={gradationBits} onChange={(event) => setGradationBits(Number(event.target.value))} /></label>
+          <div className="range-card"><span>横の画素数 <output>{density}画素</output></span><input type="range" min="0" max={densityLevels.length - 1} value={densityIndex} onChange={(event) => setDensityIndex(Number(event.target.value))} /><div className="preset-row">{densityLevels.map((value, index) => <button type="button" className={densityIndex === index ? 'is-active' : ''} key={value} onClick={() => setDensityIndex(index)}>{value}</button>)}</div></div>
+          <div className="range-card"><span>1色の量子化ビット数 <output>{gradationBits} bit</output></span><input type="range" min="1" max="8" value={gradationBits} onChange={(event) => setGradationBits(Number(event.target.value))} /><div className="preset-row">{[1, 2, 4, 5, 8].map((value) => <button type="button" className={gradationBits === value ? 'is-active' : ''} key={value} onClick={() => setGradationBits(value)}>{value} bit</button>)}</div></div>
         </div>
-        <div className="resolution-stage">
-          <div><div className="pixel-art" style={{ gridTemplateColumns: `repeat(${density}, 1fr)` }}>{pixels.map((active, index) => <i key={index} className={active ? 'active' : ''} />)}</div><b>{density} × {density} ＝ {density * density}画素</b></div>
-          <div><div className="gradation-strip">{Array.from({ length: Math.min(gradations, 16) }, (_, index) => <i key={index} style={{ background: `rgb(${Math.round(index / (Math.min(gradations, 16) - 1 || 1) * 255)},${Math.round(index / (Math.min(gradations, 16) - 1 || 1) * 255)},${Math.round(index / (Math.min(gradations, 16) - 1 || 1) * 255)})` }} />)}</div><b>{gradationBits} bit ＝ {gradations}階調</b><small>RGB各8 bitなら24ビットフルカラー</small></div>
+        <div className="resolution-stage resolution-stage-rich">
+          <div><div className="resolution-canvas-frame"><canvas ref={resolutionCanvasRef} aria-label={density + '画素、1色' + gradationBits + 'ビットで表した風景'} /></div><b>{density} × {Math.round(density * 0.67)}画素の見え方</b><small>画素を減らすと輪郭が四角くなります</small></div>
+          <div><canvas ref={gradationCanvasRef} className="gradation-canvas" aria-label={gradationBits + 'ビット、' + gradations + '階調のグラデーション'} /><b>{gradationBits} bit ＝ {gradations}階調</b><small>{gradationBits >= 8 ? '256段階では境目がほぼ見えない滑らかなグラデーション' : '段階の境目を目で探してみよう'} · RGB各8 bitなら24ビットフルカラー</small></div>
         </div>
       </div>
     </section>
   );
 }
+
