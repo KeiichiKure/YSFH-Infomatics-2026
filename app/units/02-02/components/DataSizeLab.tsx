@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-function formatExact(value: number, maximumFractionDigits: number) {
-  return value.toLocaleString('ja-JP', { maximumFractionDigits });
+function formatApprox(value: number) {
+  return value.toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 function SizeConversions({ bytes }: { bytes: number }) {
@@ -17,12 +17,16 @@ function SizeConversions({ bytes }: { bytes: number }) {
     <div className="size-conversions">
       <div className="size-conversion textbook-conversion">
         <div><b>教科書の換算（1024倍）</b><small>1 MB ＝ 1024 KB ／ 1 KB ＝ 1024 B</small></div>
-        <p><span>{exactBytes.toLocaleString()} ÷ 1,024</span><strong>＝ {formatExact(binaryKB, 10)} KB <small>（KiB）</small></strong></p>
-        <p><span>{exactBytes.toLocaleString()} ÷ 1,048,576</span><strong>＝ {formatExact(binaryMB, 20)} MB <small>（MiB）</small></strong></p>
+        {binaryKB >= 1 && <p><span>{exactBytes.toLocaleString()} ÷ 1,024</span><strong>＝ 約 {formatApprox(binaryKB)} KB <small>（KiB）</small></strong></p>}
+        {binaryMB >= 1 && <p><span>{exactBytes.toLocaleString()} ÷ 1,048,576</span><strong>＝ 約 {formatApprox(binaryMB)} MB <small>（MiB）</small></strong></p>}
       </div>
       <div className="size-conversion decimal-conversion">
         <div><b>1000倍で換算する場合</b><small>1 MB ＝ 1000 kB ／ 1 kB ＝ 1000 B</small></div>
-        <p><strong>{formatExact(decimalKB, 3)} kB</strong><span>／</span><strong>{formatExact(decimalMB, 6)} MB</strong></p>
+        {(decimalKB >= 1 || decimalMB >= 1) && <p>
+          {decimalKB >= 1 && <strong>約 {formatApprox(decimalKB)} kB</strong>}
+          {decimalKB >= 1 && decimalMB >= 1 && <span>／</span>}
+          {decimalMB >= 1 && <strong>約 {formatApprox(decimalMB)} MB</strong>}
+        </p>}
       </div>
     </div>
   );
