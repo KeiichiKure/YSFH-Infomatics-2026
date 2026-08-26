@@ -64,17 +64,35 @@ function SignalCanvas({ samples, levels, noise, showAnalog, showDigital }: Signa
 
       const analogValueAt = (x: number) => 0.5 + Math.sin(x * Math.PI * 2) * 0.26 + Math.sin(x * Math.PI * 5) * 0.08;
       const measuredValueAt = (x: number) => {
-        const disturbance = Math.sin(x * 113) * (noise / 100);
+        const noiseStrength = noise / 100;
+        const disturbance = (
+          Math.sin(x * 113) * 0.65
+          + Math.sin(x * 197 + 0.8) * 0.35
+        ) * noiseStrength;
         return Math.max(0.04, Math.min(0.96, analogValueAt(x) + disturbance));
       };
 
       if (showAnalog) {
+        if (noise > 0) {
+          ctx.strokeStyle = 'rgba(88, 106, 125, .48)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          for (let px = 0; px <= graphWidth; px += 2) {
+            const x = px / graphWidth;
+            const y = pad.top + (1 - analogValueAt(x)) * graphHeight;
+            if (px === 0) ctx.moveTo(pad.left + px, y); else ctx.lineTo(pad.left + px, y);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
         ctx.strokeStyle = '#e88466';
         ctx.lineWidth = 3;
         ctx.beginPath();
         for (let px = 0; px <= graphWidth; px += 2) {
           const x = px / graphWidth;
-          const y = pad.top + (1 - analogValueAt(x)) * graphHeight;
+          const y = pad.top + (1 - measuredValueAt(x)) * graphHeight;
           if (px === 0) ctx.moveTo(pad.left + px, y); else ctx.lineTo(pad.left + px, y);
         }
         ctx.stroke();
@@ -113,7 +131,7 @@ function SignalCanvas({ samples, levels, noise, showAnalog, showDigital }: Signa
     return () => observer.disconnect();
   }, [samples, levels, noise, showAnalog, showDigital]);
 
-  return <canvas ref={canvasRef} className="signal-canvas" aria-label="測定回と段階値を示したアナログ波形・デジタル値の比較" />;
+  return <canvas ref={canvasRef} className="signal-canvas" aria-label={`測定回と段階値を示したアナログ波形・デジタル値の比較。ノイズ${noise}%`} />;
 }
 
 export function SignalLab() {
@@ -151,7 +169,7 @@ export function SignalLab() {
           <label className="control-panel">
             <span><b>小さなノイズ</b><output>{noise === 0 ? 'なし' : `${noise}%`}</output></span>
             <input aria-label="測定時に加える小さなノイズ" type="range" min="0" max="2" step="0.5" value={noise} onChange={(event) => setNoise(Number(event.target.value))} />
-            <small>最大2%。境界付近では段階値が変わることもあります</small>
+            <small>{noise === 0 ? '動かすと、オレンジ色の波そのものにノイズが加わります' : '点線はノイズなしの基準。境界付近では段階値が変わることもあります'}</small>
           </label>
         </div>
         <div className="discovery-box">
@@ -205,4 +223,5 @@ export function MediaLab() {
     </section>
   );
 }
+
 
