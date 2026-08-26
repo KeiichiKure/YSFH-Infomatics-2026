@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import understoodMascot from '@/public/mascots/student-understood.png';
+import celebratingMascot from '@/public/mascots/student-celebrating.png';
 import thinkingMascot from '@/public/mascots/student-thinking.png';
 
 const terms = [
@@ -49,7 +49,7 @@ export function CompressionCheckpoint() {
       <div className={'final-challenge digit-final compression-final ' + (completed ? 'is-complete' : '')}>
         <div className="final-mascot-stage">
           {completed && <div className="mission-confetti" aria-hidden="true">{Array.from({ length: 14 }, (_, index) => <i key={index} />)}</div>}
-          <Image src={completed ? understoodMascot : thinkingMascot} alt={completed ? '笑顔で喜ぶ生徒のマスコット' : '答えを考えている生徒のマスコット'} />
+          <Image src={completed ? celebratingMascot : thinkingMascot} alt={completed ? '笑顔で両手を上げて喜ぶ同じ男子生徒のマスコット' : '答えを考えている男子生徒のマスコット'} />
           {completed && <strong className="mascot-cheer">やったね！</strong>}
         </div>
         <div><p className="step-label">今日のミッション</p><h3>{completed ? '達成！ 圧縮方法を目的から選べました。' : '「小ささ」と「元へ戻せるか」を一緒に考えよう。'}</h3><p>{completed ? '圧縮率の数値が小さいほど強く圧縮されることも、プリントへ書き戻して確認しよう。' : '3問すべてに答えると、考え中のマスコットが笑顔になってお祝いします。'}</p></div>

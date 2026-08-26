@@ -15,14 +15,14 @@ function runLengthEncode(input: string) {
   return groups;
 }
 
-function lzwSteps(input: string) {
-  const chars = Array.from(input);
-  const alphabet = Array.from(new Set(chars));
-  const dictionary = new Map(alphabet.map((char, index) => [char, index]));
+function lzwEncodeBytes(input: string) {
+  const bytes = Array.from(new TextEncoder().encode(input));
+  const dictionary = new Map(Array.from({ length: 256 }, (_, code) => [String.fromCharCode(code), code]));
   const additions: { code: number; text: string }[] = [];
   const output: number[] = [];
-  let phrase = chars.shift() ?? '';
-  for (const char of chars) {
+  let phrase = bytes.length ? String.fromCharCode(bytes[0]) : '';
+  for (const byte of bytes.slice(1)) {
+    const char = String.fromCharCode(byte);
     const joined = phrase + char;
     if (dictionary.has(joined)) phrase = joined;
     else {
@@ -34,49 +34,56 @@ function lzwSteps(input: string) {
     }
   }
   if (phrase) output.push(dictionary.get(phrase) ?? 0);
-  return { alphabet, additions, output, dictionarySize: dictionary.size };
+  const codeBits = Math.max(9, Math.ceil(Math.log2(Math.max(2, dictionary.size))));
+  return { additions, output, dictionarySize: dictionary.size, originalBytes: bytes.length, codeBits, compressedBits: output.length * codeBits };
 }
 
-const lzText = Array.from('ABCXYZ123'.repeat(5));
+const lzText = Array.from('すもももももももものうち');
 const lzParts = [
-  { start: 0, length: 9, sourceStart: -1, token: '最初の「ABCXYZ123」は、そのまま記録' },
-  { start: 9, length: 9, sourceStart: 0, token: '9文字前と同じ9文字 → [9, 9]' },
-  { start: 18, length: 9, sourceStart: 9, token: '9文字前と同じ9文字 → [9, 9]' },
-  { start: 27, length: 9, sourceStart: 18, token: '9文字前と同じ9文字 → [9, 9]' },
-  { start: 36, length: 9, sourceStart: 27, token: '9文字前と同じ9文字 → [9, 9]' },
+  { start: 0, length: 1, sourceStart: -1, token: '最初の「す」は、そのまま記録', result: 'す' },
+  { start: 1, length: 1, sourceStart: -1, token: '初めて出る「も」は、そのまま記録', result: 'も' },
+  { start: 2, length: 7, sourceStart: 1, token: '1文字前から続く7文字を参照', result: '[1, 7]' },
+  { start: 9, length: 1, sourceStart: -1, token: '初めて出る「の」は、そのまま記録', result: 'の' },
+  { start: 10, length: 2, sourceStart: -1, token: '残りの「う」「ち」を、そのまま記録', result: 'う・ち' },
 ];
-const lzOutput = 'ABCXYZ123 [9,9] [9,9] [9,9] [9,9]';
-const lzOriginalBits = lzText.length * 8;
-const lzCompressedBits = 9 * 8 + 4 * 16;
+const lzOutput = 'す・も・[1,7]・の・う・ち';
 
+const lzwDemo = 'BANANA_BANDANA';
+const lzwLongPhrase = '情報を送る。情報を守る。';
+
+const huffmanSource = 'なまむぎなまごめなまたまご';
 const huffmanRows = [
-  ['キ', 16, '0'], ['マ', 8, '10'], ['ガ', 4, '110'], ['ミ', 2, '1110'],
-  ['ア', 1, '11110'], ['カ', 1, '111110'], ['オ', 1, '111111'],
+  ['ま', 4, '11'], ['な', 3, '01'], ['ご', 2, '00'], ['む', 1, '1010'],
+  ['ぎ', 1, '1000'], ['め', 1, '1011'], ['た', 1, '1001'],
 ] as const;
-const huffmanSource = huffmanRows.map(([char, count]) => char.repeat(count)).join('');
+const huffmanEncoded = Array.from(huffmanSource).map((char) => huffmanRows.find(([symbol]) => symbol === char)?.[2] ?? '').join('');
+const huffmanBits = huffmanEncoded.length;
+const huffmanFixedBits = huffmanSource.length * 3;
+
+function visibleByteText(value: string) {
+  return Array.from(value).map((char) => {
+    const code = char.charCodeAt(0);
+    return code >= 32 && code <= 126 ? char : `0x${code.toString(16).padStart(2, '0')}`;
+  }).join('');
+}
 
 export function LosslessLab() {
   const [method, setMethod] = useState<Method>('rle');
   const [rleInput, setRleInput] = useState('すもももももももものうち');
-  const [lzStep, setLzStep] = useState(2);
-  const [lzwInput, setLzwInput] = useState('ABCABCABCABCABCABCABCABCABCABCABCABC');
+  const [lzStep, setLzStep] = useState(0);
+  const [lzwRepeats, setLzwRepeats] = useState(12);
   const [frame, setFrame] = useState(1);
   const rleGroups = useMemo(() => runLengthEncode(rleInput), [rleInput]);
   const rleOutput = rleGroups.map(({ char, count }) => count > 1 ? `${char}${count}` : char).join('');
-  const lzw = useMemo(() => lzwSteps(lzwInput), [lzwInput]);
-  const lzwCodeBits = Math.max(1, Math.ceil(Math.log2(Math.max(2, lzw.dictionarySize))));
-  const lzwOriginalBits = Array.from(lzwInput).length * 8;
-  const lzwCompressedBits = lzw.output.length * lzwCodeBits;
-  const huffmanBits = huffmanRows.reduce((sum, [, count, code]) => sum + count * code.length, 0);
-  const huffmanFixedBits = huffmanSource.length * 3;
-  const huffmanEncoded = Array.from(huffmanSource).map((char) => huffmanRows.find(([symbol]) => symbol === char)?.[2] ?? '').join('');
+  const lzwShort = useMemo(() => lzwEncodeBytes(lzwDemo), []);
+  const lzwLong = useMemo(() => lzwEncodeBytes(lzwLongPhrase.repeat(lzwRepeats)), [lzwRepeats]);
 
   return (
     <section className="learning-section" id="lossless">
       <div className="section-kicker"><span>03</span><p>可逆圧縮の考え方 · 教科書 p.64</p></div>
       <div className="section-title-row">
         <div><p className="step-label">規則を見つける</p><h2>同じ情報を、どう短く記録する？</h2></div>
-        <p className="section-question">4つの方法を切り替え、何を番号や短い符号へ置き換えるか比べよう。</p>
+        <p className="section-question">まず「何を短くするか」をつかみ、詳しく知りたいときだけ手順や付加情報を開こう。</p>
       </div>
 
       <div className="lossless-workbench">
@@ -93,36 +100,54 @@ export function LosslessLab() {
         </div>}
 
         {method === 'lz' && <div className="method-panel" role="tabpanel">
-          <div className="method-copy"><span>以前に現れた位置と長さを記録</span><h4>同じ並びを、過去への参照へ</h4><p>前から順に一致する文字列を探し、見つかった場所までの距離と長さで表します。</p></div>
-          <div className="lz-stage">
-            <div className="lz-string">{lzText.map((char, index) => { const current = lzParts[lzStep]; const active = index >= current.start && index < current.start + current.length; const source = current.sourceStart >= 0 && index >= current.sourceStart && index < current.sourceStart + current.length; return <i className={active ? 'active' : source ? 'source' : ''} key={index}>{char}</i>; })}</div>
-            <div className="lz-readout"><span>手順 {lzStep + 1} / {lzParts.length}</span><strong>{lzParts[lzStep].token}</strong></div>
-            <input aria-label="LZ圧縮の手順" type="range" min="0" max={lzParts.length - 1} value={lzStep} onChange={(event) => setLzStep(Number(event.target.value))} />
-            <div className="method-result"><span>この手順で記録する値</span><code>{lzStep === 0 ? 'ABCXYZ123' : '[9, 9]'}</code><small>青は参照される過去、オレンジは位置と長さへ置き換える部分</small></div>
-            <div className="compression-size-result"><span>最終的な圧縮結果</span><code>{lzOutput}</code><div><b>元：{lzText.length}文字 × 8 bit ＝ {lzOriginalBits} bit</b><i>→</i><strong>圧縮後：{lzCompressedBits} bit</strong></div><small>簡略モデル：1文字8 bit、[距離, 長さ]を各8 bitと仮定。短い文字列では参照情報の分だけ増える場合もありますが、同じ並びが長く繰り返されるほど効果が大きくなります。</small></div>
+          <div className="method-copy"><span>前に出た並びを「距離と長さ」へ</span><h4>「すもも…」の繰り返しを参照する</h4><p>同じ並びをもう一度書かず、「何文字前から、何文字分か」で表します。伸張側は前に戻って読み写すので、完全に元へ戻せます。</p></div>
+          <div className="method-story">
+            <div><span>元の言葉</span><strong>すもももももももものうち</strong><small>12文字・UTF-8では36 byte</small></div><i aria-hidden="true">→</i><div><span>LZの考え方</span><strong>{lzOutput}</strong><small>続く7個の「も」を参照へ置換</small></div>
           </div>
+          <div className="compression-size-result is-smaller"><span>簡略モデルで比べる</span><div><b>元：36 byte</b><i>→</i><strong>圧縮後：約19 byte</strong></div><small>日本語1文字をUTF-8の3 byte、参照［距離, 長さ］を4 byteとして計算。実際のファイルには方式や区切りを示す情報も必要です。</small></div>
+          <div className="real-compression-example"><span>長い文章なら効果がはっきり</span><p>「情報を小さく保存し、必要なときに元へ戻します。」を40回</p><div><b>2,760 byte</b><i>→</i><strong>89 byte</strong></div><small>ZIPでも使われるDEFLATE（LZ＋ハフマン）の圧縮本体を実測。ZIPのヘッダーは別に加わります。</small></div>
+          <details className="advanced-details">
+            <summary>もっと詳しく：5つの手順を見る</summary>
+            <div className="lz-stage">
+              <div className="lz-string">{lzText.map((char, index) => { const current = lzParts[lzStep]; const active = index >= current.start && index < current.start + current.length; const source = current.sourceStart >= 0 && index >= current.sourceStart && index < current.sourceStart + current.length; return <i className={active ? 'active' : source ? 'source' : ''} key={index}>{char}</i>; })}</div>
+              <div className="lz-readout"><span>手順 {lzStep + 1} / {lzParts.length}</span><strong>{lzParts[lzStep].token}</strong></div>
+              <input aria-label="LZ圧縮の手順" type="range" min="0" max={lzParts.length - 1} value={lzStep} onChange={(event) => setLzStep(Number(event.target.value))} />
+              <div className="method-result"><span>この手順で記録する値</span><code>{lzParts[lzStep].result}</code><small>青は参照元、オレンジは現在処理している部分です。手順1から順に動かしてみよう。</small></div>
+            </div>
+          </details>
         </div>}
 
         {method === 'lzw' && <div className="method-panel" role="tabpanel">
-          <div className="method-copy"><span>出現した文字列を辞書へ登録</span><h4>繰り返しを、辞書番号へ</h4><p>LZを改良し、見つけた文字列へ番号を付けます。同じ並びが再登場すると番号だけで記録できます。</p></div>
-          <label className="text-input"><span>辞書を作る文字列</span><input value={lzwInput} maxLength={60} onChange={(event) => setLzwInput(event.target.value)} /></label>
-          <div className="lzw-layout">
-            <div><span>最初の文字</span><p>{lzw.alphabet.map((char, index) => <i key={char}><b>{index}</b>{char}</i>)}</p></div>
-            <div><span>新しく登録</span><p>{lzw.additions.slice(0, 8).map((item) => <i key={item.code}><b>{item.code}</b>{item.text}</i>)}</p></div>
-          </div>
-          <div className="method-result"><span>記録する辞書番号</span><code>{lzw.output.join(' · ') || '—'}</code><small>長い文字列が辞書へ増えるほど、繰り返しを短い番号で表せます。</small></div>
-          <div className={'compression-size-result ' + (lzwCompressedBits < lzwOriginalBits ? 'is-smaller' : 'is-larger')}><span>同じ尺度でデータ量を比較</span><div><b>元：{Array.from(lzwInput).length}文字 × 8 bit ＝ {lzwOriginalBits} bit</b><i>→</i><strong>辞書番号 {lzw.output.length}個 × {lzwCodeBits} bit ＝ {lzwCompressedBits} bit</strong></div><small>初期の文字辞書を共有する簡略モデルです。{lzwCompressedBits < lzwOriginalBits ? `この例では ${lzwOriginalBits - lzwCompressedBits} bit減りました。` : '短い・繰り返しの少ない入力では、圧縮後の方が大きくなることがあります。'}</small></div>
+          <div className="method-copy"><span>よく出る並びへ辞書番号を付ける</span><h4>辞書は送らず、両側で同じものを育てる</h4><p>送信側と受信側は、最初に同じ「0〜255の1 byte辞書」を持ちます。受信側もコードを読む順に同じ項目を追加できるため、新しく作った辞書表を丸ごと送る必要はありません。</p></div>
+          <label className="repeat-control"><span>例文を繰り返す回数 <output>{lzwRepeats}回</output></span><input type="range" min="1" max="30" value={lzwRepeats} onChange={(event) => setLzwRepeats(Number(event.target.value))} /><small>「{lzwLongPhrase}」× {lzwRepeats}</small></label>
+          <div className="compression-size-result is-smaller"><span>コード列として送る量</span><div><b>元：{lzwLong.originalBytes} byte ＝ {lzwLong.originalBytes * 8} bit</b><i>→</i><strong>{lzwLong.output.length}コード × {lzwLong.codeBits} bit ＝ {lzwLong.compressedBits} bit</strong></div><small>この範囲ではコード1個を9 bitで表す簡略モデルです。実際にはコード幅を9→10→11 bitと増やす規則や、辞書をリセットする規則を形式側で共有します。</small></div>
+          <div className="dictionary-answer"><span>「辞書を登録するビット数」はどこへ？</span><ol><li><b>初期辞書：</b>規格で決まっているので送らない</li><li><b>追加辞書：</b>受信側もコードから同じ順に再現するので送らない</li><li><b>送るもの：</b>コード列と、コード幅・リセットなどを示すヘッダー</li></ol><p>独自の初期辞書を使う方式なら、その辞書もヘッダーに保存する必要があります。短いデータではヘッダーの分だけ圧縮後が大きくなることがあります。</p></div>
+          <details className="advanced-details">
+            <summary>もっと詳しく：短い英字例で辞書の増え方を見る</summary>
+            <div className="advanced-body">
+              <p><code>{lzwDemo}</code> をbyte単位で読みます。最初の辞書0〜255は共有済みです。</p>
+              <div className="lzw-layout"><div><span>新しく作る辞書（先頭）</span><p>{lzwShort.additions.slice(0, 8).map((item) => <i key={item.code}><b>{item.code}</b>{visibleByteText(item.text)}</i>)}</p></div><div><span>実際に送るコード</span><p className="code-stream">{lzwShort.output.join(' · ')}</p></div></div>
+              <div className="method-result"><span>短い例の圧縮本体</span><code>元112 bit → コード列90 bit</code><small>ここにファイルヘッダーが加わるため、14文字だけをファイル化すると全体では増える可能性があります。</small></div>
+            </div>
+          </details>
         </div>}
 
         {method === 'huffman' && <div className="method-panel" role="tabpanel">
-          <div className="method-copy"><span>出現頻度が高いデータほど短い符号</span><h4>よく出る「キ」は1ビット</h4><p>どの符号も別の符号の先頭にならないように割り当てるため、区切り記号なしでデコードできます。</p></div>
-          <div className="huffman-source"><span>圧縮前の文字列（33文字）</span><code>{huffmanSource}</code><small>キ16回・マ8回・ガ4回・ミ2回・ア／カ／オ各1回</small></div>
+          <div className="method-copy"><span>よく出る文字ほど短い符号</span><h4>意味のある言葉で、符号の長さを変える</h4><p>短い早口言葉「なまむぎなまごめなまたまご」を使います。「ま」「な」はよく出るため2 bit、1回だけの文字は4 bitにします。</p></div>
+          <div className="huffman-source"><span>圧縮前の文字列（13文字）</span><code>{huffmanSource}</code><small>7種類を同じ長さで表すなら、1文字3 bit必要です。</small></div>
           <div className="huffman-table" aria-label="文字の出現回数とハフマン符号">
-            {huffmanRows.map(([char, count, code]) => <div key={char}><b>{char}</b><span><i style={{ width: `${count / 16 * 100}%` }} />{count}回</span><code>{code}</code></div>)}
+            {huffmanRows.map(([char, count, code]) => <div key={char}><b>{char}</b><span><i style={{ width: `${count / 4 * 100}%` }} />{count}回</span><code>{code}</code></div>)}
           </div>
-          <div className="huffman-encoded"><span>圧縮後のビット列</span><code>{huffmanEncoded}</code></div>
-          <div className="huffman-summary"><div><span>7種類を固定長3 bitで表す</span><strong>33文字 × 3 ＝ {huffmanFixedBits} bit</strong></div><i aria-hidden="true">→</i><div><span>出現頻度に応じたハフマン符号</span><strong>{huffmanBits} bit</strong></div></div>
-          <p className="data-tradeoff">この例では {huffmanFixedBits - huffmanBits} bit減ります。同じ出現回数があると符号の形は複数通りありますが、よく出る文字を短い符号にする考え方は同じです。</p>
+          <div className="huffman-encoded"><span>圧縮本体のビット列</span><code>{huffmanEncoded}</code></div>
+          <div className="huffman-summary"><div><span>固定長の符号</span><strong>13文字 × 3 ＝ {huffmanFixedBits} bit</strong></div><i aria-hidden="true">→</i><div><span>ハフマン符号の本体</span><strong>{huffmanBits} bit</strong></div></div>
+          <div className="real-compression-example"><span>符号表も含めた長文モデル</span><p>同じ早口言葉を40回（UTF-8で1,560 byte）</p><div><b>1,560 byte</b><i>→</i><strong>約198 byte</strong></div><small>圧縮本体170 byte＋正規ハフマン符号表の簡略見積り28 byte。実際には形式固有のヘッダーも加わります。</small></div>
+          <details className="advanced-details">
+            <summary>もっと詳しく：木や0・1の情報はどう保存する？</summary>
+            <div className="advanced-body huffman-answer">
+              <ol><li><b>頻度の小さい2つを結ぶ</b><span>これを1本の木になるまで繰り返します。</span></li><li><b>左を0、右を1と決める</b><span>根から文字までの道が符号になります。</span></li><li><b>符号表をヘッダーへ保存</b><span>木そのもの、または各文字の「符号の長さ」を保存します。</span></li><li><b>本体のビット列を続ける</b><span>受信側はヘッダーから同じ木を復元してデコードします。</span></li></ol>
+              <p><b>実用形式でよく使う正規ハフマン符号：</b>文字と符号長だけを保存すれば、0・1の並びを規則どおりに再現できます。固定の符号表を使う方式なら表自体を送らない場合もあります。したがって、実際の圧縮率には符号表やヘッダーの量も必ず含めて考えます。</p>
+            </div>
+          </details>
         </div>}
       </div>
 

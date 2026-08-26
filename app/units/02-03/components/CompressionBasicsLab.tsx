@@ -55,23 +55,17 @@ export function CompressionBasicsLab() {
         </div>
 
         <div className="compression-rate-lab">
-          <div>
+          <div className="rate-heading">
             <p className="step-label">COMPRESSION RATE</p>
             <h3>圧縮率を計算する</h3>
-            <div className="rate-formula" aria-label="圧縮率の公式">
-              <span>圧縮率（%）＝</span>
-              <span className="rate-fraction"><b>圧縮後のデータ量</b><b>圧縮前のデータ量</b></span>
-              <span>× 100</span>
-            </div>
           </div>
-          <div className="rate-controls">
-            <label><span>圧縮前 <output>{originalSize} KB</output></span><input type="range" min="20" max="200" step="10" value={originalSize} onChange={(event) => { const value = Number(event.target.value); setOriginalSize(value); setCompressedSize((current) => Math.min(current, value)); }} /></label>
-            <label><span>圧縮後 <output>{compressedSize} KB</output></span><input type="range" min="10" max="200" step="10" value={compressedSize} onChange={(event) => setCompressedSize(Math.min(Number(event.target.value), originalSize))} /><small>圧縮前より右には動きません</small></label>
+          <div className="rate-formula" aria-label="圧縮率の公式">
+            <span>圧縮率（%）＝</span><b>圧縮後のデータ量</b><span>÷</span><b>圧縮前のデータ量</b><span>× 100</span>
           </div>
           <div className="rate-bars" aria-label={`同じ尺度で比較。圧縮前${originalSize}キロバイト、圧縮後${compressedSize}キロバイト`}>
-            <div><span>圧縮前</span><i><b style={{ width: `${originalSize / 2}%` }} /></i><output>{originalSize} KB</output></div>
-            <div><span>圧縮後</span><i><b style={{ width: `${compressedSize / 2}%` }} /></i><output>{compressedSize} KB</output></div>
-            <small>2本とも 0〜200 KB の同じ尺度です。棒が半分なら、圧縮率も50%です。</small>
+            <label><span>圧縮前</span><input className="before" type="range" min="20" max="200" step="10" value={originalSize} onChange={(event) => { const value = Number(event.target.value); setOriginalSize(value); setCompressedSize((current) => Math.min(current, value)); }} /><output>{originalSize} KB</output></label>
+            <label><span>圧縮後</span><input className="after" type="range" min="10" max="200" step="10" value={compressedSize} onChange={(event) => setCompressedSize(Math.min(Number(event.target.value), originalSize))} /><output>{compressedSize} KB</output></label>
+            <small>2本とも0〜200 KBの同じ尺度で、どちらも動かせます。圧縮後は圧縮前より右へ進みません。位置が半分なら圧縮率は50%です。</small>
           </div>
           <div className="rate-answer">
             <span className="rate-working">{compressedSize} ÷ {originalSize} × 100 ＝ {rate}</span><strong>圧縮率 {rate}%</strong><small>{saved} KB小さくなった。圧縮率の数値が小さいほど、強く圧縮されています。</small>
