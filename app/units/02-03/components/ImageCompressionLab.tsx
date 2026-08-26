@@ -112,8 +112,15 @@ export function ImageCompressionLab() {
       <div className="image-compression-lab">
         <div className="lab-heading"><div><p className="step-label">IMAGE FORMAT LAB</p><h3>BMP・GIF・JPEG・PNGを比較</h3></div><span className="print-badge"><small>プリント</small><b>14〜18</b></span></div>
         <div className="image-lab-toolbar">
-          <div aria-label="画像の種類"><button type="button" className={scene === 'illustration' ? 'is-active' : ''} onClick={() => setScene('illustration')}>色数の少ない図</button><button type="button" className={scene === 'photo' ? 'is-active' : ''} onClick={() => setScene('photo')}>写真・グラデーション</button></div>
-          <div aria-label="画像形式">{(['BMP', 'GIF', 'JPEG', 'PNG'] as ImageFormat[]).map((item) => <button type="button" className={format === item ? 'is-active' : ''} key={item} onClick={() => setFormat(item)}>{item}</button>)}</div>
+          <div aria-label="画像の種類"><span>1　画像を選ぶ</span><div><button type="button" className={scene === 'illustration' ? 'is-active' : ''} onClick={() => setScene('illustration')}>色数の少ない図</button><button type="button" className={scene === 'photo' ? 'is-active' : ''} onClick={() => setScene('photo')}>写真・グラデーション</button></div></div>
+          <div aria-label="画像形式"><span>2　形式を選ぶ</span><div>{(['BMP', 'GIF', 'JPEG', 'PNG'] as ImageFormat[]).map((item) => <button type="button" className={format === item ? 'is-active' : ''} key={item} onClick={() => setFormat(item)}>{item}</button>)}</div></div>
+        </div>
+        <div className="image-setting-area">
+          <span className="image-setting-step">3　品質・色数を選ぶ</span>
+          {format === 'JPEG' && <label className="image-quality-control"><span>JPEG品質 <output>{quality}%</output></span><input type="range" min="5" max="95" value={quality} onChange={(event) => setQuality(Number(event.target.value))} /><small>下げると小さくなりますが、境界付近ににじみやブロック状の変化が出ます。</small></label>}
+          {format === 'GIF' && <label className="image-quality-control"><span>使う色数 <output>{palette}色</output></span><input type="range" min="0" max="2" value={[16, 64, 256].indexOf(palette)} onChange={(event) => setPalette([16, 64, 256][Number(event.target.value)])} /><small>GIFの圧縮自体は可逆です。ただし元画像から色数を減らす操作では、選ばれなかった色は戻りません。</small></label>}
+          {format === 'PNG' && <div className="image-quality-control is-static"><b>指定する項目はありません</b><span>PNGは可逆圧縮なので、保存後も画素の色を元どおりに戻せます。</span></div>}
+          {format === 'BMP' && <div className="image-quality-control is-static"><b>指定する項目はありません</b><span>BMPはこの教材では非圧縮として扱うため、圧縮品質を選びません。</span></div>}
         </div>
         <div className="image-format-stage">
           <div className="image-canvas-frame"><canvas ref={canvasRef} aria-label={`${scene === 'illustration' ? '色数の少ない図' : '写真風のグラデーション'}を${format}形式の特徴に合わせて表示`} /></div>
@@ -123,8 +130,6 @@ export function ImageCompressionLab() {
             <div><small>同じ元画像から作った比較値</small><strong>{formatBytes(bytes)}</strong><em>{format === 'BMP' ? '非圧縮の計算値' : format === 'GIF' ? '色数と圧縮をモデル化した目安' : 'ブラウザで生成した画像の値'}</em></div>
           </div>
         </div>
-        {format === 'JPEG' && <label className="image-quality-control"><span>JPEG品質 <output>{quality}%</output></span><input type="range" min="5" max="95" value={quality} onChange={(event) => setQuality(Number(event.target.value))} /><small>下げると小さくなりますが、境界付近ににじみやブロック状の変化が出ます。</small></label>}
-        {format === 'GIF' && <label className="image-quality-control"><span>使う色数 <output>{palette}色</output></span><input type="range" min="0" max="2" value={[16, 64, 256].indexOf(palette)} onChange={(event) => setPalette([16, 64, 256][Number(event.target.value)])} /><small>色数を減らすと、グラデーションに帯状の段差が現れます。</small></label>}
         <div className="format-observation" role="status">
           {scene === 'illustration' && format === 'GIF' && <p><b>相性がよい：</b>少ない色と明確な境界を保ちやすい組合せです。</p>}
           {scene === 'photo' && format === 'GIF' && <p><b>段差を観察：</b>使える色が限られるため、徐々に変化する色が帯状になります。</p>}

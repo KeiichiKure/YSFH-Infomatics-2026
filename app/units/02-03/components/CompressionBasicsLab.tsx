@@ -3,6 +3,8 @@
 import { useState } from 'react';
 
 const originalBlocks = ['A', 'A', 'A', 'B', 'B', 'C', 'C', 'C', 'C', 'D', 'D', 'E'];
+const lossyOriginalBlocks = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3', 'D1', 'D2', 'D3'];
+const lossyExpandedBlocks = ['A2', 'A2', 'A2', 'B2', 'B2', 'B2', 'C2', 'C2', 'C2', 'D2', 'D2', 'D2'];
 
 export function CompressionBasicsLab() {
   const [mode, setMode] = useState<'lossless' | 'lossy'>('lossless');
@@ -10,6 +12,7 @@ export function CompressionBasicsLab() {
   const [compressedSize, setCompressedSize] = useState(60);
   const rate = Math.round((compressedSize / Math.max(1, originalSize)) * 1000) / 10;
   const saved = Math.max(0, originalSize - compressedSize);
+  const displayOriginal = mode === 'lossless' ? originalBlocks : lossyOriginalBlocks;
 
   return (
     <section className="learning-section" id="basics">
@@ -32,41 +35,51 @@ export function CompressionBasicsLab() {
         <div className="compression-flow">
           <div className="data-canister">
             <span>元のデータ</span>
-            <div className="data-blocks">{originalBlocks.map((value, index) => <i key={index}>{value}</i>)}</div>
-            <small>同じ内容を含む12個の記録</small>
+            <div className="data-blocks">{displayOriginal.map((value, index) => <i key={index}>{value}</i>)}</div>
+            <small>{mode === 'lossless' ? '同じ内容を含む12個の記録' : 'A〜Dのグループに、少しずつ違う細部がある'}</small>
           </div>
           <div className="compression-arrow"><b>圧縮</b><i aria-hidden="true">→</i><small>{mode === 'lossless' ? '同じ内容をまとめる' : 'まとめて、一部を省く'}</small></div>
           <div className={'data-canister compressed ' + mode}>
             <span>圧縮後</span>
             <div className="data-blocks">
-              {(mode === 'lossless' ? ['3A', '2B', '4C', '2D', 'E'] : ['A', 'B', 'C', 'D']).map((value) => <i key={value}>{value}</i>)}
+              {(mode === 'lossless' ? ['3A', '2B', '4C', '2D', 'E'] : ['A2×3', 'B2×3', 'C2×3', 'D2×3']).map((value) => <i key={value}>{value}</i>)}
             </div>
-            <small>{mode === 'lossless' ? '回数と内容を記録' : '重要度の低い細部を削除'}</small>
+            <small>{mode === 'lossless' ? '回数と内容を記録' : '近い値を代表値へまとめ、個々の細部を省く'}</small>
           </div>
         </div>
 
         <div className={'expand-result ' + mode} role="status">
-          <span>{mode === 'lossless' ? '伸張すると完全に戻る' : '伸張しても完全には戻らない'}</span>
-          <div>{originalBlocks.map((value, index) => <i className={mode === 'lossy' && [2, 6, 10].includes(index) ? 'is-lost' : ''} key={index}>{mode === 'lossy' && [2, 6, 10].includes(index) ? '?' : value}</i>)}</div>
-          <p>{mode === 'lossless' ? '文書やプログラムなど、1ビットも変わってはいけないデータに向きます。' : '画像や音声など、多少の変化よりも小ささを優先できるデータに使われます。'}</p>
+          <span>{mode === 'lossless' ? '伸張すると完全に戻る' : '伸張すると、元に近い状態まで戻る'}</span>
+          <div>{(mode === 'lossless' ? originalBlocks : lossyExpandedBlocks).map((value, index) => <i className={mode === 'lossy' && value !== lossyOriginalBlocks[index] ? 'is-approximate' : ''} key={index}>{value}</i>)}</div>
+          <p>{mode === 'lossless' ? '文書やプログラムなど、1ビットも変わってはいけないデータに向きます。' : 'たとえば A1・A2・A3 を代表値 A2 にまとめます。全体の傾向は残りますが、A1とA3の違いは戻りません。画像や音声など、わずかな違いより小ささを優先できるデータに使われます。'}</p>
         </div>
 
         <div className="compression-rate-lab">
           <div>
             <p className="step-label">COMPRESSION RATE</p>
             <h3>圧縮率を計算する</h3>
-            <p>圧縮後のデータ量 ÷ 圧縮前のデータ量 × 100</p>
+            <div className="rate-formula" aria-label="圧縮率の公式">
+              <span>圧縮率（%）＝</span>
+              <span className="rate-fraction"><b>圧縮後のデータ量</b><b>圧縮前のデータ量</b></span>
+              <span>× 100</span>
+            </div>
           </div>
           <div className="rate-controls">
             <label><span>圧縮前 <output>{originalSize} KB</output></span><input type="range" min="20" max="200" step="10" value={originalSize} onChange={(event) => { const value = Number(event.target.value); setOriginalSize(value); setCompressedSize((current) => Math.min(current, value)); }} /></label>
-            <label><span>圧縮後 <output>{compressedSize} KB</output></span><input type="range" min="10" max={originalSize} step="10" value={compressedSize} onChange={(event) => setCompressedSize(Number(event.target.value))} /></label>
+            <label><span>圧縮後 <output>{compressedSize} KB</output></span><input type="range" min="10" max="200" step="10" value={compressedSize} onChange={(event) => setCompressedSize(Math.min(Number(event.target.value), originalSize))} /><small>圧縮前より右には動きません</small></label>
+          </div>
+          <div className="rate-bars" aria-label={`同じ尺度で比較。圧縮前${originalSize}キロバイト、圧縮後${compressedSize}キロバイト`}>
+            <div><span>圧縮前</span><i><b style={{ width: `${originalSize / 2}%` }} /></i><output>{originalSize} KB</output></div>
+            <div><span>圧縮後</span><i><b style={{ width: `${compressedSize / 2}%` }} /></i><output>{compressedSize} KB</output></div>
+            <small>2本とも 0〜200 KB の同じ尺度です。棒が半分なら、圧縮率も50%です。</small>
           </div>
           <div className="rate-answer">
-            <span>{compressedSize} ÷ {originalSize} × 100</span><strong>圧縮率 {rate}%</strong><small>{saved} KB小さくなった。圧縮率の数値が小さいほど、強く圧縮されています。</small>
+            <span className="rate-working">{compressedSize} ÷ {originalSize} × 100 ＝ {rate}</span><strong>圧縮率 {rate}%</strong><small>{saved} KB小さくなった。圧縮率の数値が小さいほど、強く圧縮されています。</small>
           </div>
           <div className="rate-presets" aria-label="教科書の例題">
             <button type="button" onClick={() => { setOriginalSize(100); setCompressedSize(80); }}>A：100 → 80 KB</button>
             <button type="button" onClick={() => { setOriginalSize(100); setCompressedSize(60); }}>B：100 → 60 KB</button>
+            <button type="button" onClick={() => { setOriginalSize(100); setCompressedSize(50); }}>半分：100 → 50 KB</button>
           </div>
         </div>
 
