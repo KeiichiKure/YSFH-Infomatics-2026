@@ -7,15 +7,15 @@ import { CharacterLab } from './components/CharacterLab';
 import { MediaLab, SignalLab } from './components/SignalLab';
 
 const terms = [
-  ['1', '連続的', '切れ目なく変化する'], ['2', '離散的', '飛び飛びの値として表す'],
-  ['3', '2進法', '0と1で数を表す方法'], ['4', '2進数', '2進法で表した数値'],
-  ['5', 'ビット', '情報量の最小単位'], ['6', '8ビット', '8個のビットをまとめる'],
-  ['7', '1バイト', '8ビットのまとまり'], ['8', '1024', '2の10乗'],
-  ['9', '10進法', '0～9を使う表現方法'], ['10', '10進数', '10進法で表した数値'],
-  ['11', '16進法', '0～9とA～Fを使う方法'], ['12', '16進数', '16進法で表した数値'],
-  ['25', '1バイト', '英数字・記号などの基本'], ['26', '2バイト', 'JIS系での漢字などの表現'],
-  ['27', '文字化け', '文字コードの不一致で別表示'], ['28', '機種依存文字', '旧来の環境差に注意'],
-  ['29', '可変長', '文字ごとに使う長さが変わる'],
+  ['01', '連続的', '切れ目なく変化する'], ['01', '離散的', '飛び飛びの値として表す'],
+  ['02', '2進法', '0と1で数を表す方法'], ['02', '2進数', '2進法で表した数値'],
+  ['03', 'ビット', '情報量の最小単位'], ['03', '8ビット', '8個のビットをまとめる'],
+  ['03', '1バイト', '8ビットのまとまり'], ['03', '1024', '2の10乗'],
+  ['04', '10進法', '0～9を使う表現方法'], ['04', '10進数', '10進法で表した数値'],
+  ['04', '16進法', '0～9とA～Fを使う方法'], ['04', '16進数', '16進法で表した数値'],
+  ['05', '1バイト', '英数字・記号などの基本'], ['05', '2バイト', 'JIS系での漢字などの表現'],
+  ['05', '文字化け', '文字コードの不一致で別表示'], ['05', '機種依存文字', '旧来の環境差に注意'],
+  ['05', '可変長', '文字ごとに使う長さが変わる'],
 ];
 
 export default function AnalogDigitalUnit() {
@@ -70,9 +70,9 @@ export default function AnalogDigitalUnit() {
 
           <section className="learning-section checkpoint" id="checkpoint">
             <div className="section-kicker"><span>06</span><p>プリント最終確認</p></div>
-            <div className="section-title-row"><div><p className="step-label">言葉にする</p><h2>体験と重要語をつなごう</h2></div><p className="section-question">語句をクリックして、自分の説明と比べよう。</p></div>
+            <div className="section-title-row"><div><p className="step-label">言葉にする</p><h2>体験と重要語をつなごう</h2></div><p className="section-question">緑の単元番号を目印に学んだ場所を振り返り、語句をクリックして自分の説明と比べよう。</p></div>
             <div className="term-grid">
-              {terms.map(([number, term, meaning]) => <details key={number}><summary><span>{number}</span><strong>{term}</strong></summary><p>{meaning}</p></details>)}
+              {terms.map(([sectionNumber, term, meaning]) => <details key={`${sectionNumber}-${term}`}><summary><span>{sectionNumber}</span><strong>{term}</strong></summary><p>{meaning}</p></details>)}
             </div>
             <div className="final-challenge">
               <p className="step-label">最後の問い</p>
