@@ -68,7 +68,7 @@ export function CompressionBasicsLab() {
             <small>2本とも0〜200 KBの同じ尺度で、どちらも動かせます。圧縮後は圧縮前より右へ進みません。位置が半分なら圧縮率は50%です。</small>
           </div>
           <div className="rate-answer">
-            <span className="rate-working">{compressedSize} ÷ {originalSize} × 100 ＝ {rate}</span><strong>圧縮率 {rate}%</strong><small>{saved} KB小さくなった。圧縮率の数値が小さいほど、強く圧縮されています。</small>
+            <span className="rate-working">{compressedSize} ÷ {originalSize} × 100 ＝ {rate}</span><strong><span>圧縮率</span><b>{rate}%</b></strong><small>{saved} KB小さくなった。圧縮率の数値が小さいほど、強く圧縮されています。</small>
           </div>
           <div className="rate-presets" aria-label="教科書の例題">
             <button type="button" onClick={() => { setOriginalSize(100); setCompressedSize(80); }}>A：100 → 80 KB</button>
