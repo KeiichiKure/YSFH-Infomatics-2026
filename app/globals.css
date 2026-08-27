@@ -694,6 +694,13 @@ button, input { font: inherit; }
 }
 .image-format-lab, .rgb-lab, .resolution-lab, .depth-lab { margin-top: 26px; }
 .digit-wave-canvas { display: block; width: 100%; height: 300px; border-radius: 16px; background: #f8fbf8; }
+.digit-wave-frame { position: relative; }
+.quantization-range-label { position: absolute; z-index: 2; left: 50px; display: flex; align-items: baseline; gap: 7px; max-width: calc(100% - 76px); padding: 5px 8px; border: 1px solid rgba(47,124,122,.2); border-radius: 8px; color: var(--ink); background: rgba(255,255,255,.9); box-shadow: 0 2px 8px rgba(32,53,83,.07); pointer-events: none; }
+.quantization-range-label.range-maximum { top: 8px; }
+.quantization-range-label.range-minimum { bottom: 48px; }
+.quantization-range-label small { flex: 0 0 auto; color: var(--teal); font-size: 9px; font-weight: 900; }
+.quantization-range-label strong { min-width: 0; font-size: clamp(9px, 1.25vw, 12px); line-height: 1.25; }
+.quantization-range-label code { overflow-wrap: anywhere; color: var(--teal); font: 800 .92em/1.25 Consolas, monospace; }
 .digit-controls, .resolution-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
 .digit-controls label, .resolution-controls label, .frame-control, .size-card label {
   display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: #f8fbf8;

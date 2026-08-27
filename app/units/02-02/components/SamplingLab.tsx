@@ -6,6 +6,31 @@ function binary(value: number, bits: number) {
   return value.toString(2).padStart(bits, '0');
 }
 
+const graphHeight = 320;
+const graphTop = 22;
+const graphBottom = graphHeight - 43;
+const graphCenter = (graphTop + graphBottom) / 2;
+const graphAmplitudeHeight = (graphBottom - graphTop) / 2 - 9;
+
+function verticalScaleFor(graphZoom: number, waveFrequency: number) {
+  return graphZoom === 1 ? 1 : Math.max(1, graphZoom / (waveFrequency * 4));
+}
+
+function visibleQuantizationRange(bits: number, waveFrequency: number, graphZoom: number) {
+  const levelCount = 2 ** bits;
+  const maximumLevel = levelCount - 1;
+  const centerAmplitude = Math.sin(0.5 * waveFrequency * Math.PI * 2);
+  const verticalScale = verticalScaleFor(graphZoom, waveFrequency);
+  const visibleAmplitudeRadius = ((graphCenter - graphTop) / graphAmplitudeHeight) / verticalScale;
+  const levelForAmplitude = (amplitude: number) => ((amplitude + 1) / 2) * maximumLevel;
+  const rawMinimum = levelForAmplitude(centerAmplitude - visibleAmplitudeRadius);
+  const rawMaximum = levelForAmplitude(centerAmplitude + visibleAmplitudeRadius);
+  return {
+    minimum: Math.max(0, Math.min(maximumLevel, Math.floor(rawMinimum))),
+    maximum: Math.max(0, Math.min(maximumLevel, Math.ceil(rawMaximum))),
+  };
+}
+
 function periodLabel(frequency: number) {
   if (frequency === 1) return '1秒';
   const seconds = 1 / frequency;
@@ -37,6 +62,7 @@ export function SamplingLab() {
   const levels = 2 ** quantizationBits;
   const theoremPassed = samplingFrequency > waveFrequency * 2;
   const focusZoom = Math.max(2, Math.round(samplingFrequency / 6));
+  const visibleLevels = visibleQuantizationRange(quantizationBits, waveFrequency, graphZoom);
 
   const sampleCodes = Array.from({ length: 8 }, (_, index) => {
     const time = index / samplingFrequency;
@@ -49,32 +75,42 @@ export function SamplingLab() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const draw = () => {
-      const prepared = prepareCanvas(canvas, 320);
+      const prepared = prepareCanvas(canvas, graphHeight);
       if (!prepared) return;
       const { context, width, height } = prepared;
       const left = 42;
       const right = width - 18;
-      const top = 22;
-      const bottom = height - 43;
+      const top = graphTop;
+      const bottom = graphBottom;
       const center = (top + bottom) / 2;
       const amplitudeHeight = (bottom - top) / 2 - 9;
       const duration = 1 / graphZoom;
       const viewCenter = 0.5;
       const viewStart = viewCenter - duration / 2;
       const centerAmplitude = Math.sin(viewCenter * waveFrequency * Math.PI * 2);
-      const verticalScale = graphZoom === 1 ? 1 : Math.max(1, graphZoom / (waveFrequency * 4));
+      const verticalScale = verticalScaleFor(graphZoom, waveFrequency);
       const plotWidth = right - left;
       const xFor = (time: number) => left + ((time - viewStart) / duration) * plotWidth;
       const yFor = (amplitude: number) => center - (amplitude - centerAmplitude) * amplitudeHeight * verticalScale;
+      const amplitudeForLevel = (level: number) => (level / Math.max(1, levels - 1)) * 2 - 1;
       const quantize = (amplitude: number) => {
         const level = Math.max(0, Math.min(levels - 1, Math.round(((amplitude + 1) / 2) * (levels - 1))));
-        return (level / Math.max(1, levels - 1)) * 2 - 1;
+        return amplitudeForLevel(level);
       };
+
+      const visibleAmplitudeRadius = ((center - top) / amplitudeHeight) / verticalScale;
+      const firstVisibleLevel = Math.max(0, Math.ceil(((centerAmplitude - visibleAmplitudeRadius + 1) / 2) * (levels - 1)));
+      const lastVisibleLevel = Math.min(levels - 1, Math.floor(((centerAmplitude + visibleAmplitudeRadius + 1) / 2) * (levels - 1)));
+      const visibleLevelCount = Math.max(0, lastVisibleLevel - firstVisibleLevel + 1);
+      const lineStep = Math.max(1, Math.ceil(visibleLevelCount / 12));
+      const guideLevels: number[] = [];
+      for (let level = firstVisibleLevel; level <= lastVisibleLevel; level += lineStep) guideLevels.push(level);
+      if (visibleLevelCount > 0 && guideLevels.at(-1) !== lastVisibleLevel) guideLevels.push(lastVisibleLevel);
 
       context.strokeStyle = '#d8e3df';
       context.lineWidth = 1;
-      for (let line = 0; line <= 12; line += 1) {
-        const y = top + (line / 12) * (bottom - top);
+      for (const level of guideLevels) {
+        const y = yFor(amplitudeForLevel(level));
         context.beginPath();
         context.moveTo(left, y);
         context.lineTo(right, y);
@@ -184,7 +220,11 @@ export function SamplingLab() {
           <span>波を拡大して観察 <output>{graphZoom.toLocaleString()}倍</output></span>
           <div>{[1, 10, 100, 1000].map((value) => <button type="button" className={graphZoom === value ? 'is-active' : ''} key={value} onClick={() => setGraphZoom(value)}>{value.toLocaleString()}×</button>)}<button type="button" className={graphZoom === focusZoom ? 'is-active' : ''} onClick={() => setGraphZoom(focusZoom)}>標本6個まで拡大</button></div>
         </div>
-        <canvas ref={canvasRef} className="digit-wave-canvas" aria-label={(showAnalog ? 'アナログ波と' : '') + (showDigital ? '量子化したデジタル波' : '') + '。元の波' + waveFrequency + 'Hz、標本化周波数' + samplingFrequency + 'Hz、量子化' + quantizationBits + 'ビット、' + graphZoom + '倍表示'} />
+        <div className="digit-wave-frame">
+          <canvas ref={canvasRef} className="digit-wave-canvas" aria-label={(showAnalog ? 'アナログ波と' : '') + (showDigital ? '量子化したデジタル波' : '') + '。元の波' + waveFrequency + 'Hz、標本化周波数' + samplingFrequency + 'Hz、量子化' + quantizationBits + 'ビット、' + graphZoom + '倍表示。表示範囲の最大値' + visibleLevels.maximum + '、2進数' + binary(visibleLevels.maximum, quantizationBits) + '。最小値' + visibleLevels.minimum + '、2進数' + binary(visibleLevels.minimum, quantizationBits)} />
+          <div className="quantization-range-label range-maximum" aria-hidden="true"><small>{graphZoom === 1 ? `${levels.toLocaleString()}段階` : '表示範囲'}</small><strong>最大値 {visibleLevels.maximum.toLocaleString()} <code>（{binary(visibleLevels.maximum, quantizationBits)}）</code></strong></div>
+          <div className="quantization-range-label range-minimum" aria-hidden="true"><small>{graphZoom === 1 ? `${quantizationBits} bit` : '表示範囲'}</small><strong>最小値 {visibleLevels.minimum.toLocaleString()} <code>（{binary(visibleLevels.minimum, quantizationBits)}）</code></strong></div>
+        </div>
         <div className="digit-controls digit-controls-expanded">
           <div className="range-card">
             <span>元の波の周波数 <output>{waveFrequency} Hz</output></span>
