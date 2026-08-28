@@ -63,6 +63,15 @@ export default function Home() {
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
+        <Link className="unit-card unit-card-active" href="/units/02-03/">
+          <span className="unit-number">02-03</span>
+          <div>
+            <h3>データの圧縮</h3>
+            <span className="textbook-page">教科書 pp.62–65</span>
+            <p>圧縮率、圧縮・復元のしくみ、画像形式を操作で比べる</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
       </section>
     </main>
   );
