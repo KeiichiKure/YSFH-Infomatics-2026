@@ -3,21 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PrefixCodeTree } from './PrefixCodeTree';
 import { VideoDifferenceScene } from './VideoDifferenceScene';
+import { CompressionTextInput } from './CompressionTextInput';
+import { buildLzwModel, decodeLzw, buildHuffmanModel, decodePrefixBits, type CodeRow } from './compressionModels';
 
 type Method = 'rle' | 'lz' | 'lzw' | 'huffman';
 type HuffmanPhase = 'count' | 'assign' | 'encode' | 'decode';
 type LzToken = { start: number; length: number; sourceStart: number; result: string; explanation: string; literalBytes: number };
-type LzwStep = { phrase: string; joined: string; start: number; end: number; action: string; added?: { code: number; text: string }; outputAfter: number[] };
-type LzwDecodeStep = {
-  kind: 'read' | 'add';
-  code: number;
-  codeIndex: number;
-  text: string;
-  result: string;
-  action: string;
-  dictionary: { code: number; text: string }[];
-  added?: { code: number; text: string };
-};
 
 function runLengthEncode(input: string) {
   const groups: { char: string; count: number }[] = [];
@@ -53,77 +44,14 @@ function encodeLz(input: string) {
   return tokens;
 }
 
-function buildLzwModel(input: string) {
-  const chars = Array.from(input);
-  const unique = Array.from(new Set(chars));
-  const dictionary = new Map(unique.map((char, index) => [char, index + 1]));
-  const initial = unique.map((text, index) => ({ code: index + 1, text }));
-  const additions: { code: number; text: string }[] = [];
-  const output: number[] = [];
-  const steps: LzwStep[] = [];
-  let phrase = chars[0] ?? '';
-  let phraseStart = 0;
-  for (const [offset, next] of chars.slice(1).entries()) {
-    const nextIndex = offset + 1;
-    const joined = phrase + next;
-    if (dictionary.has(joined)) {
-      phrase = joined;
-      steps.push({ phrase, joined, start: phraseStart, end: nextIndex, action: `囲んだ「${joined}」は辞書にある。まだ番号を出さず、もう1文字読む。`, outputAfter: [...output] });
-    } else {
-      output.push(dictionary.get(phrase) ?? 0);
-      const added = { code: dictionary.size + 1, text: joined };
-      dictionary.set(joined, added.code);
-      additions.push(added);
-      steps.push({ phrase, joined, start: phraseStart, end: nextIndex, action: `囲んだ「${joined}」は辞書にない。「${phrase}」の番号を出力し、「${joined}」を辞書へ追加する。`, added, outputAfter: [...output] });
-      phrase = next;
-      phraseStart = nextIndex;
-    }
-  }
-  if (phrase) {
-    output.push(dictionary.get(phrase) ?? 0);
-    steps.push({ phrase, joined: phrase, start: phraseStart, end: chars.length - 1, action: `入力が終わったので、囲んだ「${phrase}」の番号を出力する。`, outputAfter: [...output] });
-  }
-  return { initial, additions, output, steps, codeBits: Math.max(1, Math.ceil(Math.log2(Math.max(2, dictionary.size + 1)))) };
-}
 
-function decodeLzw(output: number[], initial: { code: number; text: string }[]) {
-  const dictionary = new Map(initial.map(({ code, text }) => [code, text]));
-  const steps: LzwDecodeStep[] = [];
-  let previous = '';
-  let result = '';
-  for (const [codeIndex, code] of output.entries()) {
-    let text = dictionary.get(code) ?? '';
-    const isNewCode = !text && previous && code === dictionary.size + 1;
-    if (isNewCode) text = previous + previous[0];
-    result += text;
-    steps.push({
-      kind: 'read', code, codeIndex, text, result,
-      action: isNewCode
-        ? `番号${code}はまだ辞書にないが、次に作る番号だと分かる。直前の「${previous}」＋その先頭「${previous[0]}」で「${text}」と復元する。`
-        : `番号${code}を現在の辞書で調べると「${text}」。復元結果の後ろへ付ける。`,
-      dictionary: Array.from(dictionary, ([dictionaryCode, dictionaryText]) => ({ code: dictionaryCode, text: dictionaryText })),
-    });
-    if (previous && text) {
-      const added = { code: dictionary.size + 1, text: previous + text[0] };
-      dictionary.set(added.code, added.text);
-      steps.push({
-        kind: 'add', code, codeIndex, text, result, added,
-        action: `前に復元したかたまり「${previous}」の後ろへ、今復元した「${text}」の先頭「${text[0]}」を足す。だから辞書${added.code}＝「${added.text}」を追加する。`,
-        dictionary: Array.from(dictionary, ([dictionaryCode, dictionaryText]) => ({ code: dictionaryCode, text: dictionaryText })),
-      });
-    }
-    previous = text;
-  }
-  return steps;
-}
-
-const lzwSource = 'ABABABA';
-const huffmanSource = 'なまむぎなまごめなまたまご';
-const huffmanRows = [
+const lzwExample = 'ABABABA';
+const huffmanExample = 'なまむぎなまごめなまたまご';
+const huffmanExampleRows: readonly CodeRow[] = [
   ['ま', 4, '0'], ['な', 3, '10'], ['ご', 2, '110'], ['む', 1, '1110'],
   ['ぎ', 1, '11110'], ['め', 1, '111110'], ['た', 1, '111111'],
 ] as const;
-const huffmanAssignmentReasons = [
+const huffmanExampleReasons = [
   '最も多い「ま」へ、最短の1 bit「0」を割り当てる。',
   '「00」「01」は0を読んだ時点で「ま」と決まるため使えない。次に短い2 bitの「10」を「な」へ割り当てる。',
   '「100」「101」は先頭の10で「な」と決まるため使えない。「11」を文字にすると残り5種類を置く枝がなくなるので、11は分岐として残し、その先の「110」を「ご」へ割り当てる。',
@@ -132,14 +60,16 @@ const huffmanAssignmentReasons = [
   '11110は「ぎ」で確定したため、残りは11111の枝へ進む。「め」を111110にする。',
   '最後の「た」は、残った枝の111111（6 bit）へ。この割り当てでは4 bitは使えません。1110は「む」で確定し、1111は「ぎ・め・た」へ続く分岐なので、途中で「た」と確定させると他の符号を読めなくなります。',
 ];
-const huffmanMap = new Map<string, string>(huffmanRows.map(([symbol, , code]) => [symbol, code]));
-const huffmanEncoded = Array.from(huffmanSource).map((char) => huffmanMap.get(char) ?? '').join('');
 
 export function LosslessLab() {
   const [method, setMethod] = useState<Method>('rle');
   const [rleInput, setRleInput] = useState('すもももももももものうち');
   const [lzInput, setLzInput] = useState('すもももももももものうち');
   const [lzStep, setLzStep] = useState(0);
+  const [lzwSource, setLzwSource] = useState(lzwExample);
+  const [lzwBasic, setLzwBasic] = useState(true);
+  const [huffmanSource, setHuffmanSource] = useState(huffmanExample);
+  const [huffmanBasic, setHuffmanBasic] = useState(true);
   const [lzwStep, setLzwStep] = useState(0);
   const [lzwDecodeStep, setLzwDecodeStep] = useState(0);
   const [huffmanPhase, setHuffmanPhase] = useState<HuffmanPhase>('count');
@@ -158,12 +88,20 @@ export function LosslessLab() {
   const lzCurrent = lzTokens[safeLzStep];
   const lzOriginalBytes = new TextEncoder().encode(lzInput).length;
   const lzEstimatedBytes = lzTokens.reduce((sum, token) => sum + (token.sourceStart >= 0 ? 4 : token.literalBytes), 0);
-  const lzw = useMemo(() => buildLzwModel(lzwSource), []);
+  const lzw = useMemo(() => buildLzwModel(lzwSource), [lzwSource]);
   const lzwDecoded = useMemo(() => decodeLzw(lzw.output, lzw.initial), [lzw]);
   const currentLzwStep = lzw.steps[lzwStep];
   const currentLzwDecodeStep = lzwDecoded[lzwDecodeStep];
   const hasNewLzwOutput = currentLzwStep.outputAfter.length > (lzw.steps[lzwStep - 1]?.outputAfter.length ?? 0);
   const additionsAtStep = lzw.steps.slice(0, lzwStep + 1).flatMap((step) => step.added ? [step.added] : []);
+  const lzwInitialText = lzw.initial.map(({ code, text }) => `${code}＝${text}`).join('、');
+  const specialLzwCode = lzwDecoded.find((step) => step.kind === 'infer')?.code;
+  const huffmanModel = useMemo(() => huffmanBasic ? { rows: huffmanExampleRows, fixedBits: 3 } : buildHuffmanModel(huffmanSource), [huffmanSource, huffmanBasic]);
+  const huffmanRows = huffmanModel.rows;
+  const huffmanMap = useMemo(() => new Map(huffmanRows.map(([symbol, , code]) => [symbol, code])), [huffmanRows]);
+  const huffmanEncoded = Array.from(huffmanSource).map((char) => huffmanMap.get(char) ?? '').join('');
+  const huffmanDecoded = useMemo(() => decodePrefixBits(huffmanEncoded, huffmanRows), [huffmanEncoded, huffmanRows]);
+  const huffmanAssignmentReasons = huffmanBasic ? huffmanExampleReasons : huffmanRows.map(([char, count, code]) => `「${char}」は${count}回。回数の少ないものを2つずつまとめて作った木で、開始から ${Array.from(code).join(' → ')} と枝をたどると「${char}」の葉に着きます。途中の分岐では確定せず、葉までの${code.length} bitを符号にします。`);
   const huffmanChars = Array.from(huffmanSource);
   const countedHuffmanChars = huffmanChars.slice(0, huffmanCountStep + 1);
   const runningHuffmanCounts = huffmanRows.map(([char]) => [char, countedHuffmanChars.filter((value) => value === char).length] as const);
@@ -171,15 +109,17 @@ export function LosslessLab() {
   const currentHuffmanChar = huffmanChars[huffmanStep];
   const currentHuffmanCode = huffmanMap.get(currentHuffmanChar) ?? '';
   const encodedHuffmanCodes = huffmanChars.slice(0, huffmanStep + 1).map((char) => huffmanMap.get(char) ?? '');
-  const currentDecodedHuffmanChar = huffmanChars[huffmanDecodeStep];
-  const currentDecodedHuffmanCode = huffmanMap.get(currentDecodedHuffmanChar) ?? '';
+  const currentDecodedHuffmanChar = huffmanDecoded[huffmanDecodeStep].char;
+  const currentDecodedHuffmanCode = huffmanDecoded[huffmanDecodeStep].code;
   const currentDecodedPrefix = currentDecodedHuffmanCode.slice(0, huffmanDecodeBitStep + 1);
   const isHuffmanCharacterDecided = currentDecodedPrefix === currentDecodedHuffmanCode;
-  const decodedHuffmanText = huffmanChars.slice(0, huffmanDecodeStep).join('') + (isHuffmanCharacterDecided ? currentDecodedHuffmanChar : '');
+  const decodedHuffmanText = huffmanDecoded.slice(0, huffmanDecodeStep).map(({ char }) => char).join('') + (isHuffmanCharacterDecided ? currentDecodedHuffmanChar : '');
   const confirmedHuffmanCount = huffmanDecodeStep + (isHuffmanCharacterDecided ? 1 : 0);
-  const confirmedHuffmanCodes = huffmanChars.slice(0, confirmedHuffmanCount).map((char) => huffmanMap.get(char) ?? '');
+  const confirmedHuffmanCodes = huffmanDecoded.slice(0, confirmedHuffmanCount).map(({ code }) => code);
   const confirmedBitCount = confirmedHuffmanCodes.join('').length;
   const unconfirmedPrefix = isHuffmanCharacterDecided ? '' : currentDecodedPrefix;
+  const applyLzwInput = (text: string, basic: boolean) => { setLzwSource(text); setLzwBasic(basic); setLzwStep(0); setLzwDecodeStep(0); };
+  const applyHuffmanInput = (text: string, basic: boolean) => { setHuffmanSource(text); setHuffmanBasic(basic); setHuffmanPhase('count'); setHuffmanCountStep(0); setHuffmanAssignStep(0); setHuffmanStep(0); setHuffmanDecodeStep(0); setHuffmanDecodeBitStep(0); };
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -245,9 +185,10 @@ export function LosslessLab() {
         </div>}
 
         {method === 'lzw' && <div className="method-panel" role="tabpanel">
-          <div className="method-copy"><span>文字の並びを辞書へ登録</span><h4>辞書が育つ手順を1つずつ見る</h4><p><code>{lzwSource}</code> を左から読みます。最初はAとBだけの辞書から始め、見つけた並びへ新しい番号を付けます。</p></div>
+          <CompressionTextInput method="lzw" example={lzwExample} activeText={lzwSource} isBasic={lzwBasic} onApply={applyLzwInput} />
+          <div className="method-copy"><span>文字の並びを辞書へ登録</span><h4>辞書が育つ手順を1つずつ見る</h4><p><code>{lzwSource}</code> を左から読みます。入力に使う文字だけの初期辞書から始め、見つけた並びへ新しい番号を付けます。</p></div>
           <div className="initial-dictionary"><span>最初から共有する辞書</span>{lzw.initial.map((item) => <i key={item.code}><b>{item.code}</b>{item.text}</i>)}</div>
-          <div className="lzw-rules"><h5>操作の前に：辞書を作る約束</h5><p>圧縮側も復元側も <b>1＝A、2＝B</b> から出発。新しい並びは <b>3、4、5…の順</b> に登録します。</p><ol><li><b>圧縮側：</b>「今のかたまり＋次の1文字」が辞書になければ、今のかたまりの番号を出力し、その新しい並びを登録。辞書にあれば、さらに1文字先まで調べます。最後は残ったかたまりの番号を出力します。</li><li><b>復元側：</b>番号から文字列を戻した後、<b>「前に復元したかたまり＋今回復元したかたまりの先頭1文字」</b>を登録。最初の番号では、前のかたまりがないので登録しません。</li></ol><p className="rule-example">例：前が A、今回が B → 3＝AB を登録。次に、前が B、今回が AB → 4＝BA を登録。</p><small>まだ辞書にない「次の登録番号」が来た場合だけ、「前のかたまり＋その先頭1文字」で復元します。この例の番号5で体験できます。</small></div>
+          <div className="lzw-rules"><h5>操作の前に：辞書を作る約束</h5><p>圧縮側も復元側も <b>{lzwInitialText}</b> から出発。新しい並びは <b>{lzw.initial.length + 1}、{lzw.initial.length + 2}、{lzw.initial.length + 3}…の順</b> に登録します。</p><ol><li><b>圧縮側：</b>「今のかたまり＋次の1文字」が辞書になければ、今のかたまりの番号を出力し、その新しい並びを登録。辞書にあれば、さらに1文字先まで調べます。最後は残ったかたまりの番号を出力します。</li><li><b>復元側：</b>番号から文字列を戻した後、<b>「前に復元したかたまり＋今回復元したかたまりの先頭1文字」</b>を登録。最初の番号では、前のかたまりがないので登録しません。</li></ol>{lzwBasic && <p className="rule-example">例：前が A、今回が B → 3＝AB を登録。次に、前が B、今回が AB → 4＝BA を登録。</p>}<small>{specialLzwCode ? `番号${specialLzwCode}のように、まだ辞書にない「次の登録番号」が届く場合があります。下の復元では、登録待ちの中身を3段階で推論してから復元します。` : '今回の入力では未登録番号の推論は登場しません。「基本例に戻す」で、番号5の中身を推論する手順も体験できます。'}</small></div>
           <p className="current-action-legend">オレンジの枠と「今回」の表示＝その手順で新しく行ったこと。前の手順の結果は残して表示します。</p>
           <div className="step-experience lzw-stage">
             <span className="experience-label">オレンジの囲みが、今調べている並び</span>
@@ -262,18 +203,19 @@ export function LosslessLab() {
           </div>
           <div className="dictionary-answer"><span>追加した辞書そのものは送らなくてよい</span><p>受信側も同じ初期辞書と同じ規則を使い、コードを読むたびに同じ順番で辞書を作れます。実際のファイルには、辞書の初期状態・番号のビット幅・リセット規則などを示す情報が必要です。</p></div>
           <div className="decode-lab">
-            <div className="decode-heading"><span>DECODE</span><h4>番号だけから元の文字列へ戻す</h4><p>A＝1、B＝2の初期辞書と、圧縮時と同じ追加規則があれば復元できます。</p></div>
+            <div className="decode-heading"><span>DECODE</span><h4>番号だけから元の文字列へ戻す</h4><p>{lzwInitialText}の初期辞書と、圧縮時と同じ追加規則があれば復元できます。</p></div>
             <div className="output-code-row" aria-label="LZWで復元する番号列">{lzw.output.map((code, index) => <i className={index === currentLzwDecodeStep.codeIndex ? 'is-current' : index < currentLzwDecodeStep.codeIndex ? 'is-read' : ''} key={index}>{code}</i>)}</div>
-            <div className="step-card"><span>復元 {lzwDecodeStep + 1} / {lzwDecoded.length} · {currentLzwDecodeStep.kind === 'read' ? '番号を読む' : '辞書へ登録'}</span><strong>{currentLzwDecodeStep.action}</strong>{currentLzwDecodeStep.kind === 'read' && <p>番号 <code>{currentLzwDecodeStep.code}</code> → 文字列 <code>{currentLzwDecodeStep.text}</code></p>}</div>
+            <div className={`step-card ${currentLzwDecodeStep.kind === 'infer' ? 'inference-card' : ''}`}><span>復元 {lzwDecodeStep + 1} / {lzwDecoded.length} · {currentLzwDecodeStep.kind === 'read' ? '番号を読む' : currentLzwDecodeStep.kind === 'infer' ? '未登録番号の中身を推論' : '辞書へ登録'}</span><strong>{currentLzwDecodeStep.action}</strong>{currentLzwDecodeStep.kind === 'read' && <p>番号 <code>{currentLzwDecodeStep.code}</code> → 文字列 <code>{currentLzwDecodeStep.text}</code></p>}</div>
             <input aria-label="LZW復元の手順" type="range" min="0" max={lzwDecoded.length - 1} value={lzwDecodeStep} onChange={(event) => setLzwDecodeStep(Number(event.target.value))} />
             <div className="step-buttons"><button type="button" disabled={lzwDecodeStep === 0} onClick={() => setLzwDecodeStep((value) => Math.max(0, value - 1))}>← 前へ</button><button type="button" disabled={lzwDecodeStep >= lzwDecoded.length - 1} onClick={() => setLzwDecodeStep((value) => Math.min(lzwDecoded.length - 1, value + 1))}>次へ →</button></div>
-            <div className="decode-dictionary"><span>復元側で育てる辞書</span><div>{currentLzwDecodeStep.dictionary.map((item) => <i className={currentLzwDecodeStep.added?.code === item.code ? 'is-new' : item.code <= 2 ? 'is-initial' : ''} key={item.code}><b>{item.code}</b><em>{item.text}</em><small>{currentLzwDecodeStep.added?.code === item.code ? '今回追加' : item.code <= 2 ? '初期辞書' : '追加済み'}</small></i>)}</div><small>{currentLzwDecodeStep.kind === 'add' ? `今回：${currentLzwDecodeStep.added?.code}＝${currentLzwDecodeStep.added?.text}を登録` : 'この手順は番号を読むだけ。辞書はまだ追加しません。'}</small></div>
-            <div className="decode-result"><span>ここまでの復元結果</span><strong>{currentLzwDecodeStep.kind === 'read' ? <>{currentLzwDecodeStep.result.slice(0, -currentLzwDecodeStep.text.length)}<mark className="current-decoded-text">{currentLzwDecodeStep.text}</mark></> : currentLzwDecodeStep.result}</strong><small>{currentLzwDecodeStep.kind === 'add' ? '今回は辞書だけを追加。復元結果の文字列は変わりません。' : `今回復元：${currentLzwDecodeStep.text}（オレンジの枠）を後ろにつなぎました。`}</small></div>
+            <div className="decode-dictionary"><span>復元側で育てる辞書</span><div>{currentLzwDecodeStep.dictionary.map((item) => <i className={currentLzwDecodeStep.added?.code === item.code ? 'is-new' : item.code <= lzw.initial.length ? 'is-initial' : ''} key={item.code}><b>{item.code}</b><em>{item.text}</em><small>{currentLzwDecodeStep.added?.code === item.code ? '今回追加' : item.code <= lzw.initial.length ? '初期辞書' : '追加済み'}</small></i>)}</div><small>{currentLzwDecodeStep.kind === 'add' ? `今回：${currentLzwDecodeStep.added?.code}＝${currentLzwDecodeStep.added?.text}を登録` : currentLzwDecodeStep.kind === 'infer' ? `次の空番号は${currentLzwDecodeStep.dictionary.length + 1}。今は中身を推論中なので、まだ登録しません。` : 'この手順は番号を読むだけ。辞書はまだ追加しません。'}</small></div>
+            <div className="decode-result"><span>ここまでの復元結果</span><strong>{currentLzwDecodeStep.kind === 'read' ? <>{currentLzwDecodeStep.result.slice(0, -currentLzwDecodeStep.text.length)}<mark className="current-decoded-text">{currentLzwDecodeStep.text}</mark></> : currentLzwDecodeStep.result}</strong><small>{currentLzwDecodeStep.kind === 'add' ? '今回は辞書だけを追加。復元結果の文字列は変わりません。' : currentLzwDecodeStep.kind === 'infer' ? '今回は推論だけ。結果への追加は、中身が決まった次の手順で行います。' : `今回復元：${currentLzwDecodeStep.text}（オレンジの枠）を後ろにつなぎました。`}</small></div>
           </div>
-          <div className="compression-size-result"><span>この短い例の結果</span><code>出力する番号：{lzw.output.join('・')}</code><div><b>元：7文字 × 8 ＝ 56 bit</b><i>→</i><strong>番号部分：{lzw.output.length}個 × {lzw.codeBits} ＝ {lzw.output.length * lzw.codeBits} bit</strong></div><small>これは番号部分だけの値です。辞書の約束やヘッダーを含めると、この短い例では全体が増えることがあります。ここでは辞書を育てる仕組みを理解することが目的です。</small></div>
+          <div className="compression-size-result"><span>今回の文字列の結果</span><code>出力する番号：{lzw.output.join('・')}</code><div><b>元：{lzwSource.length}文字 × 8 ＝ {lzwSource.length * 8} bit</b><i>→</i><strong>番号部分：{lzw.output.length}個 × {lzw.codeBits} ＝ {lzw.output.length * lzw.codeBits} bit</strong></div><small>元の英字は1文字8 bit、番号はすべて同じ幅で記録する学習用モデルです。辞書の約束やヘッダーを含めると、短い例では全体が増えることがあります。</small></div>
         </div>}
 
         {method === 'huffman' && <div className="method-panel" role="tabpanel">
+          <CompressionTextInput method="huffman" example={huffmanExample} activeText={huffmanSource} isBasic={huffmanBasic} onApply={applyHuffmanInput} />
           <div className="method-copy"><span>よく出る文字ほど短い符号</span><h4>数えるところから、復元まで体験</h4><p>出現回数を調べ、符号が重ならないように割り当て、その符号で圧縮・復元します。</p></div>
           <div className="huffman-phase-tabs" aria-label="ハフマン圧縮の学習段階">{([['count', '1 回数を数える'], ['assign', '2 符号を割り当てる'], ['encode', '3 圧縮する'], ['decode', '4 復元する']] as const).map(([phase, label]) => <button type="button" className={huffmanPhase === phase ? 'is-active' : ''} onClick={() => setHuffmanPhase(phase)} key={phase}>{label}</button>)}</div>
 
@@ -291,15 +233,15 @@ export function LosslessLab() {
             <div className="step-card"><span>割り当て {huffmanAssignStep + 1} / {huffmanRows.length}</span><strong>「{currentHuffmanAssignment[0]}」＝ {currentHuffmanAssignment[2]}（{currentHuffmanAssignment[2].length} bit）</strong><p>{huffmanAssignmentReasons[huffmanAssignStep]}</p></div>
             <div className="assignment-controls step-buttons"><button type="button" disabled={huffmanAssignStep === 0} onClick={() => setHuffmanAssignStep((value) => Math.max(0, value - 1))}>← 前へ</button><input aria-label="ハフマン符号を割り当てる手順" type="range" min="0" max={huffmanRows.length - 1} value={huffmanAssignStep} onChange={(event) => setHuffmanAssignStep(Number(event.target.value))} /><button type="button" onClick={() => { if (huffmanAssignStep < huffmanRows.length - 1) setHuffmanAssignStep((value) => value + 1); else { setHuffmanPhase('encode'); setHuffmanStep(0); } }}>{huffmanAssignStep === huffmanRows.length - 1 ? '圧縮する →' : '次へ →'}</button></div>
             <div className="huffman-assignment-visuals">
-              <PrefixCodeTree rows={huffmanRows} step={huffmanAssignStep} />
-              <div className="assignment-code-table"><div className="huffman-table-head"><span>文字</span><span>回数</span><span>対応する符号</span></div><div className="huffman-table assignment-table" aria-label="ハフマン符号の対応表">{huffmanRows.map(([char, count, code], index) => <div className={index === huffmanAssignStep ? 'is-current' : index < huffmanAssignStep ? 'is-assigned' : 'is-waiting'} key={char}><b>{char}</b><span><i style={{ width: `${count / 4 * 100}%` }} />{count}回</span><code>{index <= huffmanAssignStep ? code : '？'}<small>{index <= huffmanAssignStep ? `${code.length} bit` : '未割当'}</small></code></div>)}</div></div>
+              <PrefixCodeTree rows={huffmanRows} step={huffmanAssignStep} generated={!huffmanBasic} />
+              <div className="assignment-code-table"><div className="huffman-table-head"><span>文字</span><span>回数</span><span>対応する符号</span></div><div className="huffman-table assignment-table" aria-label="ハフマン符号の対応表">{huffmanRows.map(([char, count, code], index) => <div className={index === huffmanAssignStep ? 'is-current' : index < huffmanAssignStep ? 'is-assigned' : 'is-waiting'} key={char}><b>{char}</b><span><i style={{ width: `${count / Math.max(...huffmanRows.map(([, frequency]) => frequency)) * 100}%` }} />{count}回</span><code>{index <= huffmanAssignStep ? code : '？'}<small>{index <= huffmanAssignStep ? `${code.length} bit` : '未割当'}</small></code></div>)}</div></div>
             </div>
-            <p className="assignment-footnote"><b>確定した符号は、他の符号の先頭にしない（接頭語条件）。</b><br />長さの違いを体験する学習用の木です。実際のハフマン法では出現回数の少ないものを2つずつまとめるため、この例の木は最短の結果とは異なります。</p>
+            <p className="assignment-footnote"><b>確定した符号は、他の符号の先頭にしない（接頭語条件）。</b><br />{huffmanBasic ? '長さの違いを体験する学習用の木です。実際のハフマン法では出現回数の少ないものを2つずつまとめるため、この例の木は最短の結果とは異なります。' : '入力の出現回数から、少ないものを2つずつまとめて生成しました。同じ回数なら文字順と作成順で決めます。符号長は入力によって変わり、常に1 bitや4 bitがあるとは限りません。'}</p>
           </div>}
 
           {huffmanPhase === 'encode' && <div className="step-experience huffman-stepper">
             <div className="encoding-codebook"><span>割り当てられた符号：この表を見て置き換えよう</span><div>{huffmanRows.map(([char, , code]) => <i className={char === currentHuffmanChar ? 'is-current' : ''} key={char}><b>{char}</b><code>{code}</code><small>{code.length} bit</small></i>)}</div></div>
-            <div className="huffman-source"><span>圧縮前の文字列（13文字）</span><div className="huffman-source-characters compact">{huffmanChars.map((char, index) => <i className={index === huffmanStep ? 'is-current' : index < huffmanStep ? 'is-read' : ''} key={index}>{char}</i>)}</div><small>完成した符号表どおりに、1文字ずつ0と1へ置き換えます。</small></div>
+            <div className="huffman-source"><span>圧縮前の文字列（{huffmanChars.length}文字）</span><div className="huffman-source-characters compact">{huffmanChars.map((char, index) => <i className={index === huffmanStep ? 'is-current' : index < huffmanStep ? 'is-read' : ''} key={index}>{char}</i>)}</div><small>完成した符号表どおりに、1文字ずつ0と1へ置き換えます。</small></div>
             <div className="step-card"><span>圧縮 {huffmanStep + 1} / {huffmanChars.length}</span><strong>「{currentHuffmanChar}」を <code>{currentHuffmanCode}</code> へ置き換える</strong><p>{currentHuffmanCode.length} bitの符号です。</p></div>
             <input aria-label="ハフマンで圧縮する文字" type="range" min="0" max={huffmanChars.length - 1} value={huffmanStep} onChange={(event) => setHuffmanStep(Number(event.target.value))} />
             <div className="step-buttons"><button type="button" disabled={huffmanStep === 0} onClick={() => setHuffmanStep((value) => Math.max(0, value - 1))}>← 前へ</button><button type="button" disabled={huffmanStep >= huffmanChars.length - 1} onClick={() => setHuffmanStep((value) => Math.min(huffmanChars.length - 1, value + 1))}>次へ →</button></div>
@@ -315,11 +257,11 @@ export function LosslessLab() {
             <div className="decode-step-stable"><div className="bit-reading" aria-label="ハフマン符号を1ビットずつ読む">{Array.from({ length: 6 }, (_, index) => { const prefix = currentDecodedPrefix.slice(0, index + 1); const bit = currentDecodedPrefix[index]; const decided = prefix === currentDecodedHuffmanCode; return bit ? <div className={decided ? 'is-decided' : ''} key={index}><b>{bit}</b><span>{prefix}</span><small>{decided ? `「${currentDecodedHuffmanChar}」に決定` : '候補を絞る'}</small></div> : <div className="is-placeholder" aria-hidden="true" key={index} />; })}</div>
             <div className="decode-candidates"><span>現在残っている候補</span><div>{huffmanRows.map(([char, , code]) => { const possible = code.startsWith(currentDecodedPrefix); const decided = code === currentDecodedPrefix; return <i className={possible ? decided ? 'is-decided' : 'is-possible' : 'is-eliminated'} key={char}><b>{char}</b><code>{code}</code><small>{decided ? '確定' : possible ? '可能性あり' : '候補から外れた'}</small></i>; })}</div></div>
             <div className="step-buttons"><button type="button" disabled={huffmanDecodeStep === 0 && huffmanDecodeBitStep === 0} onClick={moveHuffmanDecodeBack}>← 1つ戻る</button><button type="button" disabled={huffmanDecodeStep === huffmanChars.length - 1 && isHuffmanCharacterDecided} onClick={moveHuffmanDecodeForward}>{isHuffmanCharacterDecided && huffmanDecodeStep < huffmanChars.length - 1 ? '次の文字へ →' : '次の1 bit →'}</button></div></div>
-            <div className="decode-result"><span>ここまでの復元結果</span><strong>{decodedHuffmanText}</strong><small>符号の区切りが一意に決まるので、元の13文字へ完全に戻せます。</small></div>
+            <div className="decode-result"><span>ここまでの復元結果</span><strong>{decodedHuffmanText}</strong><small>符号の区切りが一意に決まるので、元の{huffmanChars.length}文字へ完全に戻せます。</small></div>
           </div>}
 
-          <div className="huffman-summary"><div><span>全て固定長なら</span><strong>{huffmanChars.length * 3} bit</strong></div><i aria-hidden="true">→</i><div><span>この学習用符号の本体</span><strong>{huffmanEncoded.length} bit</strong></div></div>
-          <p className="data-caution">実際のファイルには、この対応表または木を復元するための情報も保存します。短いデータでは表の分だけ全体が増えることがあります。</p>
+          <div className="huffman-summary"><div><span>固定長なら：{huffmanChars.length}文字 × {huffmanModel.fixedBits} bit</span><strong>{huffmanChars.length * huffmanModel.fixedBits} bit</strong></div><i aria-hidden="true">→</i><div><span>{huffmanBasic ? 'この学習用符号の本体' : '入力から作ったハフマン符号の本体'}</span><strong>{huffmanEncoded.length} bit</strong></div></div>
+          <p className="data-caution">比較の元は、今回の{huffmanRows.length}種類を1文字{huffmanModel.fixedBits} bitの固定長符号で表した場合です（UTF-8のファイルサイズではありません）。実際には対応表や木の情報も必要です。回数が均等なら符号本体が小さくならない場合があり、短いデータでは表の分だけ全体が増えることがあります。</p>
         </div>}
       </div>
 

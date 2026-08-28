@@ -1,6 +1,37 @@
-type CodeRow = readonly [string, number, string];
+import type { CodeRow } from './compressionModels';
 
-export function PrefixCodeTree({ rows, step }: { rows: readonly CodeRow[]; step: number }) {
+function GeneratedPrefixTree({ rows, step }: { rows: readonly CodeRow[]; step: number }) {
+  const leafRows = [...rows].sort((a, b) => a[2] < b[2] ? -1 : 1);
+  const depth = Math.max(...rows.map(([, , code]) => code.length));
+  const selected = rows[step][2];
+  const assigned = rows.slice(0, step + 1).map(([, , code]) => code);
+  const positions = new Map<string, { x: number; y: number; row?: CodeRow }>();
+  const place = (prefix: string): number => {
+    const leafIndex = leafRows.findIndex(([, , code]) => code === prefix);
+    const y = leafIndex >= 0 ? 32 + leafIndex * 39 : (place(prefix + '0') + place(prefix + '1')) / 2;
+    positions.set(prefix, { x: 18 + prefix.length / depth * 135, y, row: leafIndex >= 0 ? leafRows[leafIndex] : undefined });
+    return y;
+  };
+  place('');
+  return <figure className="prefix-code-tree generated-prefix-tree">
+    <figcaption><b>入力から作った符号木</b><span>オレンジ＝今回 ／ 緑＝割り当て済み</span></figcaption>
+    <div className="tree-scroll" role="region" aria-label="符号木"><svg viewBox="0 0 330 305" role="img" aria-label={`割り当て${step + 1}。${rows.slice(0, step + 1).map(([char, , code]) => `${char}は${code}`).join('、')}。`}>
+      {Array.from(positions, ([prefix, node]) => {
+        const parent = positions.get(prefix.slice(0, -1));
+        const current = selected.startsWith(prefix);
+        const known = assigned.some((code) => code.startsWith(prefix));
+        const leafAssigned = node.row && assigned.includes(prefix);
+        return <g className={`tree-edge ${current ? 'is-current' : known ? 'is-assigned' : 'is-pending'}`} key={prefix}>
+          {prefix && parent && <><path d={`M${parent.x},${parent.y} L${node.x},${node.y}`} /><text className="generated-edge-bit" x={(parent.x + node.x) / 2 - 6} y={(parent.y + node.y) / 2 - 4}>{known ? prefix.at(-1) : '？'}</text></>}
+          {node.row ? <><rect x={node.x + 5} y={node.y - 14} width="157" height="29" rx="7" /><text className="tree-leaf-label" x={node.x + 12} y={node.y + 6}>{node.row[0]} = {leafAssigned ? prefix : '？'}</text></> : <circle className="tree-node" cx={node.x} cy={node.y} r="4" />}
+        </g>;
+      })}
+    </svg></div><p>開始から枝をたどり、葉までの0・1を読む。</p>
+  </figure>;
+}
+
+export function PrefixCodeTree({ rows, step, generated = false }: { rows: readonly CodeRow[]; step: number; generated?: boolean }) {
+  if (generated) return <GeneratedPrefixTree rows={rows} step={step} />;
   return <figure className="prefix-code-tree">
     <figcaption><b>符号木：枝の0・1をつなぐ</b><span>オレンジ＝今回 ／ 緑＝割り当て済み</span></figcaption>
     <div className="tree-scroll" role="region" aria-label="符号木">
