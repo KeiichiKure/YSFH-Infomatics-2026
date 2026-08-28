@@ -1465,7 +1465,7 @@ button, input { font: inherit; }
 .prefix-code-tree figcaption span, .prefix-code-tree p { color: var(--muted); font-size: 14px; line-height: 1.7; }
 .prefix-code-tree p { margin: 8px 0 0; }
 .tree-scroll { max-width: 100%; overflow-x: auto; }
-.prefix-code-tree svg { display: block; width: 100%; min-width: 570px; max-height: 480px; }
+.prefix-code-tree svg { display: block; width: 100%; height: auto; }
 .tree-edge { color: var(--teal); }
 .tree-edge path { fill: none; stroke: currentColor; stroke-width: 3; }
 .tree-edge text { fill: currentColor; font: 900 19px Consolas, monospace; }
@@ -1485,6 +1485,54 @@ button, input { font: inherit; }
 .video-difference-legend > i { flex: 0 0 35px; height: 35px; border: 1px solid #b9d0ca; border-radius: 4px; }
 .video-difference-legend p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.75; }
 .video-difference-legend b { color: var(--teal); }
+
+/* Keep the assignment reference and repeated-click controls in one workspace. */
+.huffman-assignment-visuals { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(230px, 1fr); align-items: start; gap: 12px; margin-top: 12px; }
+.huffman-assignment .step-card { min-height: 128px; margin-top: 0; padding: 10px 12px; gap: 2px; }
+.huffman-assignment .step-card p { font-size: 14px; line-height: 1.6; }
+.assignment-controls { align-items: center; margin-top: 10px; }
+.assignment-controls input { min-width: 0; width: 100%; accent-color: var(--coral); }
+.assignment-controls button { flex-shrink: 0; min-width: 104px; }
+.huffman-assignment .prefix-code-tree { margin: 0; padding: 8px; }
+.huffman-assignment .prefix-code-tree figcaption { gap: 0; }
+.huffman-assignment .prefix-code-tree figcaption span { font-size: 12px; }
+.huffman-assignment .prefix-code-tree p { margin: 0; font-size: 13px; }
+.assignment-code-table { min-width: 0; }
+.assignment-code-table .huffman-table-head, .assignment-code-table .huffman-table > div { grid-template-columns: 32px minmax(35px, 1fr) 110px; gap: 6px; }
+.assignment-code-table .huffman-table-head { margin: 0 8px 6px; font-size: 13px; }
+.assignment-code-table .huffman-table { gap: 5px; margin-top: 0; }
+.assignment-code-table .huffman-table > div { min-height: 41px; padding: 5px 8px; }
+.assignment-code-table .huffman-table code { flex-wrap: wrap; gap: 0 5px; font-size: 16px; }
+.assignment-code-table .huffman-table code small { font-size: 12px; }
+.assignment-footnote { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.assignment-footnote b { color: var(--teal); }
+.encoded-progress { margin-top: 14px; }
+.encoded-progress > span { color: var(--teal); font-size: 15px; font-weight: 900; }
+.encoded-progress .encoded-symbols { margin-top: 8px; }
+.encoded-progress .encoded-symbols i { min-width: 75px; min-height: 86px; }
+.encoded-progress .encoded-symbols small { color: var(--muted); font-size: 12px; }
+.encoded-progress .encoded-symbols i.is-current small { color: #853b27; font-weight: 900; }
+.encoded-progress .encoded-symbols i.is-waiting { border-style: dashed; background: #f7faf8; }
+.encoded-progress p { margin: 10px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+.encoded-progress p code { color: var(--teal); font: 900 17px Consolas, monospace; }
+.decode-step-stable .bit-reading { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 66px; }
+.decode-step-stable .bit-reading > div { min-width: 0; }
+.decode-step-stable .bit-reading > .is-placeholder { border-style: dashed; opacity: .45; }
+.decode-step-stable .decode-candidates > div { grid-auto-rows: 100px; }
+.huffman-stepper:has(.decode-step-stable) > .step-card { min-height: 94px; }
+.decode-step-stable .step-buttons { margin-top: 14px; }
+.decode-step-stable .step-buttons button { width: 140px; min-height: 44px; }
+.video-canvas-stack { position: relative; }
+.difference-markers { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.difference-markers g { color: #203553; }
+.difference-markers g.is-draw { color: #a5482f; }
+.difference-markers path { fill: none; stroke: currentColor; stroke-width: 2; }
+.difference-markers circle { fill: white; stroke: currentColor; stroke-width: 2; }
+.difference-markers text { fill: currentColor; font: 900 16px sans-serif; text-anchor: middle; }
+.difference-marker-key { display: grid; gap: 4px; padding: 9px 10px 0; font-size: 14px; }
+.difference-marker-key b { display: inline-grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; color: white; background: var(--ink); }
+.difference-marker-key span:nth-child(2) b { background: #a5482f; }
+.difference-marker-key small { color: var(--muted); font-size: 12px; }
 
 .image-lab-toolbar { display: grid; grid-template-columns: auto 1fr; gap: 14px; margin-top: 20px; }
 .image-lab-toolbar > div { display: grid; gap: 6px; padding: 8px; border-radius: 12px; background: #e7efec; }
@@ -1559,6 +1607,17 @@ button, input { font: inherit; }
 }
 @media (max-width: 620px) {
   .codec-lab, .format-choice-lab, .lossless-workbench, .keyframe-lab, .image-compression-lab, .compression-final-quiz { padding: 18px; }
+  .huffman-assignment-visuals { grid-template-columns: minmax(0, 1fr); }
+  .huffman-assignment .prefix-code-tree svg { min-width: 300px; }
+  .huffman-assignment .step-card, .huffman-stepper:has(.decode-step-stable) > .step-card { min-height: 200px; }
+  .huffman-assignment .step-card { min-height: 250px; }
+  .assignment-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .assignment-controls input { grid-column: 1 / -1; grid-row: 2; }
+  .assignment-controls button { min-width: 0; }
+  .decode-step-stable .bit-reading { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 92px; }
+  .decode-step-stable .bit-reading > div { grid-template-columns: 1fr; gap: 2px; padding: 5px; }
+  .decode-step-stable .bit-reading b { grid-row: auto; width: 28px; height: 28px; }
+  .decode-step-stable .step-buttons button { min-width: 0; width: 50%; font-size: 12px; }
   .method-tabs { grid-template-columns: 1fr 1fr; }
   .format-question fieldset > div { grid-template-columns: 1fr; }
   .lzw-layout, .huffman-summary, .keyframe-compare { grid-template-columns: 1fr; }

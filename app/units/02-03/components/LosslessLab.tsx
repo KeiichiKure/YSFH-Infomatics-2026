@@ -170,6 +170,7 @@ export function LosslessLab() {
   const currentHuffmanAssignment = huffmanRows[huffmanAssignStep];
   const currentHuffmanChar = huffmanChars[huffmanStep];
   const currentHuffmanCode = huffmanMap.get(currentHuffmanChar) ?? '';
+  const encodedHuffmanCodes = huffmanChars.slice(0, huffmanStep + 1).map((char) => huffmanMap.get(char) ?? '');
   const currentDecodedHuffmanChar = huffmanChars[huffmanDecodeStep];
   const currentDecodedHuffmanCode = huffmanMap.get(currentDecodedHuffmanChar) ?? '';
   const currentDecodedPrefix = currentDecodedHuffmanCode.slice(0, huffmanDecodeBitStep + 1);
@@ -286,16 +287,14 @@ export function LosslessLab() {
             {huffmanCountStep === huffmanChars.length - 1 && <button type="button" className="phase-next" onClick={() => setHuffmanPhase('assign')}>数え終わった → 符号を割り当てる</button>}
           </div>}
 
-          {huffmanPhase === 'assign' && <div className="step-experience">
-            <div className="assignment-guide"><b>枝をたどって、符号が区切れる理由を確かめる</b><span>ここでは1・2・3・4 bitなど長さの違いを体験できる学習用の符号木を使い、短い符号から割り当てます。実際のハフマン法は出現回数の少ないものを2つずつまとめて木を作ります。この例の木は、その最短の結果とは異なります。</span></div>
+          {huffmanPhase === 'assign' && <div className="step-experience huffman-assignment">
             <div className="step-card"><span>割り当て {huffmanAssignStep + 1} / {huffmanRows.length}</span><strong>「{currentHuffmanAssignment[0]}」＝ {currentHuffmanAssignment[2]}（{currentHuffmanAssignment[2].length} bit）</strong><p>{huffmanAssignmentReasons[huffmanAssignStep]}</p></div>
-            <input aria-label="ハフマン符号を割り当てる手順" type="range" min="0" max={huffmanRows.length - 1} value={huffmanAssignStep} onChange={(event) => setHuffmanAssignStep(Number(event.target.value))} />
-            <div className="step-buttons"><button type="button" disabled={huffmanAssignStep === 0} onClick={() => setHuffmanAssignStep((value) => Math.max(0, value - 1))}>← 前へ</button><button type="button" disabled={huffmanAssignStep >= huffmanRows.length - 1} onClick={() => setHuffmanAssignStep((value) => Math.min(huffmanRows.length - 1, value + 1))}>次へ →</button></div>
-            {huffmanAssignStep === huffmanRows.length - 1 && <button type="button" className="phase-next" onClick={() => { setHuffmanPhase('encode'); setHuffmanStep(0); }}>割り当て完了 → 圧縮する</button>}
-            <PrefixCodeTree rows={huffmanRows} step={huffmanAssignStep} />
-            <div className="huffman-table-head"><span>文字</span><span>出現回数</span><span>上から順に割り当てた符号</span></div>
-            <div className="huffman-table assignment-table" aria-label="ハフマン符号を割り当てる">{huffmanRows.map(([char, count, code], index) => <div className={index === huffmanAssignStep ? 'is-current' : index < huffmanAssignStep ? 'is-assigned' : 'is-waiting'} key={char}><b>{char}</b><span><i style={{ width: `${count / 4 * 100}%` }} />{count}回</span><code>{index <= huffmanAssignStep ? code : '？'}<small>{index <= huffmanAssignStep ? `${code.length} bit` : '未割当'}</small></code></div>)}</div>
-            <div className="prefix-rule three-branches"><span>なぜ0の次が10、その次が110なの？</span><div><code>0</code><p><b>「ま」で確定。</b>00や01は、最初の0だけで「ま」と読まれるため使えません。</p></div><div><code>10</code><p><b>「な」で確定。</b>100や101も、先頭の10で「な」と読まれるため使えません。</p></div><div><code>11…</code><p><b>残りの文字用の分岐。</b>11で確定すると残り5種類を置けないため、次の110を「ご」にします。</p></div><small>完成した表では、どの符号も別の符号の先頭部分になりません。これを接頭語条件といいます。</small></div>
+            <div className="assignment-controls step-buttons"><button type="button" disabled={huffmanAssignStep === 0} onClick={() => setHuffmanAssignStep((value) => Math.max(0, value - 1))}>← 前へ</button><input aria-label="ハフマン符号を割り当てる手順" type="range" min="0" max={huffmanRows.length - 1} value={huffmanAssignStep} onChange={(event) => setHuffmanAssignStep(Number(event.target.value))} /><button type="button" onClick={() => { if (huffmanAssignStep < huffmanRows.length - 1) setHuffmanAssignStep((value) => value + 1); else { setHuffmanPhase('encode'); setHuffmanStep(0); } }}>{huffmanAssignStep === huffmanRows.length - 1 ? '圧縮する →' : '次へ →'}</button></div>
+            <div className="huffman-assignment-visuals">
+              <PrefixCodeTree rows={huffmanRows} step={huffmanAssignStep} />
+              <div className="assignment-code-table"><div className="huffman-table-head"><span>文字</span><span>回数</span><span>対応する符号</span></div><div className="huffman-table assignment-table" aria-label="ハフマン符号の対応表">{huffmanRows.map(([char, count, code], index) => <div className={index === huffmanAssignStep ? 'is-current' : index < huffmanAssignStep ? 'is-assigned' : 'is-waiting'} key={char}><b>{char}</b><span><i style={{ width: `${count / 4 * 100}%` }} />{count}回</span><code>{index <= huffmanAssignStep ? code : '？'}<small>{index <= huffmanAssignStep ? `${code.length} bit` : '未割当'}</small></code></div>)}</div></div>
+            </div>
+            <p className="assignment-footnote"><b>確定した符号は、他の符号の先頭にしない（接頭語条件）。</b><br />長さの違いを体験する学習用の木です。実際のハフマン法では出現回数の少ないものを2つずつまとめるため、この例の木は最短の結果とは異なります。</p>
           </div>}
 
           {huffmanPhase === 'encode' && <div className="step-experience huffman-stepper">
@@ -304,7 +303,7 @@ export function LosslessLab() {
             <div className="step-card"><span>圧縮 {huffmanStep + 1} / {huffmanChars.length}</span><strong>「{currentHuffmanChar}」を <code>{currentHuffmanCode}</code> へ置き換える</strong><p>{currentHuffmanCode.length} bitの符号です。</p></div>
             <input aria-label="ハフマンで圧縮する文字" type="range" min="0" max={huffmanChars.length - 1} value={huffmanStep} onChange={(event) => setHuffmanStep(Number(event.target.value))} />
             <div className="step-buttons"><button type="button" disabled={huffmanStep === 0} onClick={() => setHuffmanStep((value) => Math.max(0, value - 1))}>← 前へ</button><button type="button" disabled={huffmanStep >= huffmanChars.length - 1} onClick={() => setHuffmanStep((value) => Math.min(huffmanChars.length - 1, value + 1))}>次へ →</button></div>
-            <div className="encoded-symbols">{huffmanChars.map((char, index) => <i className={index === huffmanStep ? 'is-current' : index < huffmanStep ? 'is-read' : ''} key={index}><b>{char}</b><code>{huffmanMap.get(char)}</code></i>)}</div>
+            <div className="encoded-progress"><span>ここまでに入力した符号</span><div className="encoded-symbols">{huffmanChars.map((char, index) => <i className={index === huffmanStep ? 'is-current' : index < huffmanStep ? 'is-read' : 'is-waiting'} key={index}><b>{char}</b><code>{index <= huffmanStep ? huffmanMap.get(char) : '　'}</code><small>{index === huffmanStep ? '今回入力' : index < huffmanStep ? '入力済み' : '未入力'}</small></i>)}</div><p>連続ビット列：<code>{encodedHuffmanCodes.join('')}</code></p></div>
             {huffmanStep === huffmanChars.length - 1 && <button type="button" className="phase-next" onClick={() => { setHuffmanPhase('decode'); setHuffmanDecodeStep(0); setHuffmanDecodeBitStep(0); }}>圧縮完了 → 復元する</button>}
           </div>}
 
@@ -313,9 +312,9 @@ export function LosslessLab() {
             <div ref={bitstreamRef} className="continuous-bitstream" tabIndex={0} role="region" aria-label="区切りのない圧縮ビット列。緑の枠は確定した符号だけ。"><code>{confirmedHuffmanCodes.map((code, index) => <span className="is-confirmed" key={index}>{code}</span>)}{unconfirmedPrefix && <span className="is-reading">{unconfirmedPrefix}</span>}{huffmanEncoded.slice(confirmedBitCount + unconfirmedPrefix.length)}</code></div>
             <p className="bitstream-legend">オレンジの下線＝今読んだビット。文字が確定したときだけ緑の枠が付きます。続きのビットは、まだ区切りません。横に入りきらない場合はスクロールできます。</p>
             <div className="step-card"><span>復元する文字 {huffmanDecodeStep + 1} / {huffmanChars.length} · {huffmanDecodeBitStep + 1} bit目</span><strong>{isHuffmanCharacterDecided ? `${currentDecodedPrefix}まで読むと候補が1つになり、「${currentDecodedHuffmanChar}」に決定。` : `${currentDecodedPrefix}まで読んだ。まだ候補が複数あるので、次の1 bitを読む。`}</strong></div>
-            <div className="bit-reading" aria-label="ハフマン符号を1ビットずつ読む">{Array.from(currentDecodedPrefix).map((bit, index) => { const prefix = currentDecodedPrefix.slice(0, index + 1); const decided = prefix === currentDecodedHuffmanCode; return <div className={decided ? 'is-decided' : ''} key={prefix}><b>{bit}</b><span>{prefix}</span><small>{decided ? `「${currentDecodedHuffmanChar}」に決定` : '候補を絞る'}</small></div>; })}</div>
+            <div className="decode-step-stable"><div className="bit-reading" aria-label="ハフマン符号を1ビットずつ読む">{Array.from({ length: 6 }, (_, index) => { const prefix = currentDecodedPrefix.slice(0, index + 1); const bit = currentDecodedPrefix[index]; const decided = prefix === currentDecodedHuffmanCode; return bit ? <div className={decided ? 'is-decided' : ''} key={index}><b>{bit}</b><span>{prefix}</span><small>{decided ? `「${currentDecodedHuffmanChar}」に決定` : '候補を絞る'}</small></div> : <div className="is-placeholder" aria-hidden="true" key={index} />; })}</div>
             <div className="decode-candidates"><span>現在残っている候補</span><div>{huffmanRows.map(([char, , code]) => { const possible = code.startsWith(currentDecodedPrefix); const decided = code === currentDecodedPrefix; return <i className={possible ? decided ? 'is-decided' : 'is-possible' : 'is-eliminated'} key={char}><b>{char}</b><code>{code}</code><small>{decided ? '確定' : possible ? '可能性あり' : '候補から外れた'}</small></i>; })}</div></div>
-            <div className="step-buttons"><button type="button" disabled={huffmanDecodeStep === 0 && huffmanDecodeBitStep === 0} onClick={moveHuffmanDecodeBack}>← 1つ戻る</button><button type="button" disabled={huffmanDecodeStep === huffmanChars.length - 1 && isHuffmanCharacterDecided} onClick={moveHuffmanDecodeForward}>{isHuffmanCharacterDecided && huffmanDecodeStep < huffmanChars.length - 1 ? '次の文字へ →' : '次の1 bit →'}</button></div>
+            <div className="step-buttons"><button type="button" disabled={huffmanDecodeStep === 0 && huffmanDecodeBitStep === 0} onClick={moveHuffmanDecodeBack}>← 1つ戻る</button><button type="button" disabled={huffmanDecodeStep === huffmanChars.length - 1 && isHuffmanCharacterDecided} onClick={moveHuffmanDecodeForward}>{isHuffmanCharacterDecided && huffmanDecodeStep < huffmanChars.length - 1 ? '次の文字へ →' : '次の1 bit →'}</button></div></div>
             <div className="decode-result"><span>ここまでの復元結果</span><strong>{decodedHuffmanText}</strong><small>符号の区切りが一意に決まるので、元の13文字へ完全に戻せます。</small></div>
           </div>}
 

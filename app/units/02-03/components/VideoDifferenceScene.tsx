@@ -72,6 +72,12 @@ function framePixels(frame: number) {
 export function VideoDifferenceScene({ frame }: { frame: number }) {
   const playback = useRef<HTMLCanvasElement>(null);
   const difference = useRef<HTMLCanvasElement>(null);
+  const changeMarkers = frame === 1 ? [] : [
+    { kind: 'restore', label: '1', x: 70 + (frame - 1) * 25, y: 239, dx: -28, dy: -23 },
+    { kind: 'draw', label: '2', x: 70 + frame * 25, y: 239, dx: 28, dy: -23 },
+    ...(frame > 3 ? [{ kind: 'restore', label: '1', x: 441 - (frame - 4) * 45, y: 44 + ((frame - 1) % 3) * 5, dx: 0, dy: 28 }] : []),
+    ...(frame >= 3 ? [{ kind: 'draw', label: '2', x: 441 - (frame - 3) * 45, y: 44 + (frame % 3) * 5, dx: 0, dy: 28 }] : []),
+  ];
 
   useEffect(() => {
     const playbackContext = playback.current?.getContext('2d');
@@ -109,7 +115,10 @@ export function VideoDifferenceScene({ frame }: { frame: number }) {
     <i aria-hidden="true">←</i>
     <div className="video-scene-frame is-difference">
       <span>{frame === 1 ? '保存するもの：全体' : `フレーム${frame}で保存する差分`}</span>
-      <canvas ref={difference} width={width} height={height} role="img" aria-label={frame === 1 ? '家と木を含む全体を保存。' : frame === 8 ? '空と地面の色が変化。家と木の場所は網目になり、更新しない。人と鳥の移動前後も差分として保存。' : '動いた人と鳥の新しい姿と、移動前の場所を背景へ戻す差分。家と木は更新しない。'} />
+      <div className="video-canvas-stack"><canvas ref={difference} width={width} height={height} role="img" aria-label={frame === 1 ? '家と木を含む全体を保存。' : `1は移動前の場所を背景色に戻す変更。2は移動先の${frame >= 3 ? '人と鳥' : '人'}。2人・2羽を保存しているのではありません。家と木は更新しません。`} />
+        {frame > 1 && <svg className="difference-markers" viewBox="0 0 480 280" aria-hidden="true">{changeMarkers.map(({ kind, label, x, y, dx, dy }, index) => <g className={`is-${kind}`} key={index}><path d={`M${x},${y} L${x + dx},${y + dy}`} /><circle cx={x + dx} cy={y + dy} r="12" /><text x={x + dx} y={y + dy + 5}>{label}</text></g>)}</svg>}
+      </div>
+      {frame > 1 && <div className="difference-marker-key"><span><b>1</b> 移動前を背景色に戻す</span><span><b>2</b> 移動先の姿を描く</span><small>番号と線は説明用です。保存データには含みません。</small></div>}
       <p>{frame === 1 ? 'キーフレームには家・木も含む' : frame === 8 ? '家・木の場所は網目＝上書きしない' : '移動先と、移動前の場所の変化だけ'}</p>
     </div>
   </div>;
