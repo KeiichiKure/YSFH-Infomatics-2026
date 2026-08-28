@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { PrefixCodeTree } from './PrefixCodeTree';
+import { VideoDifferenceScene } from './VideoDifferenceScene';
 
 type Method = 'rle' | 'lz' | 'lzw' | 'huffman';
 type HuffmanPhase = 'count' | 'assign' | 'encode' | 'decode';
@@ -128,7 +130,7 @@ const huffmanAssignmentReasons = [
   '1回の文字は、まだ文字が決まらない「111」の枝を使い、「む」を4 bitの1110にする。',
   '1110は「む」で確定したため使えない。残る1111の枝で「ぎ」を5 bitの11110にする。',
   '11110は「ぎ」で確定したため、残りは11111の枝へ進む。「め」を111110にする。',
-  '最後の「た」を111111へ。4 bitも使えますが、7種類すべてを重ならず収めるため最後の2文字は6 bitになります。',
+  '最後の「た」は、残った枝の111111（6 bit）へ。この割り当てでは4 bitは使えません。1110は「む」で確定し、1111は「ぎ・め・た」へ続く分岐なので、途中で「た」と確定させると他の符号を読めなくなります。',
 ];
 const huffmanMap = new Map<string, string>(huffmanRows.map(([symbol, , code]) => [symbol, code]));
 const huffmanEncoded = Array.from(huffmanSource).map((char) => huffmanMap.get(char) ?? '').join('');
@@ -146,6 +148,7 @@ export function LosslessLab() {
   const [huffmanStep, setHuffmanStep] = useState(0);
   const [huffmanDecodeStep, setHuffmanDecodeStep] = useState(0);
   const [huffmanDecodeBitStep, setHuffmanDecodeBitStep] = useState(0);
+  const bitstreamRef = useRef<HTMLDivElement>(null);
   const [frame, setFrame] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const rleGroups = useMemo(() => runLengthEncode(rleInput), [rleInput]);
@@ -159,6 +162,7 @@ export function LosslessLab() {
   const lzwDecoded = useMemo(() => decodeLzw(lzw.output, lzw.initial), [lzw]);
   const currentLzwStep = lzw.steps[lzwStep];
   const currentLzwDecodeStep = lzwDecoded[lzwDecodeStep];
+  const hasNewLzwOutput = currentLzwStep.outputAfter.length > (lzw.steps[lzwStep - 1]?.outputAfter.length ?? 0);
   const additionsAtStep = lzw.steps.slice(0, lzwStep + 1).flatMap((step) => step.added ? [step.added] : []);
   const huffmanChars = Array.from(huffmanSource);
   const countedHuffmanChars = huffmanChars.slice(0, huffmanCountStep + 1);
@@ -171,17 +175,25 @@ export function LosslessLab() {
   const currentDecodedPrefix = currentDecodedHuffmanCode.slice(0, huffmanDecodeBitStep + 1);
   const isHuffmanCharacterDecided = currentDecodedPrefix === currentDecodedHuffmanCode;
   const decodedHuffmanText = huffmanChars.slice(0, huffmanDecodeStep).join('') + (isHuffmanCharacterDecided ? currentDecodedHuffmanChar : '');
-  const birdVisible = frame >= 3;
-  const isEvening = frame >= 8;
-  const isFullFrame = frame === 1;
-  const personLeft = 18 + frame * 5;
-  const birdLeft = 96 - (frame - 3) * 11;
+  const confirmedHuffmanCount = huffmanDecodeStep + (isHuffmanCharacterDecided ? 1 : 0);
+  const confirmedHuffmanCodes = huffmanChars.slice(0, confirmedHuffmanCount).map((char) => huffmanMap.get(char) ?? '');
+  const confirmedBitCount = confirmedHuffmanCodes.join('').length;
+  const unconfirmedPrefix = isHuffmanCharacterDecided ? '' : currentDecodedPrefix;
 
   useEffect(() => {
     if (!isPlaying) return;
     const timer = window.setInterval(() => setFrame((current) => current >= 10 ? 1 : current + 1), 650);
     return () => window.clearInterval(timer);
   }, [isPlaying]);
+
+  useEffect(() => {
+    const stream = bitstreamRef.current;
+    const active = stream?.querySelector('.is-reading') ?? stream?.querySelector('.is-confirmed:last-child');
+    if (!stream || !active) return;
+    const activeBounds = active.getBoundingClientRect();
+    const streamBounds = stream.getBoundingClientRect();
+    stream.scrollLeft += activeBounds.left - streamBounds.left - stream.clientWidth / 2;
+  }, [huffmanPhase, huffmanDecodeStep, huffmanDecodeBitStep, method]);
 
   const moveHuffmanDecodeForward = () => {
     if (huffmanDecodeBitStep < currentDecodedHuffmanCode.length - 1) {
@@ -234,6 +246,8 @@ export function LosslessLab() {
         {method === 'lzw' && <div className="method-panel" role="tabpanel">
           <div className="method-copy"><span>文字の並びを辞書へ登録</span><h4>辞書が育つ手順を1つずつ見る</h4><p><code>{lzwSource}</code> を左から読みます。最初はAとBだけの辞書から始め、見つけた並びへ新しい番号を付けます。</p></div>
           <div className="initial-dictionary"><span>最初から共有する辞書</span>{lzw.initial.map((item) => <i key={item.code}><b>{item.code}</b>{item.text}</i>)}</div>
+          <div className="lzw-rules"><h5>操作の前に：辞書を作る約束</h5><p>圧縮側も復元側も <b>1＝A、2＝B</b> から出発。新しい並びは <b>3、4、5…の順</b> に登録します。</p><ol><li><b>圧縮側：</b>「今のかたまり＋次の1文字」が辞書になければ、今のかたまりの番号を出力し、その新しい並びを登録。辞書にあれば、さらに1文字先まで調べます。最後は残ったかたまりの番号を出力します。</li><li><b>復元側：</b>番号から文字列を戻した後、<b>「前に復元したかたまり＋今回復元したかたまりの先頭1文字」</b>を登録。最初の番号では、前のかたまりがないので登録しません。</li></ol><p className="rule-example">例：前が A、今回が B → 3＝AB を登録。次に、前が B、今回が AB → 4＝BA を登録。</p><small>まだ辞書にない「次の登録番号」が来た場合だけ、「前のかたまり＋その先頭1文字」で復元します。この例の番号5で体験できます。</small></div>
+          <p className="current-action-legend">オレンジの枠と「今回」の表示＝その手順で新しく行ったこと。前の手順の結果は残して表示します。</p>
           <div className="step-experience lzw-stage">
             <span className="experience-label">オレンジの囲みが、今調べている並び</span>
             <div className="source-progress" aria-label="LZWで読む文字列">{Array.from(lzwSource).map((char, index) => {
@@ -243,7 +257,7 @@ export function LosslessLab() {
             <div className="step-card"><span>手順 {lzwStep + 1} / {lzw.steps.length}</span><strong>{currentLzwStep.action}</strong><p>いま調べる並び：<code>{currentLzwStep.joined}</code></p></div>
             <input aria-label="LZW圧縮の手順" type="range" min="0" max={lzw.steps.length - 1} value={lzwStep} onChange={(event) => setLzwStep(Number(event.target.value))} />
             <div className="step-buttons"><button type="button" disabled={lzwStep === 0} onClick={() => setLzwStep((value) => Math.max(0, value - 1))}>← 前へ</button><button type="button" disabled={lzwStep >= lzw.steps.length - 1} onClick={() => setLzwStep((value) => Math.min(lzw.steps.length - 1, value + 1))}>次へ →</button></div>
-            <div className="dictionary-growth"><div><span>ここまでに追加した辞書</span><p>{additionsAtStep.length ? additionsAtStep.map((item) => <i key={item.code}><b>{item.code}</b>{item.text}</i>) : 'まだ追加されていません'}</p></div><div><span>ここまでに出力した番号</span><code>{currentLzwStep.outputAfter.join('・') || 'まだ出力していません'}</code></div></div>
+            <div className="dictionary-growth"><div><span>ここまでに追加した辞書</span><p>{additionsAtStep.length ? additionsAtStep.map((item) => <i className={currentLzwStep.added?.code === item.code ? 'is-new' : ''} key={item.code}><b>{item.code}</b>{item.text}{currentLzwStep.added?.code === item.code && <small>今回追加</small>}</i>) : 'まだ追加されていません'}</p><small>{currentLzwStep.added ? `今回：${currentLzwStep.added.code}＝${currentLzwStep.added.text}を登録` : '今回は辞書を追加しません'}</small></div><div><span>ここまでに出力した番号</span><div className="lzw-emitted-codes">{currentLzwStep.outputAfter.map((code, index) => <i className={hasNewLzwOutput && index === currentLzwStep.outputAfter.length - 1 ? 'is-new' : ''} key={index}><b>{code}</b>{hasNewLzwOutput && index === currentLzwStep.outputAfter.length - 1 && <small>今回出力</small>}</i>)}</div><small>{hasNewLzwOutput ? `今回：番号${currentLzwStep.outputAfter.at(-1)}を出力` : '今回はまだ番号を出しません'}</small></div></div>
           </div>
           <div className="dictionary-answer"><span>追加した辞書そのものは送らなくてよい</span><p>受信側も同じ初期辞書と同じ規則を使い、コードを読むたびに同じ順番で辞書を作れます。実際のファイルには、辞書の初期状態・番号のビット幅・リセット規則などを示す情報が必要です。</p></div>
           <div className="decode-lab">
@@ -252,8 +266,8 @@ export function LosslessLab() {
             <div className="step-card"><span>復元 {lzwDecodeStep + 1} / {lzwDecoded.length} · {currentLzwDecodeStep.kind === 'read' ? '番号を読む' : '辞書へ登録'}</span><strong>{currentLzwDecodeStep.action}</strong>{currentLzwDecodeStep.kind === 'read' && <p>番号 <code>{currentLzwDecodeStep.code}</code> → 文字列 <code>{currentLzwDecodeStep.text}</code></p>}</div>
             <input aria-label="LZW復元の手順" type="range" min="0" max={lzwDecoded.length - 1} value={lzwDecodeStep} onChange={(event) => setLzwDecodeStep(Number(event.target.value))} />
             <div className="step-buttons"><button type="button" disabled={lzwDecodeStep === 0} onClick={() => setLzwDecodeStep((value) => Math.max(0, value - 1))}>← 前へ</button><button type="button" disabled={lzwDecodeStep >= lzwDecoded.length - 1} onClick={() => setLzwDecodeStep((value) => Math.min(lzwDecoded.length - 1, value + 1))}>次へ →</button></div>
-            <div className="decode-dictionary"><span>復元側で育てる辞書</span><div>{currentLzwDecodeStep.dictionary.map((item) => <i className={currentLzwDecodeStep.added?.code === item.code ? 'is-new' : item.code <= 2 ? 'is-initial' : ''} key={item.code}><b>{item.code}</b><em>{item.text}</em><small>{item.code <= 2 ? '初期辞書' : '自動追加'}</small></i>)}</div></div>
-            <div className="decode-result"><span>ここまでの復元結果</span><strong>{currentLzwDecodeStep.result}</strong><small>{currentLzwDecodeStep.kind === 'add' ? `「前のかたまり＋今回の先頭文字」という共通規則で、辞書${currentLzwDecodeStep.added?.code}を追加しました。` : '番号を辞書で文字列へ置き換え、復元結果へつなぎます。'}</small></div>
+            <div className="decode-dictionary"><span>復元側で育てる辞書</span><div>{currentLzwDecodeStep.dictionary.map((item) => <i className={currentLzwDecodeStep.added?.code === item.code ? 'is-new' : item.code <= 2 ? 'is-initial' : ''} key={item.code}><b>{item.code}</b><em>{item.text}</em><small>{currentLzwDecodeStep.added?.code === item.code ? '今回追加' : item.code <= 2 ? '初期辞書' : '追加済み'}</small></i>)}</div><small>{currentLzwDecodeStep.kind === 'add' ? `今回：${currentLzwDecodeStep.added?.code}＝${currentLzwDecodeStep.added?.text}を登録` : 'この手順は番号を読むだけ。辞書はまだ追加しません。'}</small></div>
+            <div className="decode-result"><span>ここまでの復元結果</span><strong>{currentLzwDecodeStep.kind === 'read' ? <>{currentLzwDecodeStep.result.slice(0, -currentLzwDecodeStep.text.length)}<mark className="current-decoded-text">{currentLzwDecodeStep.text}</mark></> : currentLzwDecodeStep.result}</strong><small>{currentLzwDecodeStep.kind === 'add' ? '今回は辞書だけを追加。復元結果の文字列は変わりません。' : `今回復元：${currentLzwDecodeStep.text}（オレンジの枠）を後ろにつなぎました。`}</small></div>
           </div>
           <div className="compression-size-result"><span>この短い例の結果</span><code>出力する番号：{lzw.output.join('・')}</code><div><b>元：7文字 × 8 ＝ 56 bit</b><i>→</i><strong>番号部分：{lzw.output.length}個 × {lzw.codeBits} ＝ {lzw.output.length * lzw.codeBits} bit</strong></div><small>これは番号部分だけの値です。辞書の約束やヘッダーを含めると、この短い例では全体が増えることがあります。ここでは辞書を育てる仕組みを理解することが目的です。</small></div>
         </div>}
@@ -273,17 +287,19 @@ export function LosslessLab() {
           </div>}
 
           {huffmanPhase === 'assign' && <div className="step-experience">
-            <div className="assignment-guide"><b>回数が少ない文字から枝をまとめる</b><span>できた枝を逆にたどると、回数が多い文字ほど短い符号になります。ここでは短い符号から順に表へ書き込みます。</span></div>
-            <div className="huffman-table-head"><span>文字</span><span>出現回数</span><span>上から順に割り当てた符号</span></div>
-            <div className="huffman-table assignment-table" aria-label="ハフマン符号を割り当てる">{huffmanRows.map(([char, count, code], index) => <div className={index === huffmanAssignStep ? 'is-current' : index < huffmanAssignStep ? 'is-assigned' : 'is-waiting'} key={char}><b>{char}</b><span><i style={{ width: `${count / 4 * 100}%` }} />{count}回</span><code>{index <= huffmanAssignStep ? code : '？'}<small>{index <= huffmanAssignStep ? `${code.length} bit` : '未割当'}</small></code></div>)}</div>
+            <div className="assignment-guide"><b>枝をたどって、符号が区切れる理由を確かめる</b><span>ここでは1・2・3・4 bitなど長さの違いを体験できる学習用の符号木を使い、短い符号から割り当てます。実際のハフマン法は出現回数の少ないものを2つずつまとめて木を作ります。この例の木は、その最短の結果とは異なります。</span></div>
             <div className="step-card"><span>割り当て {huffmanAssignStep + 1} / {huffmanRows.length}</span><strong>「{currentHuffmanAssignment[0]}」＝ {currentHuffmanAssignment[2]}（{currentHuffmanAssignment[2].length} bit）</strong><p>{huffmanAssignmentReasons[huffmanAssignStep]}</p></div>
             <input aria-label="ハフマン符号を割り当てる手順" type="range" min="0" max={huffmanRows.length - 1} value={huffmanAssignStep} onChange={(event) => setHuffmanAssignStep(Number(event.target.value))} />
             <div className="step-buttons"><button type="button" disabled={huffmanAssignStep === 0} onClick={() => setHuffmanAssignStep((value) => Math.max(0, value - 1))}>← 前へ</button><button type="button" disabled={huffmanAssignStep >= huffmanRows.length - 1} onClick={() => setHuffmanAssignStep((value) => Math.min(huffmanRows.length - 1, value + 1))}>次へ →</button></div>
             {huffmanAssignStep === huffmanRows.length - 1 && <button type="button" className="phase-next" onClick={() => { setHuffmanPhase('encode'); setHuffmanStep(0); }}>割り当て完了 → 圧縮する</button>}
+            <PrefixCodeTree rows={huffmanRows} step={huffmanAssignStep} />
+            <div className="huffman-table-head"><span>文字</span><span>出現回数</span><span>上から順に割り当てた符号</span></div>
+            <div className="huffman-table assignment-table" aria-label="ハフマン符号を割り当てる">{huffmanRows.map(([char, count, code], index) => <div className={index === huffmanAssignStep ? 'is-current' : index < huffmanAssignStep ? 'is-assigned' : 'is-waiting'} key={char}><b>{char}</b><span><i style={{ width: `${count / 4 * 100}%` }} />{count}回</span><code>{index <= huffmanAssignStep ? code : '？'}<small>{index <= huffmanAssignStep ? `${code.length} bit` : '未割当'}</small></code></div>)}</div>
             <div className="prefix-rule three-branches"><span>なぜ0の次が10、その次が110なの？</span><div><code>0</code><p><b>「ま」で確定。</b>00や01は、最初の0だけで「ま」と読まれるため使えません。</p></div><div><code>10</code><p><b>「な」で確定。</b>100や101も、先頭の10で「な」と読まれるため使えません。</p></div><div><code>11…</code><p><b>残りの文字用の分岐。</b>11で確定すると残り5種類を置けないため、次の110を「ご」にします。</p></div><small>完成した表では、どの符号も別の符号の先頭部分になりません。これを接頭語条件といいます。</small></div>
           </div>}
 
           {huffmanPhase === 'encode' && <div className="step-experience huffman-stepper">
+            <div className="encoding-codebook"><span>割り当てられた符号：この表を見て置き換えよう</span><div>{huffmanRows.map(([char, , code]) => <i className={char === currentHuffmanChar ? 'is-current' : ''} key={char}><b>{char}</b><code>{code}</code><small>{code.length} bit</small></i>)}</div></div>
             <div className="huffman-source"><span>圧縮前の文字列（13文字）</span><div className="huffman-source-characters compact">{huffmanChars.map((char, index) => <i className={index === huffmanStep ? 'is-current' : index < huffmanStep ? 'is-read' : ''} key={index}>{char}</i>)}</div><small>完成した符号表どおりに、1文字ずつ0と1へ置き換えます。</small></div>
             <div className="step-card"><span>圧縮 {huffmanStep + 1} / {huffmanChars.length}</span><strong>「{currentHuffmanChar}」を <code>{currentHuffmanCode}</code> へ置き換える</strong><p>{currentHuffmanCode.length} bitの符号です。</p></div>
             <input aria-label="ハフマンで圧縮する文字" type="range" min="0" max={huffmanChars.length - 1} value={huffmanStep} onChange={(event) => setHuffmanStep(Number(event.target.value))} />
@@ -294,7 +310,8 @@ export function LosslessLab() {
 
           {huffmanPhase === 'decode' && <div className="step-experience huffman-stepper">
             <span className="experience-label">実際のビット列には区切りがありません。左から符号表と照らして読みます。</span>
-            <div className="encoded-symbols decode-stream">{huffmanChars.map((char, index) => <i className={index === huffmanDecodeStep ? 'is-current' : index < huffmanDecodeStep ? 'is-read' : ''} key={index}><code>{huffmanMap.get(char)}</code></i>)}</div>
+            <div ref={bitstreamRef} className="continuous-bitstream" tabIndex={0} role="region" aria-label="区切りのない圧縮ビット列。緑の枠は確定した符号だけ。"><code>{confirmedHuffmanCodes.map((code, index) => <span className="is-confirmed" key={index}>{code}</span>)}{unconfirmedPrefix && <span className="is-reading">{unconfirmedPrefix}</span>}{huffmanEncoded.slice(confirmedBitCount + unconfirmedPrefix.length)}</code></div>
+            <p className="bitstream-legend">オレンジの下線＝今読んだビット。文字が確定したときだけ緑の枠が付きます。続きのビットは、まだ区切りません。横に入りきらない場合はスクロールできます。</p>
             <div className="step-card"><span>復元する文字 {huffmanDecodeStep + 1} / {huffmanChars.length} · {huffmanDecodeBitStep + 1} bit目</span><strong>{isHuffmanCharacterDecided ? `${currentDecodedPrefix}まで読むと候補が1つになり、「${currentDecodedHuffmanChar}」に決定。` : `${currentDecodedPrefix}まで読んだ。まだ候補が複数あるので、次の1 bitを読む。`}</strong></div>
             <div className="bit-reading" aria-label="ハフマン符号を1ビットずつ読む">{Array.from(currentDecodedPrefix).map((bit, index) => { const prefix = currentDecodedPrefix.slice(0, index + 1); const decided = prefix === currentDecodedHuffmanCode; return <div className={decided ? 'is-decided' : ''} key={prefix}><b>{bit}</b><span>{prefix}</span><small>{decided ? `「${currentDecodedHuffmanChar}」に決定` : '候補を絞る'}</small></div>; })}</div>
             <div className="decode-candidates"><span>現在残っている候補</span><div>{huffmanRows.map(([char, , code]) => { const possible = code.startsWith(currentDecodedPrefix); const decided = code === currentDecodedPrefix; return <i className={possible ? decided ? 'is-decided' : 'is-possible' : 'is-eliminated'} key={char}><b>{char}</b><code>{code}</code><small>{decided ? '確定' : possible ? '可能性あり' : '候補から外れた'}</small></i>; })}</div></div>
@@ -302,7 +319,7 @@ export function LosslessLab() {
             <div className="decode-result"><span>ここまでの復元結果</span><strong>{decodedHuffmanText}</strong><small>符号の区切りが一意に決まるので、元の13文字へ完全に戻せます。</small></div>
           </div>}
 
-          <div className="huffman-summary"><div><span>全て固定長なら</span><strong>{huffmanChars.length * 3} bit</strong></div><i aria-hidden="true">→</i><div><span>ハフマン符号の本体</span><strong>{huffmanEncoded.length} bit</strong></div></div>
+          <div className="huffman-summary"><div><span>全て固定長なら</span><strong>{huffmanChars.length * 3} bit</strong></div><i aria-hidden="true">→</i><div><span>この学習用符号の本体</span><strong>{huffmanEncoded.length} bit</strong></div></div>
           <p className="data-caution">実際のファイルには、この対応表または木を復元するための情報も保存します。短いデータでは表の分だけ全体が増えることがあります。</p>
         </div>}
       </div>
@@ -310,12 +327,9 @@ export function LosslessLab() {
       <div className="keyframe-lab">
         <div className="lab-heading"><div><p className="step-label">KEYFRAME &amp; DIFFERENCE</p><h3>動画は変化した部分だけを保存</h3></div><span className="print-badge"><small>プリント</small><b>13</b></span></div>
         <div className="frame-timeline"><div className="frame-step-buttons"><button type="button" disabled={frame === 1} onClick={() => { setFrame((value) => Math.max(1, value - 1)); setIsPlaying(false); }}>← 前へ</button><button type="button" className={isPlaying ? 'is-playing' : ''} onClick={() => setIsPlaying((value) => !value)}>{isPlaying ? '一時停止' : '▶ 再生'}</button><button type="button" disabled={frame === 10} onClick={() => { setFrame((value) => Math.min(10, value + 1)); setIsPlaying(false); }}>次へ →</button></div><label><span>フレーム <output>{frame} / 10</output></span><input aria-label="動画のフレーム" type="range" min="1" max="10" value={frame} onChange={(event) => { setFrame(Number(event.target.value)); setIsPlaying(false); }} /></label></div>
-        <div className="keyframe-compare">
-          <div className={`mini-frame ${isEvening ? 'is-evening' : ''}`}><span>{frame === 1 ? 'キーフレーム：昼の全体' : frame === 8 ? '再生時の画面8：夕方へ変化' : `再生時の画面 ${frame}`}</span><i className="mini-house" /><i className="mini-tree" /><i className="mini-person" style={{ left: `${personLeft}%` }} />{birdVisible && <i className="mini-bird" style={{ left: `${birdLeft}%`, top: `${20 + (frame % 3) * 4}%` }} />}</div>
-          <i aria-hidden="true">→</i>
-          <div className={`mini-frame difference frame-${frame} ${frame === 8 ? 'is-evening-change' : ''}`}><span>{isFullFrame ? `フレーム${frame}：キーフレーム` : `フレーム${frame}：差分だけ`}</span>{isFullFrame && <><i className="mini-house" /><i className="mini-tree" /></>}<i className="difference-person" style={{ left: `${personLeft}%` }} />{birdVisible && <i className="mini-bird difference-bird" style={{ left: `${birdLeft}%`, top: `${20 + (frame % 3) * 4}%` }} />}<b>{frame === 1 ? '最初だけ全体を保存' : frame === 8 ? '変化した空・地面＋人・鳥を保存（家・木は保存しない）' : birdVisible ? '人と鳥の位置だけを保存' : '人の位置だけを保存'}</b></div>
-        </div>
-        <p className="teacher-note">フレーム1だけをキーフレームとして全体保存し、ほかは変化した部分だけを保存します。フレーム8では夕方へ変わった空・地面と、動いた人・鳥が差分です。変化していない家と木は保存しません。</p>
+        <VideoDifferenceScene frame={frame} />
+        <div className="video-difference-legend"><i aria-hidden="true" /><p><b>網目の場所＝差分なし。「消す」ではなく「上書きしない」</b><br />家・木の場所には前の画面がそのまま残ります。フレーム8で空と地面だけが夕方になり、9・10でも家と木は消えません。差分にある空色の鳥の跡・地面色の人の跡は、移動前の場所を背景へ戻すための変更です。</p></div>
+        <p className="teacher-note">フレーム1だけをキーフレームとして全体保存し、以降は直前の画面から変化した画素だけを保存する学習モデルです。人や鳥がいた場所を背景へ戻す変更も含みます。左は、キーフレームへ差分を順に重ねて実際に復元した画面です。</p>
       </div>
     </section>
   );
