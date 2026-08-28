@@ -12,7 +12,8 @@
     "build:sites": "vinext build",
     "start": "next start",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "test:compression": "node --experimental-strip-types --test tests/compression-models.test.mjs"
+    "test:compression": "node --experimental-strip-types --test tests/compression-models.test.mjs",
+    "test:hardware": "node --experimental-strip-types --test tests/hardware-software-models.test.mjs"
   },
   "dependencies": {
     "encoding-japanese": "^2.2.0",
