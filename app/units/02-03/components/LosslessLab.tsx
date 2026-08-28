@@ -185,13 +185,31 @@ export function LosslessLab() {
         </div>}
 
         {method === 'lzw' && <div className="method-panel" role="tabpanel">
-          <CompressionTextInput method="lzw" example={lzwExample} activeText={lzwSource} isBasic={lzwBasic} onApply={applyLzwInput} />
-          <div className="method-copy"><span>文字の並びを辞書へ登録</span><h4>辞書が育つ手順を1つずつ見る</h4><p><code>{lzwSource}</code> を左から読みます。入力に使う文字だけの初期辞書から始め、見つけた並びへ新しい番号を付けます。</p></div>
-          <div className="initial-dictionary"><span>最初から共有する辞書</span>{lzw.initial.map((item) => <i key={item.code}><b>{item.code}</b>{item.text}</i>)}</div>
-          <div className="lzw-rules"><h5>操作の前に：辞書を作る約束</h5><p>圧縮側も復元側も <b>{lzwInitialText}</b> から出発。新しい並びは <b>{lzw.initial.length + 1}、{lzw.initial.length + 2}、{lzw.initial.length + 3}…の順</b> に登録します。</p><ol><li><b>圧縮側：</b>「今のかたまり＋次の1文字」が辞書になければ、今のかたまりの番号を出力し、その新しい並びを登録。辞書にあれば、さらに1文字先まで調べます。最後は残ったかたまりの番号を出力します。</li><li><b>復元側：</b>番号から文字列を戻した後、<b>「前に復元したかたまり＋今回復元したかたまりの先頭1文字」</b>を登録。最初の番号では、前のかたまりがないので登録しません。</li></ol>{lzwBasic && <p className="rule-example">例：前が A、今回が B → 3＝AB を登録。次に、前が B、今回が AB → 4＝BA を登録。</p>}<small>{specialLzwCode ? `番号${specialLzwCode}のように、まだ辞書にない「次の登録番号」が届く場合があります。下の復元では、登録待ちの中身を3段階で推論してから復元します。` : '今回の入力では未登録番号の推論は登場しません。「基本例に戻す」で、番号5の中身を推論する手順も体験できます。'}</small></div>
-          <p className="current-action-legend">オレンジの枠と「今回」の表示＝その手順で新しく行ったこと。前の手順の結果は残して表示します。</p>
+          <section className="lzw-rules" aria-labelledby="lzw-rules-title">
+            <h4 id="lzw-rules-title">操作の前に：辞書を作る約束</h4>
+            <div className="lzw-shared-rule">
+              <div className="initial-dictionary"><span>共通の初期辞書</span>{lzw.initial.map((item) => <i key={item.code}><b>{item.code}</b>{item.text}</i>)}<strong>追加は {lzw.initial.length + 1}、{lzw.initial.length + 2}、{lzw.initial.length + 3}… の順</strong></div>
+              <p>使う文字を A → B → C の順に番号付け。圧縮・復元で同じ辞書から始めます。</p>
+            </div>
+            <div className="lzw-rule-pair">
+              <div className="lzw-rule-card">
+                <h5>圧縮側 <span>並びを調べる</span></h5>
+                <p className="lzw-rule-formula"><b>今のかたまり</b><span>＋</span><b>次の1文字</b></p>
+                <dl><div><dt>辞書にない</dt><dd>今の番号を出す ＋ 並びを登録</dd></div><div><dt>辞書にある</dt><dd>もう1文字読む</dd></div></dl>
+                <p className="lzw-rule-note">最後は、残ったかたまりの番号を出す。</p>
+              </div>
+              <div className="lzw-rule-card">
+                <h5>復元側 <span>番号から戻して、登録</span></h5>
+                <p className="lzw-rule-formula"><b>前のかたまり</b><span>＋</span><b>今回の先頭1文字</b></p>
+                <p className="lzw-register-arrow">↓ 新しい並びを辞書に登録</p>
+                <p className="lzw-rule-note">最初の番号では、まだ追加しない。</p>
+              </div>
+            </div>
+          </section>
           <div className="step-experience lzw-stage">
-            <span className="experience-label">オレンジの囲みが、今調べている並び</span>
+            <h4>実際にやってみよう</h4>
+            <CompressionTextInput method="lzw" example={lzwExample} activeText={lzwSource} isBasic={lzwBasic} onApply={applyLzwInput} />
+            <span className="experience-label">オレンジの囲み＝今調べている並び</span>
             <div className="source-progress" aria-label="LZWで読む文字列">{Array.from(lzwSource).map((char, index) => {
               const isCurrent = index >= currentLzwStep.start && index <= currentLzwStep.end;
               return <i className={isCurrent ? 'is-current' : index < currentLzwStep.start ? 'is-read' : ''} key={index}>{char}<small>{index + 1}</small></i>;
@@ -204,6 +222,7 @@ export function LosslessLab() {
           <div className="dictionary-answer"><span>追加した辞書そのものは送らなくてよい</span><p>受信側も同じ初期辞書と同じ規則を使い、コードを読むたびに同じ順番で辞書を作れます。実際のファイルには、辞書の初期状態・番号のビット幅・リセット規則などを示す情報が必要です。</p></div>
           <div className="decode-lab">
             <div className="decode-heading"><span>DECODE</span><h4>番号だけから元の文字列へ戻す</h4><p>{lzwInitialText}の初期辞書と、圧縮時と同じ追加規則があれば復元できます。</p></div>
+            <p className="current-action-legend">{specialLzwCode ? `未登録の番号${specialLzwCode}は、3つの手順で中身を推論します。` : '未登録番号の推論は「基本例に戻す」で体験できます。'}</p>
             <div className="output-code-row" aria-label="LZWで復元する番号列">{lzw.output.map((code, index) => <i className={index === currentLzwDecodeStep.codeIndex ? 'is-current' : index < currentLzwDecodeStep.codeIndex ? 'is-read' : ''} key={index}>{code}</i>)}</div>
             <div className={`step-card ${currentLzwDecodeStep.kind === 'infer' ? 'inference-card' : ''}`}><span>復元 {lzwDecodeStep + 1} / {lzwDecoded.length} · {currentLzwDecodeStep.kind === 'read' ? '番号を読む' : currentLzwDecodeStep.kind === 'infer' ? '未登録番号の中身を推論' : '辞書へ登録'}</span><strong>{currentLzwDecodeStep.action}</strong>{currentLzwDecodeStep.kind === 'read' && <p>番号 <code>{currentLzwDecodeStep.code}</code> → 文字列 <code>{currentLzwDecodeStep.text}</code></p>}</div>
             <input aria-label="LZW復元の手順" type="range" min="0" max={lzwDecoded.length - 1} value={lzwDecodeStep} onChange={(event) => setLzwDecodeStep(Number(event.target.value))} />
