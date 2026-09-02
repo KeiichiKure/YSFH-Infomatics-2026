@@ -288,7 +288,7 @@ export function LosslessLab() {
         <div className="lab-heading"><div><p className="step-label">KEYFRAME &amp; DIFFERENCE</p><h3>動画は変化した部分だけを保存</h3></div><span className="print-badge"><small>プリント</small><b>13</b></span></div>
         <div className="frame-timeline"><div className="frame-step-buttons"><button type="button" disabled={frame === 1} onClick={() => { setFrame((value) => Math.max(1, value - 1)); setIsPlaying(false); }}>← 前へ</button><button type="button" className={isPlaying ? 'is-playing' : ''} onClick={() => setIsPlaying((value) => !value)}>{isPlaying ? '一時停止' : '▶ 再生'}</button><button type="button" disabled={frame === 10} onClick={() => { setFrame((value) => Math.min(10, value + 1)); setIsPlaying(false); }}>次へ →</button></div><label><span>フレーム <output>{frame} / 10</output></span><input aria-label="動画のフレーム" type="range" min="1" max="10" value={frame} onChange={(event) => { setFrame(Number(event.target.value)); setIsPlaying(false); }} /></label></div>
         <VideoDifferenceScene frame={frame} />
-        <div className="video-difference-legend"><i aria-hidden="true" /><p><b>網目の場所＝差分なし。「消す」ではなく「上書きしない」</b><br />家・木の場所には前の画面がそのまま残ります。フレーム8で空と地面だけが夕方になり、9・10でも家と木は消えません。差分にある空色の鳥の跡・地面色の人の跡は、移動前の場所を背景へ戻すための変更です。</p></div>
+        <div className="video-difference-legend"><i aria-hidden="true" /><p><b>網目の場所＝差分なし。「消す」ではなく「上書きしない」</b><br />家・木・緑の地面は前の画面のまま残ります。フレーム8では空だけが夕方になり、地面は網目のままです。差分にある空色の鳥の跡・地面色の人の跡は、移動前の場所を背景へ戻すための変更です。</p></div>
         <p className="teacher-note">フレーム1だけをキーフレームとして全体保存し、以降は直前の画面から変化した画素だけを保存する学習モデルです。人や鳥がいた場所を背景へ戻す変更も含みます。左は、キーフレームへ差分を順に重ねて実際に復元した画面です。</p>
       </div>
     </section>

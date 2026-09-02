@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 const width = 480;
 const height = 280;
 
-// All frames share these house/tree shapes and colors. Only the background,
+// All frames share the house, tree and ground. Only the sky,
 // person and bird vary; pixel comparison also includes erasing their old positions.
 function drawFrame(context: CanvasRenderingContext2D, frame: number) {
   const evening = frame >= 8;
@@ -13,7 +13,7 @@ function drawFrame(context: CanvasRenderingContext2D, frame: number) {
   context.fillRect(0, 0, width, 208);
   context.fillStyle = evening ? '#efc28b' : '#bfe7ef';
   context.fillRect(0, 150, width, 58);
-  context.fillStyle = evening ? '#698c61' : '#81ba70';
+  context.fillStyle = '#81ba70';
   context.fillRect(0, 208, width, 72);
 
   context.fillStyle = '#fff5dd';
@@ -109,17 +109,17 @@ export function VideoDifferenceScene({ frame }: { frame: number }) {
   return <div className="keyframe-compare">
     <div className="video-scene-frame">
       <span>{frame === 1 ? 'フレーム1：キーフレーム' : `復元した画面 ${frame}${frame === 8 ? '：夕方へ' : ''}`}</span>
-      <canvas ref={playback} width={width} height={height} role="img" aria-label={`フレーム${frame}の復元画面。家と木はそのまま残り、${frame >= 8 ? '夕方' : '昼'}の背景に人${frame >= 3 ? 'と鳥' : ''}がいる。`} />
+      <canvas ref={playback} width={width} height={height} role="img" aria-label={`フレーム${frame}の復元画面。家と木はそのまま残り、${frame >= 8 ? '夕方の空と昼から続く緑の地面' : '昼の背景'}に人${frame >= 3 ? 'と鳥' : ''}がいる。`} />
       <p>{frame === 1 ? '最初の画面を丸ごと保存' : '前の画面に、差分のある場所だけを上書き'}</p>
     </div>
     <i aria-hidden="true">←</i>
     <div className="video-scene-frame is-difference">
       <span>{frame === 1 ? '保存するもの：全体' : `フレーム${frame}で保存する差分`}</span>
-      <div className="video-canvas-stack"><canvas ref={difference} width={width} height={height} role="img" aria-label={frame === 1 ? '家と木を含む全体を保存。' : `1は移動前の場所を背景色に戻す変更。2は移動先の${frame >= 3 ? '人と鳥' : '人'}。2人・2羽を保存しているのではありません。家と木は更新しません。`} />
+      <div className="video-canvas-stack"><canvas ref={difference} width={width} height={height} role="img" aria-label={frame === 1 ? '家と木を含む全体を保存。' : `1は移動前の場所を背景色に戻す変更。2は移動先の${frame >= 3 ? '人と鳥' : '人'}。2人・2羽を保存しているのではありません。家・木・緑の地面は更新しません。`} />
         {frame > 1 && <svg className="difference-markers" viewBox="0 0 480 280" aria-hidden="true">{changeMarkers.map(({ kind, label, x, y, dx, dy }, index) => <g className={`is-${kind}`} key={index}><path d={`M${x},${y} L${x + dx},${y + dy}`} /><circle cx={x + dx} cy={y + dy} r="12" /><text x={x + dx} y={y + dy + 5}>{label}</text></g>)}</svg>}
       </div>
       {frame > 1 && <div className="difference-marker-key"><span><b>1</b> 移動前を背景色に戻す</span><span><b>2</b> 移動先の姿を描く</span><small>番号と線は説明用です。保存データには含みません。</small></div>}
-      <p>{frame === 1 ? 'キーフレームには家・木も含む' : frame === 8 ? '家・木の場所は網目＝上書きしない' : '移動先と、移動前の場所の変化だけ'}</p>
+      <p>{frame === 1 ? 'キーフレームには家・木も含む' : frame === 8 ? '家・木・地面は網目＝上書きしない' : '移動先と、移動前の場所の変化だけ'}</p>
     </div>
   </div>;
 }
