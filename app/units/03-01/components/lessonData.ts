@@ -23,18 +23,26 @@ export const worksheetTerms = [
 ] as const;
 
 export const hardwareSteps = [
-  { target: 'input', label: '入力', text: 'キーボードから「3＋5」を入力する。', data: '入力装置 → 主記憶装置' },
-  { target: 'memory', label: '記憶', text: '計算に必要なデータとプログラムを、主記憶装置で保持する。', data: '主記憶装置 ↔ CPU' },
-  { target: 'control', label: '制御', text: '制御装置がプログラムの命令に従って、各装置の働きを調整する。', data: '制御装置 ⇢ 各装置への指示（制御）' },
-  { target: 'arithmetic', label: '演算', text: '演算装置が3＋5を計算し、結果の8を主記憶装置へ戻す。', data: '演算装置 → 主記憶装置' },
-  { target: 'output', label: '出力', text: '計算結果の「8」をディスプレイに表示する。', data: '主記憶装置 → 出力装置' },
-  { target: 'storage', label: '保存', text: '保存を指示すると、結果をSSDなどの補助記憶装置へ書き込む。', data: '主記憶装置 → 補助記憶装置' },
+  { actors: ['input'], speaker: '入力装置さん', line: '「3＋5」が入力されたよ！ CPUのみんな、受け取って！', packet: '3＋5', route: '入力装置 → CPU', memory: 'まだ空', slots: ['', '', '', ''] },
+  { actors: ['control'], speaker: '制御装置くん', line: '計算に使うデータだね。主記憶ちゃん、「3は箱1、5は箱2へ入れて」と指示を送るよ！', packet: '箱1＝3／箱2＝5', route: '制御装置 ⇢ 主記憶装置へ書き込み指示', memory: 'まだ書き込み前', slots: ['', '', '', ''] },
+  { actors: ['memory'], speaker: '主記憶ちゃん', line: '指示とデータを受け取ったよ。3を箱1、5を箱2へ入れたよ！', packet: '3　5', route: '主記憶装置：箱1・箱2へ書き込み', memory: '箱1＝3／箱2＝5', slots: ['3', '5', '', ''] },
+  { actors: ['control', 'arithmetic'], speaker: '制御装置くん', line: 'これは足し算だ。演算装置くん、主記憶ちゃんの箱1と箱2の中身を足して、答えを箱4へ返して！', packet: '箱1＋箱2 → 箱4', route: '制御装置 ⇢ 演算装置へ指示', memory: '箱1＝3／箱2＝5', slots: ['3', '5', '', ''] },
+  { actors: ['memory', 'arithmetic'], speaker: '主記憶ちゃん', line: '箱1から「3」、箱2から「5」を読み出したよ。演算装置くんへ渡すね！', packet: '3　5', route: '主記憶装置 → 演算装置へ読み出し', memory: '箱1＝3／箱2＝5', slots: ['3', '5', '', ''] },
+  { actors: ['arithmetic'], speaker: '演算装置くん', line: '3＋5＝8だね。主記憶ちゃん、「8を箱4へ入れて」と書き込みを頼むよ！', packet: '箱4＝8', route: '演算装置 → 主記憶装置へ結果と指示', memory: '箱4はまだ空', slots: ['3', '5', '', ''] },
+  { actors: ['memory'], speaker: '主記憶ちゃん', line: '計算結果の「8」を受け取って、箱4に入れたよ！', packet: '8', route: '主記憶装置：箱4へ書き込み', memory: '箱1＝3／箱2＝5／箱4＝8', slots: ['3', '5', '', '8'] },
+  { actors: ['control', 'output'], speaker: '制御装置くん', line: '計算が終わった！ 出力装置くん、主記憶ちゃんの箱4を画面へ表示して！', packet: '箱4を表示', route: '制御装置 ⇢ 出力装置へ指示', memory: '箱4＝8', slots: ['3', '5', '', '8'] },
+  { actors: ['memory', 'output'], speaker: '出力装置くん', line: '主記憶ちゃんの箱4から「8」を受け取ったよ。ぼくが画面へ「8」を渡して表示するね！', packet: '8', route: '主記憶装置の箱4 → 出力装置 → 画面', memory: '箱4＝8', slots: ['3', '5', '', '8'] },
+  { actors: ['control', 'storage'], speaker: '制御装置くん', line: 'この結果を残しておこう。補助記憶お母さん、主記憶ちゃんの箱4を保存して！', packet: '箱4を保存せよ', route: '制御装置 ⇢ 補助記憶装置へ指示', memory: '箱4＝8', slots: ['3', '5', '', '8'] },
+  { actors: ['memory', 'storage'], speaker: '主記憶ちゃん', line: '制御装置くんの指示だね。箱4の「8」を補助記憶お母さんへ渡すよ！', packet: '8', route: '主記憶装置の箱4 → 補助記憶装置', memory: '箱4の8を受け渡し中', slots: ['3', '5', '', '8'] },
+  { actors: ['storage'], speaker: '補助記憶お母さん', line: '箱4の「8」を受け取ったよ。SSDへ保存したから、電源を切っても残るよ。', packet: '保存完了', route: 'SSDなどへ保存完了', memory: '主記憶：3・5・8を使用中／補助記憶：8', slots: ['3', '5', '', '8'] },
+  { actors: ['control'], speaker: '制御装置くん', line: '計算・表示・保存が終わったよ。この物語ではぼくが代表して、箱1・箱2・箱4の作業領域を解放するよう伝えるね！', packet: '箱1・2・4を解放', route: '制御装置 ⇢ 主記憶装置へ解放指示', memory: '解放指示を受信', slots: ['3', '5', '', '8'] },
+  { actors: ['memory'], speaker: '主記憶ちゃん', line: '作業領域を解放したよ。次の処理で再利用できるね！', packet: '作業領域を解放', route: '主記憶装置の領域を再利用可能に', memory: '実機ではOSなどが管理し、値を消去せず領域を再利用することもある', slots: ['', '', '', ''] },
 ] as const;
 
 export const connections = [
   { id: 'type-a', name: 'USB Type-A', number: 4, group: '有線', detail: 'キーボード、マウス、USBメモリなど。端子の形状の名前であり、通信速度の名前ではない。', shape: '長方形・向きあり' },
   { id: 'type-c', name: 'USB Type-C', number: 5, group: '有線', detail: 'USBメモリなどの接続や充電。対応機器では映像も送れるが、端子・ケーブルの機能確認が必要。', shape: '小さな長円形・上下対称' },
-  { id: 'hdmi', name: 'HDMI', number: 6, group: '有線', detail: 'ディスプレイやプロジェクタへ、デジタルの映像と音声を送る。', shape: '台形に近い形' },
+  { id: 'hdmi', name: 'HDMI', number: 6, group: '有線', detail: 'ディスプレイやプロジェクタへ、デジタルの映像と音声を送る。', shape: 'Type A・下の2角を落とした形' },
   { id: 'displayport', name: 'DisplayPort', number: 7, group: '有線', detail: 'ディスプレイなどへ、デジタルの映像と音声を送る。', shape: '片側の角を落とした形' },
   { id: 'vga', name: 'VGA', number: null, group: '有線', detail: 'ディスプレイやプロジェクタへアナログの映像を送る。音声は別の接続が必要。', shape: '3段のピン・固定ねじ' },
   { id: 'bluetooth', name: 'Bluetooth', number: 8, group: '無線', detail: 'イヤホンやマウスなどに使う。プリントの距離は目安であり、機器や障害物などで通信できる範囲は変わる。', shape: '周辺機器を無線でつなぐ' },
@@ -43,9 +51,12 @@ export const connections = [
 ] as const;
 
 export const connectionQuestions = [
-  { text: 'PCとプロジェクタの両方にHDMI端子があります。変換器を使わず、映像と音声を1本で送るには？', answer: 'hdmi', reason: '両方の機器が対応するHDMIなら、映像と音声を一緒に送れます。VGAでは音声は送れません。' },
-  { text: 'USB Type-C端子だけの端末に、Type-C端子を備えたUSBメモリを変換器なしで直接つなぐには？', answer: 'type-c', reason: '端末とUSBメモリの端子形状が一致します。ただし、形が同じでも通信速度などは製品ごとに確認します。' },
-  { text: '対応するイヤホンを、ケーブルなしでスマートフォンと接続したい。ここでは周辺機器用の無線通信を選ぼう。', answer: 'bluetooth', reason: 'イヤホンなどの周辺機器の接続にはBluetoothがよく使われます。両方の機器が対応している必要があります。' },
-  { text: '対応する決済端末にスマートフォンを近づけて支払う。使う近距離無線通信は？', answer: 'nfc', reason: 'NFCは機器を近づけて行う通信で、非接触の決済などに利用されます。' },
-  { text: '教室の無線LANアクセスポイントへ接続する。無線LANの標準規格は？', answer: 'wifi', reason: 'IEEE 802.11は無線LANの標準規格です。機器や規格によって使う周波数帯や速度が違います。' },
+  { left: 'パソコン', right: 'キーボード', text: 'キーボードを、パソコンへ有線でつなぎたい。', focus: ['キーボード', '有線', '端子の形を見よう'], choices: ['type-a', 'hdmi', 'nfc'], answer: 'type-a', reason: 'このキーボードとパソコンにはUSB Type-A端子があるため、USBで接続できます。' },
+  { left: '薄型パソコン', right: 'USBメモリ（Type-C）', text: 'このUSBメモリを、変換器なしで直接つなぎたい。', focus: ['小さな長円形', '上下対称'], choices: ['type-c', 'displayport', 'bluetooth'], answer: 'type-c', reason: 'USBメモリのType-C端子とパソコンの端子の形が合うため、直接接続できます。形が同じでも機能や速度は製品ごとに確認します。' },
+  { left: 'パソコン', right: 'プロジェクタ', text: '映像と音声を、1本のデジタルケーブルで送りたい。', focus: ['映像＋音声', '1本', 'デジタル'], choices: ['vga', 'hdmi', 'type-a'], answer: 'hdmi', reason: 'HDMIはデジタルの映像と音声を一緒に送れます。VGAは映像だけです。' },
+  { left: 'パソコン', right: 'ディスプレイ', text: '映像と音声を、1本のデジタルケーブルで送りたい。', focus: ['映像＋音声', '1本', 'デジタル'], choices: ['displayport', 'nfc', 'type-a'], answer: 'displayport', reason: 'この選択肢ではDisplayPortが、デジタルの映像と音声を1本で送れます。' },
+  { left: '古いパソコン', right: '古いプロジェクタ', text: '青い15本ピンの端子で、映像だけを送りたい。', focus: ['映像だけ', 'アナログ', '15ピン'], choices: ['vga', 'hdmi', 'wifi'], answer: 'vga', reason: 'VGAはアナログ映像を送ります。音声は別の接続が必要です。' },
+  { left: 'スマートフォン', right: 'ワイヤレスイヤホン', text: '近くのイヤホンへ、ケーブルなしで音声を送りたい。', focus: ['近く', '音声', '無線'], choices: ['bluetooth', 'nfc', 'wifi'], answer: 'bluetooth', reason: 'Bluetoothは近くのイヤホンやマウスなどを無線でつなぐ技術です。' },
+  { left: 'スマートフォン', right: '決済端末', text: '読み取り部へ近づけて、非接触で支払いたい。', focus: ['タッチ', '数cm', '非接触'], choices: ['nfc', 'bluetooth', 'hdmi'], answer: 'nfc', reason: 'NFCは数cmほどまで近づけて使う近距離無線通信です。' },
+  { left: 'ノートPC', right: '無線LANアクセスポイント', text: 'アクセスポイントを通して、学校のネットワークへ接続したい。', focus: ['無線LAN', 'アクセスポイント'], choices: ['wifi', 'bluetooth', 'displayport'], answer: 'wifi', reason: 'IEEE 802.11は無線LANの標準規格です。アクセスポイントから先はケーブルでネットワークへつながることもあります。' },
 ] as const;

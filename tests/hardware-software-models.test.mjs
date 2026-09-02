@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { worksheetTerms, connections, connectionQuestions } from '../app/units/03-01/components/lessonData.ts';
-import { buildResourceSchedule, canAdvancePrint, fileTypes, finalQuestions, initialIoTState, inspectRename, iotReducer, isMissionComplete } from '../app/units/03-01/components/systemModels.ts';
+import { worksheetTerms, connections, connectionQuestions, hardwareSteps } from '../app/units/03-01/components/lessonData.ts';
+import { buildResourceSchedule, canAdvancePrint, fileTypes, finalQuestions, initialIoTState, inspectRename, iotReducer, isMissionComplete, managementFunctions } from '../app/units/03-01/components/systemModels.ts';
 
 test('revised worksheet numbers are 1–21: interface is 3 and PDF is 21', () => {
   assert.deepEqual(worksheetTerms.map(({ number, term }) => [number, term]), [
@@ -16,6 +16,42 @@ test('revised worksheet numbers are 1–21: interface is 3 and PDF is 21', () =>
     assert.ok(item.name.includes(term.term));
   }
   for (const question of connectionQuestions) assert.equal(connections.filter(item => item.id === question.answer).length, 1);
+});
+
+test('personified hardware story follows input, memory, calculation, output, and saving', () => {
+  assert.equal(hardwareSteps.length, 14);
+  assert.match(hardwareSteps[0].route, /入力装置.*CPU/);
+  assert.ok(hardwareSteps.some(step => step.actors.includes('memory') && /3.*5/.test(step.memory)));
+  assert.ok(hardwareSteps.some(step => step.actors.includes('arithmetic') && /足/.test(step.line)));
+  assert.deepEqual(hardwareSteps[3].slots.slice(0, 2), ['3', '5']);
+  assert.ok(hardwareSteps.some(step => step.slots[3] === '8' && /箱4/.test(step.memory)));
+  assert.ok(hardwareSteps.some(step => step.actors.includes('output') && /8/.test(step.line)));
+  assert.ok(hardwareSteps.some(step => step.actors.includes('control') && step.actors.includes('storage') && /保存/.test(step.line)));
+  const storageTransfer = hardwareSteps.find(step => step.actors.includes('memory') && step.actors.includes('storage'));
+  assert.match(storageTransfer.line, /箱4/);
+  assert.equal(storageTransfer.packet, '8');
+  assert.match(hardwareSteps.at(-2).line, /解放/);
+  assert.deepEqual(hardwareSteps.at(-1).slots, ['', '', '', '']);
+  assert.ok(hardwareSteps.some(step => step.actors.includes('storage') && /保存/.test(step.line)));
+});
+
+test('every OS management scene explains its connection with the OS', () => {
+  assert.equal(managementFunctions.length, 6);
+  assert.ok(managementFunctions.every(item => /OS/.test(item.seen)));
+  assert.match(managementFunctions.find(item => item.name === 'ユーザ管理').seen, /ぼくOS/);
+});
+
+test('every connection quiz has three valid choices and covers all eight connection types', () => {
+  assert.equal(connectionQuestions.length, 8);
+  const connectionIds = new Set(connections.map(item => item.id));
+  for (const question of connectionQuestions) {
+    assert.equal(question.choices.length, 3);
+    assert.equal(new Set(question.choices).size, 3);
+    assert.ok(question.focus.length >= 2);
+    assert.ok(question.choices.includes(question.answer));
+    assert.ok(question.choices.every(id => connectionIds.has(id)));
+  }
+  assert.deepEqual(new Set(connectionQuestions.map(question => question.answer)), connectionIds);
 });
 
 test('printing pauses at driver when missing and resumes after it becomes available', () => {
@@ -108,6 +144,8 @@ test('IoT limits and repeated connection changes keep remote readings consistent
 });
 
 test('final celebration requires all four correct answers, and disappears on correction/reset', () => {
+  assert.doesNotMatch(finalQuestions[3].text, /この実験/);
+  assert.match(finalQuestions[3].text, /IoT/);
   const correct = finalQuestions.map(question => question.answer);
   assert.equal(isMissionComplete(correct), true);
   assert.equal(isMissionComplete([]), false);

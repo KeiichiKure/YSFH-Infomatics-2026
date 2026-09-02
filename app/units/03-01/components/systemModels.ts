@@ -11,12 +11,12 @@ export function canAdvancePrint(step: number, driverAvailable: boolean) {
 }
 
 export const managementFunctions = [
-  { name: 'タスク管理', number: 13, example: '複数のアプリに、CPUを使う時間を順に割り当てる。', meaning: '実行順序やCPUへの割り当てを管理する。' },
-  { name: '記憶管理', number: null, example: 'アプリAとBが使うメモリの領域を割り当てる。', meaning: '各ソフトウェアが使うメモリの割り当てを管理する。' },
-  { name: '入出力管理', number: 14, example: 'マウスからの入力やプリンタへのデータ出力を管理する。', meaning: '周辺機器との入出力を管理する。' },
-  { name: 'ファイル管理', number: 15, example: 'レポートをフォルダに保存し、後で読み出す。', meaning: 'ファイルやフォルダ、ファイルの読み書きを管理する。' },
-  { name: '資源管理', number: 16, example: 'CPU・メモリ・周辺機器などを、利用状況に合わせて全体として管理する。', meaning: 'コンピュータ資源を利用できるように管理する。' },
-  { name: 'ユーザ管理', number: 17, example: '新しい利用者のアカウントを登録する。', meaning: '利用者のアカウントの登録・削除などを管理する。' },
+  { name: 'タスク管理', number: 13, seen: 'OSは私に「この順番で実行して」と伝えてきます。私はその順番に従ってCPUへ指示し、処理の状況をOSへ返してあげます。', example: '複数のアプリに、CPUを使う時間を順に割り当てる。', meaning: '実行順序やCPUへの割り当てを管理する。' },
+  { name: '記憶管理', number: null, seen: 'OSは私に「この範囲をアプリの作業場所にして」って教えてくれるよ。私はそこでデータを読み書きして、結果をOSへ返すよ！', example: 'アプリAとBが使うメモリの領域を重ならないように割り当てる。', meaning: '各ソフトウェアが使うメモリの割り当てを管理する。' },
+  { name: '入出力管理', number: 14, seen: 'OSは私に「入力を待って」と頼みます。キー入力を受け取ったら、データにしてOSへ届けますね！', example: 'キーボードからの入力やプリンタへの出力を管理する。', meaning: '周辺機器との入出力を管理する。' },
+  { name: 'ファイル管理', number: 15, seen: 'OSは私に「この名前と場所へ保存して」と頼んでくるの。大切に保存して、終わったらOSへ知らせてあげるわね。', example: 'レポートをフォルダに保存し、後で読み出す。', meaning: 'ファイルやフォルダ、ファイルの読み書きを管理する。' },
+  { name: '資源管理', number: 16, seen: 'OSは私に「空いているCPUや装置へ仕事を割り当てて」と伝えてきます。私は各装置へ指示し、使用状況をOSへ報告します。', example: 'CPU・メモリ・周辺機器などを、利用状況に合わせて全体として管理する。', meaning: 'コンピュータ資源を利用できるように管理する。' },
+  { name: 'ユーザ管理', number: 17, seen: 'ぼくOSは利用者のアカウントを登録・確認して、その人が使ってよい機能やファイルの範囲を決めているよ。', example: '新しい利用者のアカウントを登録し、使える範囲を決める。', meaning: '利用者のアカウントの登録・削除などを管理する。' },
 ] as const;
 
 export const fileTypes = [
@@ -93,7 +93,7 @@ export const finalQuestions = [
   { section: 1, href: '#hardware', text: '制御装置と演算装置を合わせたものは？', choices: ['補助記憶装置', 'CPU', 'API'], answer: 1, reason: 'CPUは中央処理装置。制御と演算を担います。主記憶装置とは区別します。' },
   { section: 2, href: '#software', text: '応用ソフトウェアが、OSの機能を利用するときの窓口は？', choices: ['HDMI', '拡張子', 'API'], answer: 2, reason: 'APIはソフトウェア同士の窓口。デバイスドライバはOSと機器を橋渡しするプログラムです。' },
   { section: 3, href: '#os-purpose', text: '画像の名前を「写真.jpg」から「写真.pdf」へ変えただけでは？', choices: ['中身はJPEGのまま', 'PDFに変換される', '画像が圧縮される'], answer: 0, reason: '拡張子の変更は形式の変換ではありません。PDFにするには対応アプリで変換・書き出しを行います。' },
-  { section: 4, href: '#iot', text: 'この実験で通信を切って明るさを変えると、どうなる？', choices: ['センサも計測を止める', '遠隔の表示も更新される', '現地では計測、遠隔の値は更新されない'], answer: 2, reason: 'センサは現地で計測を続けます。通信がない間は、離れたアプリへの更新や指示の送信ができません。' },
+  { section: 4, href: '#iot', text: 'IoTで、センサや家電などの「モノ」が情報をやり取りするためにつながるものは？', choices: ['ネットワーク', '拡張子', 'デバイスドライバだけ'], answer: 0, reason: 'IoTでは、センサや家電などのモノがネットワークにつながり、アプリへ情報を送ったり操作を受け取ったりします。' },
 ] as const;
 
 export function isMissionComplete(answers: readonly (number | null)[]) {
