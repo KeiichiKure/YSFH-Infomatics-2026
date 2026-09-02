@@ -78,6 +78,7 @@ button, input { font: inherit; }
 .bit-preview i { display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px; color: white; background: var(--teal); font-size: 25px; font-style: normal; font-weight: 900; }
 .unit-list { max-width: 1000px; margin: 0 auto; padding: 40px 5vw 100px; }
 .section-heading h2 { margin: 0 0 28px; font-size: clamp(30px, 5vw, 46px); }
+.unit-group-heading { margin-top: 56px; padding-top: 40px; border-top: 1px solid var(--line); }
 .unit-card {
   display: grid; grid-template-columns: 90px 1fr auto; align-items: center; gap: 24px;
   padding: 24px; border-top: 1px solid var(--line); background: transparent;

@@ -14,7 +14,6 @@ const description = '機器・OS・アプリの協力を、接続、印刷、フ
 
 export const metadata: Metadata = {
   title, description,
-  robots: { index: false, follow: false },
   openGraph: { title, description, images: [] },
   twitter: { title, description, images: [] },
 };

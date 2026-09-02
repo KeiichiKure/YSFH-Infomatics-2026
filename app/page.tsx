@@ -72,6 +72,19 @@ export default function Home() {
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
+        <div className="section-heading unit-group-heading">
+          <p className="eyebrow">3学期 · UNIT 03</p>
+          <h2>コンピュータのしくみ</h2>
+        </div>
+        <Link className="unit-card unit-card-active" href="/units/03-01/">
+          <span className="unit-number">03-01</span>
+          <div>
+            <h3>ハードウェアとソフトウェア</h3>
+            <span className="textbook-page">教科書 pp.68–71</span>
+            <p>5大装置、接続、OS、拡張子、IoTをキャラクターと模擬実験で学ぶ</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
       </section>
     </main>
   );
