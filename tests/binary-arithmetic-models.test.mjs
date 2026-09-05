@@ -43,6 +43,12 @@ test('worksheet addition examples keep every carry and produce the answer key re
     assert.equal(trace.result, expected);
     assert.equal(trace.steps.length, 4);
     assert.deepEqual(trace.steps.map(step => step.column), [3, 2, 1, 0]);
+    for (const step of trace.steps) {
+      const expectedInputs = step.column === 3
+        ? `${step.left}＋${step.right}`
+        : `${step.incoming}＋${step.left}＋${step.right}`;
+      assert.equal(step.expression, `${expectedInputs}＝${(step.left + step.right + step.incoming).toString(2)}₂`);
+    }
     for (let index = 1; index < trace.steps.length; index++) {
       assert.equal(trace.steps[index].incoming, trace.steps[index - 1].outgoing);
     }

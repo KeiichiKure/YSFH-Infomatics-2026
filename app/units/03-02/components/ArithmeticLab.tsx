@@ -55,7 +55,12 @@ export function ArithmeticLab() {
     const index = subtraction!.steps.findIndex(step => step.column === column);
     return index >= 0 && isPlaced(index) ? subtraction!.steps[index].result : '';
   };
-  const carryForColumn = (column: number) => addition.steps.some((step, index) => isPlaced(index) && step.outgoing === 1 && step.column - 1 === column) ? '1' : '';
+  const carryForColumn = (column: number) => {
+    if (column === 3) return '';
+    const index = addition.steps.findIndex(step => step.column - 1 === column);
+    return index >= 0 && isPlaced(index) ? String(addition.steps[index].outgoing) : '';
+  };
+  const carryOutValue = operation === 'add' && isPlaced(addition.steps.length - 1) ? String(addition.carryOut) : '';
   const carryOutVisible = operation === 'add' && addition.carryOut === 1 && isPlaced(addition.steps.length - 1);
   const topDigits = (() => {
     if (operation === 'add' || momentIndex < 0) return [...left].map(Number);
@@ -113,7 +118,7 @@ export function ArithmeticLab() {
 
       <div className="column-workspace school-workspace" aria-label={`${left}${operation === 'add' ? '足す' : '引く'}${right}の筆算`}>
         <div className="column-row place-head-row five-column-row">{displayPlaces.map(place => <span key={place}>{place}の位</span>)}</div>
-        {operation === 'add' && <><div className="column-label">繰り上がった1は、本来入る左隣の位へ</div><div className="column-row transfer-row five-column-row"><span>{carryOutVisible && <b>1</b>}</span>{[0, 1, 2, 3].map(column => <span key={column}>{carryForColumn(column) && <b>{carryForColumn(column)}</b>}</span>)}</div></>}
+        {operation === 'add' && <><div className="column-label">桁上がりは0でも省略せず、本来入る左隣の位へ</div><div className="column-row transfer-row five-column-row"><span>{carryOutValue && <b>{carryOutValue}</b>}</span>{[0, 1, 2, 3].map(column => <span key={column}>{carryForColumn(column) && <b>{carryForColumn(column)}</b>}</span>)}</div></>}
         <div className="column-row operand-row changing-top-row five-column-row"><span aria-hidden="true" />{topDigits.map((digit, column) => <span className={activeColumn === column ? 'is-active' : ''} key={column}>{operation === 'subtract' && digit !== Number(left[column]) ? <><del>{left[column]}</del><b className="updated-digit">{digit}</b></> : digit}</span>)}</div>
         <div className="column-row operand-row second-row five-column-row"><span className="operation-cell" aria-hidden="true">{operation === 'add' ? '＋' : '－'}</span>{[...right].map((bit, column) => <span className={activeColumn === column ? 'is-active' : ''} key={column}>{bit}</span>)}</div>
         <div className="column-rule" />
@@ -130,11 +135,12 @@ export function ArithmeticLab() {
 
 function AdditionMoment({ moment, step }: { moment: Moment; step: ReturnType<typeof buildAdditionTrace>['steps'][number] }) {
   const total = step.left + step.right + step.incoming;
-  const expression = `${step.incoming ? '1 ＋ ' : ''}${step.left} ＋ ${step.right}`;
-  if (moment.kind === 'inspect') return <div className="micro-moment" key={`inspect-${step.column}`}><em>① 見る</em><h4>上から順に、この桁の数字を集める</h4><div className="large-calc">{step.incoming ? <><span className="incoming-carry">1</span> ＋ </> : null}{step.left} ＋ {step.right}</div><p>{step.incoming ? 'オレンジの繰り上がり → 上の数 → 下の数、の順に足します。' : '上の数 → 下の数、の順に足します。'}</p></div>;
+  const isOnesPlace = step.column === 3;
+  const expression = isOnesPlace ? `${step.left} ＋ ${step.right}` : `${step.incoming} ＋ ${step.left} ＋ ${step.right}`;
+  if (moment.kind === 'inspect') return <div className="micro-moment" key={`inspect-${step.column}`}><em>① 見る</em><h4>上から順に、この桁の数字を集める</h4><div className="large-calc">{isOnesPlace ? <>{step.left} ＋ {step.right}</> : <><span className="incoming-carry">{step.incoming}</span> ＋ {step.left} ＋ {step.right}</>}</div><p>{isOnesPlace ? '1の位には前の桁から来る桁上がりがないので、上の数と下の数だけを足します。' : '前の桁から来た桁上がり → 上の数 → 下の数、の順に足します。桁上がりが0でも省略しません。'}</p></div>;
   if (moment.kind === 'decimal') return <div className="micro-moment" key={`decimal-${step.column}`}><em>② まず10進数で計算</em><h4>{expression} ＝ <b>{total}</b></h4><p>今は答えの{total}だけを確認します。</p></div>;
-  if (moment.kind === 'binary') return <div className="micro-moment" key={`binary-${step.column}`}><em>③ 2進数へ変える</em><div className="number-morph"><span>{total}</span><i>だから</i><strong>{total.toString(2)}₂</strong></div><p>{total >= 2 ? '10₂は「左へ渡す1」と「この桁に残す0」に分かれます。' : `${total}₂は1桁なので、そのまま書けます。`}</p></div>;
-  return <div className="micro-moment" key={`place-${step.column}`}><em>④ 筆算へ置く</em><div className="split-result"><span className="carry-token"><small>左隣の位へ</small><b>{step.outgoing}</b></span><i>＋</i><span className="write-token"><small>この桁の答え</small><b>{step.result}</b></span></div><p>上の筆算に数字が入りました。</p></div>;
+  if (moment.kind === 'binary') return <div className="micro-moment" key={`binary-${step.column}`}><em>③ 2進数へ変える</em><div className="number-morph"><span>{total}</span><i>2進数では</i><strong>{total.toString(2)}₂</strong></div><p>{total}₁₀を2進数へ直すと{total.toString(2)}₂です。</p></div>;
+  return <div className="micro-moment" key={`place-${step.column}`}><em>④ 筆算へ置く</em><div className="split-result"><span className="carry-token"><small>桁上がり（C）</small><b>{step.outgoing}</b></span><i>と</i><span className="write-token"><small>この桁に残る数（S）</small><b>{step.result}</b></span></div><p>Cは左隣の位へ、Sは答えの段へ置きます。Cが0のときも省略しません。</p></div>;
 }
 
 function SubtractionMoment({ moment, step, place }: { moment: Moment; step: ReturnType<typeof buildSchoolSubtractionTrace>['steps'][number]; place: string }) {

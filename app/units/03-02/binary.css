@@ -237,8 +237,8 @@
 .split-result { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .split-result > span { min-width: 134px; display: grid; place-items: center; padding: 10px 14px; border: 2px solid; border-radius: 13px; background: white; animation: split-apart .6s .22s ease both; }
 .split-result small, .split-result b { display: block; text-align: center; }
-.split-result small { color: var(--muted); font-size: 10px; font-weight: 900; }
-.split-result b { margin-top: 3px; font: 900 27px/1 Consolas, monospace; }
+.split-result small { color: var(--ink); font-size: 12px; font-weight: 900; }
+.split-result b { margin-top: 7px; font: 900 34px/1 Consolas, monospace; }
 .split-result > i { font-style: normal; font-weight: 900; }
 .carry-token { color: var(--coral); border-color: var(--coral) !important; transform-origin: right center; }
 .write-token { color: var(--teal-dark); border-color: var(--teal) !important; transform-origin: left center; }
@@ -841,7 +841,7 @@
 .school-workspace .column-row span { height: 42px; }
 .school-workspace .place-head-row span { height: 22px; }
 .school-workspace .transfer-row span { min-height: 34px; height: 34px; align-content: center; }
-.school-workspace .transfer-row b { color: var(--coral); font: 900 25px/1 Consolas, monospace; animation: carry-land 1.05s ease both; }
+.school-workspace .transfer-row b { display: block; color: var(--coral); font: 900 25px/1 Consolas, monospace; animation: carry-land 1.05s ease both; }
 .school-workspace .column-rule { margin: 2px 0 3px; }
 .school-workspace .operation-cell { color: var(--ink); border-color: transparent; background: transparent; box-shadow: none; font-size: 31px; }
 .changing-top-row span { grid-template-columns: 1fr; gap: 3px; }
@@ -1080,6 +1080,7 @@
   .equation-line { gap: 6px; }
   .equation-line > span, .equation-line > strong { min-width: 49px; min-height: 52px; font-size: 25px; }
   .split-result > span { min-width: 112px; padding: 9px; }
+  .number-morph { flex-wrap: wrap; gap: 10px; }
   .practice-grid, .practice-grid.three-columns { grid-template-columns: 1fr; }
   .flip-bit-row { grid-template-columns: repeat(4, minmax(48px, 1fr)); gap: 6px; }
   .flip-bit-row > span { min-height: 78px; font-size: 30px; }

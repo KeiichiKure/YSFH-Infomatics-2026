@@ -45,7 +45,9 @@ export function buildAdditionTrace(leftValue: string, rightValue: string, width 
       incoming: carry,
       result,
       outgoing,
-      expression: `${leftBit}＋${rightBit}${carry ? '＋繰り上がり1' : ''}＝${total.toString(2)}₂`,
+      expression: column === width - 1
+        ? `${leftBit}＋${rightBit}＝${total.toString(2)}₂`
+        : `${carry}＋${leftBit}＋${rightBit}＝${total.toString(2)}₂`,
     });
     carry = outgoing;
   }
