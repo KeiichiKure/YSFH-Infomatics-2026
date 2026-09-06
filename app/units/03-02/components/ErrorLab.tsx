@@ -277,7 +277,7 @@ export function ErrorLab() {
       </>}
     </div>
 
-    <div className="try-outside"><div><p className="step-label">EXCEL / SPREADSHEET ACTIVITY</p><h3>0.01を500回足すと、本当に5になる？</h3><p>表計算ソフトでA1を<code>0</code>、A2を<code>=A1+0.01</code>としてA501までコピーし、表示桁数を増やしてみよう。</p></div><button type="button" onClick={() => setAccumulationRun(true)}>Webでも500回足してみる</button>{accumulationRun && <div className="accumulation-result" role="status"><span>期待する値 <b>5</b></span><i>↔</i><span>実際の計算 <b>{repeatedSum.toPrecision(17)}</b></span><strong>差は {decimalText(repeatedSum - 5, 18)}</strong></div>}</div>
+    <div className="try-outside"><div><p className="step-label">EXCEL / SPREADSHEET ACTIVITY</p><h3>0.01を500回足すと、本当に5になる？</h3><p>表計算ソフトでA1を<code>0</code>、A2を<code>=A1+0.01</code>としてA501までコピーし、表示桁数を増やしてみよう。</p></div><button type="button" onClick={() => setAccumulationRun(true)}>Webでも500回足してみる</button>{accumulationRun && <div className="accumulation-result" role="status"><span>期待する値 <b>5</b></span><i>↔</i><span>実際の計算 <b>{repeatedSum.toPrecision(17)}</b></span><strong>差は {plainDifference(repeatedSum - 5)}</strong></div>}</div>
 
     <div className="binary-panel error-simulator">
       <div className="binary-panel-heading"><div><p className="step-label">OTHER ERRORS</p><h3>小さなビット数の箱で、演算誤差を体験する</h3></div><span className="binary-model-badge">学習用4〜8ビット</span></div>

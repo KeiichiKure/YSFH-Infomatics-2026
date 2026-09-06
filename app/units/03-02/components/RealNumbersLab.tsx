@@ -125,7 +125,7 @@ export function RealNumbersLab() {
       <div className="normalization-target-banner" aria-label={`${binaryApproximation.display}を1点何々かける2のE乗へ直す`}>
         <span><small>絶対値を2進数にした数</small><strong>{normalizationInputValid ? binaryApproximation.display : '—'}₂</strong>{normalizationInputValid && <small>符号部 S＝{normalizationSign}（{normalizationSign === '0' ? 'プラス' : 'マイナス'}）</small>}</span>
         <i>→</i>
-        <span><small>絶対値をこの形へ直す</small><strong>{normalizationInputValid && normalizationValue < 0 ? '−' : ''}1.<em>xxxx</em>₂ × 2<sup>E</sup></strong></span>
+        <span><small>絶対値をこの形へ直す</small><strong>1.<em>xxxx</em>₂ × 2<sup>E</sup></strong></span>
       </div>
       <div className="normalization-quiz">
         <label>絶対値を1.にそろえた数（−は入力しない）<input value={mantissaAnswer} onChange={event => { setMantissaAnswer(event.target.value.replace(/[^01.]/g, '')); setQuizState(undefined); }} placeholder={normalizationUnavailable ? '0は正規化できません' : '例 1.101'} inputMode="decimal" disabled={normalizationUnavailable} /></label>
@@ -138,7 +138,7 @@ export function RealNumbersLab() {
 
       {quizState === 'correct' && <div className="floating-answer-reveal" aria-live="polite">
         <div className="underlined-floating-formula">
-          <span className="mantissa-underline"><span className="formula-token"><b>{normalizationSign === '1' ? '−' : ''}1.</b><em>{mantissa.replace(/0+$/, '') || '0'}</em><sub>2</sub></span><small>絶対値の「1.」より右側を仮数部 Mへ入れる</small></span>
+          <span className="mantissa-underline"><span className="formula-token"><b>1.</b><em>{mantissa.replace(/0+$/, '') || '0'}</em><sub>2</sub></span><small>絶対値の「1.」より右側を仮数部 Mへ入れる</small></span>
           <b className="formula-times">×</b>
           <span className="exponent-underline"><span className="formula-token"><b>2</b><sup><em>{normalizedExponent}</em></sup></span><small>右上の数が指数 E</small></span>
         </div>
