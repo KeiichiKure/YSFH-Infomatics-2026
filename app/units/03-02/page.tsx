@@ -15,7 +15,6 @@ const description = '2進数の加減算、補数、実数表現、演算誤差�
 export const metadata: Metadata = {
   title,
   description,
-  robots: { index: false, follow: false },
   openGraph: { title, description, images: [] },
   twitter: { title, description, images: [] },
 };
@@ -46,7 +45,7 @@ export default function BinaryArithmeticUnit() {
         <RealNumbersLab />
         <ErrorLab />
         <BinaryCheckpoint />
-        <footer className="lesson-footer"><div><b>理数情報ラボ</b><span>高校 情報Ⅰ · 2学期補助教材</span></div><p>プリントと教科書の学習順序に合わせ、説明・図解・操作画面は本教材用に独自作成しています。</p><div><Link href="/third-party-notices.txt">第三者ライセンス</Link><Link href="/">単元一覧へ戻る ↑</Link></div></footer>
+        <footer className="lesson-footer"><div><b>理数情報ラボ</b><span>高校 情報Ⅰ · Web教材</span></div><p>プリントと教科書の学習順序に合わせ、説明・図解・操作画面は本教材用に独自作成しています。</p><div><Link href="/third-party-notices.txt">第三者ライセンス</Link><Link href="/">単元一覧へ戻る ↑</Link></div></footer>
       </article>
     </div>
   </main>;

@@ -44,7 +44,7 @@ export default function CompressionUnit() {
           <LosslessLab />
           <ImageCompressionLab />
           <CompressionCheckpoint />
-          <footer className="lesson-footer"><div><b>理数情報ラボ</b><span>高校 情報Ⅰ · 2学期補助教材</span></div><p>プリントと教科書の学習順序に合わせ、図解と操作画面は本教材用に独自作成しています。</p><div><Link href="/third-party-notices.txt">第三者ライセンス</Link><Link href="/">単元一覧へ戻る ↑</Link></div></footer>
+          <footer className="lesson-footer"><div><b>理数情報ラボ</b><span>高校 情報Ⅰ · Web教材</span></div><p>プリントと教科書の学習順序に合わせ、図解と操作画面は本教材用に独自作成しています。</p><div><Link href="/third-party-notices.txt">第三者ライセンス</Link><Link href="/">単元一覧へ戻る ↑</Link></div></footer>
         </article>
       </div>
     </main>

@@ -18,12 +18,6 @@ export default function Home() {
           <p className="hero-lead">
             答えを覚える前に、まず動かしてみる。理数情報の学びを、自分のペースで深めるウェブ教材です。
           </p>
-          <div className="hero-actions">
-            <Link className="primary-button" href="/units/02-02/">
-              02-02の学習をはじめる <span aria-hidden="true">→</span>
-            </Link>
-            <span className="hero-note">目安 40分 · スマホ／PC対応</span>
-          </div>
         </div>
         <div className="hero-visual" aria-label="連続的な波が0と1のデジタルデータへ変わるイメージ">
           <div className="signal-card signal-card-analog">
@@ -42,8 +36,8 @@ export default function Home() {
 
       <section className="unit-list" aria-labelledby="units-title">
         <div className="section-heading">
-          <p className="eyebrow">2学期 · UNIT 02</p>
-          <h2 id="units-title">学習する単元</h2>
+          <p className="eyebrow">UNIT 02</p>
+          <h2 id="units-title">コミュニケーションと情報デザイン</h2>
         </div>
         <Link className="unit-card unit-card-active" href="/units/02-01/">
           <span className="unit-number">02-01</span>
@@ -73,7 +67,7 @@ export default function Home() {
           <span className="unit-status">学習する →</span>
         </Link>
         <div className="section-heading unit-group-heading">
-          <p className="eyebrow">3学期 · UNIT 03</p>
+          <p className="eyebrow">UNIT 03</p>
           <h2>コンピュータのしくみ</h2>
         </div>
         <Link className="unit-card unit-card-active" href="/units/03-01/">
@@ -82,6 +76,24 @@ export default function Home() {
             <h3>ハードウェアとソフトウェア</h3>
             <span className="textbook-page">教科書 pp.68–71</span>
             <p>5大装置、接続、OS、拡張子、IoTをキャラクターと模擬実験で学ぶ</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
+        <Link className="unit-card unit-card-active" href="/units/03-02/">
+          <span className="unit-number">03-02</span>
+          <div>
+            <h3>2進数の計算</h3>
+            <span className="textbook-page">教科書 pp.72–75</span>
+            <p>2進数の加減算、補数、実数の表現、演算誤差を操作しながら確かめる</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
+        <Link className="unit-card unit-card-active" href="/units/03-03/">
+          <span className="unit-number">03-03</span>
+          <div>
+            <h3>論理回路と論理演算</h3>
+            <span className="textbook-page">教科書 pp.76–79</span>
+            <p>論理回路、加算回路、ビットマスクを動かして計算のしくみをつなぐ</p>
           </div>
           <span className="unit-status">学習する →</span>
         </Link>

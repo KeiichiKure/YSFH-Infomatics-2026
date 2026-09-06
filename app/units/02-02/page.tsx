@@ -67,7 +67,7 @@ export default function DigitalizationUnit() {
             <div className="term-grid">{terms.map(([sectionNumber, term, meaning]) => <details key={`${sectionNumber}-${term}`}><summary><span>{sectionNumber}</span><strong>{term}</strong></summary><p>{meaning}</p></details>)}</div>
             <div className="final-challenge digit-final"><Image src={understoodMascot} alt="理解して手を挙げる生徒のマスコット" /><div><p className="step-label">最後の問い</p><h3>元の情報に近づけると、なぜデータ量が増える？</h3><ol><li>1秒間に取り出す標本点の数</li><li>1つの値を表す量子化ビット数</li><li>画像の画素数や動画のフレーム数</li></ol><p>この3つを使って60秒で説明できたら、今日のミッション達成です。</p></div></div>
           </section>
-          <footer className="lesson-footer"><div><b>理数情報ラボ</b><span>高校 情報Ⅰ · 2学期補助教材</span></div><p>プリントと教科書の学習順序に合わせ、図解と操作画面は本教材用に独自作成しています。</p><div><Link href="/third-party-notices.txt">第三者ライセンス</Link><Link href="/">単元一覧へ戻る ↑</Link></div></footer>
+          <footer className="lesson-footer"><div><b>理数情報ラボ</b><span>高校 情報Ⅰ · Web教材</span></div><p>プリントと教科書の学習順序に合わせ、図解と操作画面は本教材用に独自作成しています。</p><div><Link href="/third-party-notices.txt">第三者ライセンス</Link><Link href="/">単元一覧へ戻る ↑</Link></div></footer>
         </article>
       </div>
     </main>
