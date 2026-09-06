@@ -17,6 +17,10 @@ function roundFourFraction(value: number) {
   return Math.round(Math.max(0, value) / FOUR_BIT_STEP) * FOUR_BIT_STEP;
 }
 
+function truncateFourFraction(value: number) {
+  return Math.floor(Math.max(0, value) / FOUR_BIT_STEP) * FOUR_BIT_STEP;
+}
+
 function fourFractionBits(value: number) {
   return Math.max(0, Math.min(15, Math.round(value / FOUR_BIT_STEP))).toString(2).padStart(4, '0');
 }
@@ -205,11 +209,15 @@ export function ErrorLab() {
   const underflowMinimum = FOUR_BIT_STEP;
   const underflowStored = underflowExact > 0 && underflowExact < underflowMinimum ? 0 : roundFourFraction(underflowExact);
   const underflowHappened = underflowExact > 0 && underflowStored === 0;
-  const truncated = roundFourFraction(truncationValue);
+  const isDivisionTruncation = truncationValue === 1 / 3;
+  const limitedValue = isDivisionTruncation ? truncateFourFraction(truncationValue) : roundFourFraction(truncationValue);
   const truncationTrace = binaryFractionTrace(Math.min(0.999999, Math.max(0, truncationValue)), 12);
   const truncationStream = truncationTrace.map(step => step.bit).join('');
   const truncationContinues = (truncationTrace.at(-1)?.remainder ?? 0) !== 0;
-  const repeatedFour = (count: number) => Array.from({ length: count }).reduce<number>(sum => roundFourFraction(sum + roundFourFraction(truncationValue)), 0);
+  const repeatedFour = (count: number) => Array.from({ length: count }).reduce<number>((sum) => {
+    const next = sum + limitedValue;
+    return isDivisionTruncation ? truncateFourFraction(next) : roundFourFraction(next);
+  }, 0);
   const informationFieldError = learningFloatInputError(largeText) || learningFloatInputError(smallText);
   const informationOrderError = !informationFieldError && Number(largeText) < Number(smallText) ? '「大きい値」には、「小さい値」以上の数を入力してください。' : '';
   const informationResultError = !informationFieldError && !informationOrderError && Number(largeText) + Number(smallText) > 240 ? '2数の和が240を超えると、情報落ちではなくオーバーフローの実験になります。和が240以下になる組み合わせにしてください。' : '';
@@ -285,7 +293,7 @@ export function ErrorLab() {
       <div className="error-tabs" aria-label="実験する誤差を選ぶ">
         <button type="button" className={experiment === 'overflow' ? 'is-active' : ''} onClick={() => chooseExperiment('overflow')}>オーバーフロー</button>
         <button type="button" className={experiment === 'underflow' ? 'is-active' : ''} onClick={() => chooseExperiment('underflow')}>アンダーフロー</button>
-        <button type="button" className={experiment === 'truncation' ? 'is-active' : ''} onClick={() => chooseExperiment('truncation')}>打ち切り誤差</button>
+        <button type="button" className={experiment === 'truncation' ? 'is-active' : ''} onClick={() => chooseExperiment('truncation')}>丸め・打ち切り誤差</button>
         <button type="button" className={experiment === 'information' ? 'is-active' : ''} onClick={() => chooseExperiment('information')}>情報落ち</button>
         <button type="button" className={experiment === 'cancellation' ? 'is-active' : ''} onClick={() => chooseExperiment('cancellation')}>桁落ち</button>
       </div>
@@ -321,14 +329,14 @@ export function ErrorLab() {
       </div>}
 
       {experiment === 'truncation' && <div className="experiment-panel">
-        <div className="error-explanation"><h4>打ち切り誤差とは</h4><p>終わらない2進小数を途中で止めるため、本来の値との差が生まれる現象です。ここでは<strong>小数点以下4ビット</strong>で止めます。</p></div>
+        <div className="error-explanation dual-error-explanation"><h4>丸め誤差と打ち切り誤差</h4><p>どちらも本来の値との差ですが、<strong>差が生まれる理由</strong>が異なります。</p><div><article><b>丸め誤差</b><p><strong>0.1</strong>のように有限ビットで表せない数を、次のビットを見て近い値へ丸めると生じます。</p></article><article><b>打ち切り誤差</b><p><strong>1÷3</strong>のように終わらない計算を、決めた桁や回数で途中終了すると生じます。</p></article></div></div>
         <div className="value-buttons">{[{label:'0.1',value:0.1},{label:'1÷3',value:1/3},{label:'0.25（比較）',value:0.25}].map(item=><button type="button" className={truncationValue===item.value?'is-active':''} onClick={()=>{setTruncationValue(item.value);setRun(0);}} key={item.label}>{item.label}</button>)}</div>
         <div className="four-bit-rule fraction-rule"><b>小数用の4ビット箱</b><span>0.5</span><span>0.25</span><span>0.125</span><span>0.0625</span><strong>ここで止める</strong></div>
         <div className="error-history" aria-live="polite">
-          <section><h5>1　元の2進小数を見る</h5><div className="exact-binary-form"><b>0.{truncationStream}{truncationContinues ? '…' : ''}₂</b><span>{truncationContinues ? '右側へまだ続いています' : 'この数は途中で終わります'}</span></div></section>
-          {run>=1&&<section><h5>2　4ビットの後ろで止め、次の1桁を確認する</h5><div className="binary-cut-visual four-bit-cut"><b>0.</b>{[...truncationStream.slice(0,8)].map((bit,index)=><span className={index<4?'is-kept':index===4?'is-next':'is-cut'} key={index}>{bit}</span>)}{truncationContinues&&<i>…</i>}<strong>✂</strong></div><p className="stage-instruction">最初の4桁は <b>{truncationStream.slice(0,4)}</b>。次の桁が{truncationStream[4]}なので、{truncationStream[4]==='1'?'繰り上げて丸めます':'そのままにします'}。</p></section>}
-          {run>=2&&<section><h5>3　4ビットで保存した値と比べる</h5><div className={`experiment-result ${truncated!==truncationValue?'has-error':'no-error'}`}><div><small>本来の値</small><b>{decimalText(truncationValue, 8)}</b></div><i>0.{fourFractionBits(truncated)}₂ として保存</i><div><small>保存後の値</small><b>{truncated}</b></div><strong>{truncated!==truncationValue?`差は ${decimalText(Math.abs(truncated-truncationValue),8)}。4ビットで止めたためです。`:'この数は4ビットで正確に保存できました。'}</strong></div></section>}
-          {run>=3&&<section><h5>4　4ビットへ毎回丸めて、100回足し算する</h5><div className="repetition-results two-results"><span><small>本来の値を100回足す</small><b>{decimalText(truncationValue,6)} × 100</b><strong>＝ {decimalText(truncationValue*100,6)}</strong></span><i>比べる</i><span><small>毎回4ビットへ丸めて足す</small><b>{decimalText(roundFourFraction(truncationValue),6)} × 100</b><strong>＝ {decimalText(repeatedFour(100),6)}</strong></span><p>本来は約{decimalText(truncationValue*100,6)}ですが、毎回丸めると{decimalText(repeatedFour(100),6)}になりました。小さな差が100回分積み重なっています。</p></div></section>}
+          <section><h5>1　元の2進小数を見る</h5><div className="exact-binary-form"><b>0.{truncationStream}{truncationContinues ? '…' : ''}₂</b><span>{truncationContinues ? '右側へまだ続いています' : 'この数は途中で終わります'}</span></div><p className={`error-kind-label ${isDivisionTruncation ? 'is-truncation' : 'is-rounding'}`}>{isDivisionTruncation ? '1÷3：終わらない除算を途中で止める「打ち切り誤差」を確かめます。' : truncationValue === 0.1 ? '0.1：有限ビットの近い値へ直す「丸め誤差」を確かめます。' : '0.25：有限ビットで正確に表せる比較例です。'}</p></section>
+          {run>=1&&<section><h5>2　{isDivisionTruncation ? '4ビットまで計算し、そこで打ち切る' : '4ビットの後ろで区切り、次の1桁を見て丸める'}</h5><div className="binary-cut-visual four-bit-cut"><b>0.</b>{[...truncationStream.slice(0,8)].map((bit,index)=><span className={index<4?'is-kept':!isDivisionTruncation&&index===4?'is-next':'is-cut'} key={index}>{bit}</span>)}{truncationContinues&&<i>…</i>}<strong>✂</strong></div><p className="stage-instruction">{isDivisionTruncation ? <>1÷3の除算を4ビットまで求めたところで、残りがあっても計算を終了します。最初の4桁 <b>{truncationStream.slice(0,4)}</b> をそのまま使います。</> : <>最初の4桁は <b>{truncationStream.slice(0,4)}</b>。次の桁が{truncationStream[4]}なので、{truncationStream[4]==='1'?'繰り上げて近い値へ丸めます':'そのまま保存します'}。</>}</p></section>}
+          {run>=2&&<section><h5>3　4ビットで得た値と、本来の値を比べる</h5><div className={`experiment-result ${limitedValue!==truncationValue?'has-error':'no-error'}`}><div><small>本来の値</small><b>{decimalText(truncationValue, 8)}</b></div><i>{isDivisionTruncation ? '計算を4ビットで打ち切る' : `0.${fourFractionBits(limitedValue)}₂へ丸める`}</i><div><small>{isDivisionTruncation ? '打ち切った値' : '保存後の値'}</small><b>{limitedValue}</b></div><strong>{limitedValue!==truncationValue ? isDivisionTruncation ? `差は ${decimalText(Math.abs(limitedValue-truncationValue),8)}。1÷3の計算を4ビットで打ち切ったためです。これが打ち切り誤差です。` : `差は ${decimalText(Math.abs(limitedValue-truncationValue),8)}。0.1を有限ビットの近い値へ丸めたためです。これが丸め誤差です。` : 'この数は4ビットで正確に表せました。'}</strong></div></section>}
+          {run>=3&&<section><h5>4　4ビットで得た値を100回足して比べる</h5><div className="repetition-results two-results"><span><small>本来の値を100回足す</small><b>{decimalText(truncationValue,6)} × 100</b><strong>＝ {decimalText(truncationValue*100,6)}</strong></span><i>比べる</i><span><small>{isDivisionTruncation ? '4ビットで打ち切った値を足す' : '4ビットへ丸めた値を足す'}</small><b>{decimalText(limitedValue,6)} × 100</b><strong>＝ {decimalText(repeatedFour(100),6)}</strong></span><p>本来は約{decimalText(truncationValue*100,6)}ですが、{isDivisionTruncation ? '打ち切った値' : '丸めた値'}を使うと{decimalText(repeatedFour(100),6)}になりました。1回の小さな差も、繰り返すと大きくなります。</p></div></section>}
         </div>
         <ExperimentStepControls step={run} max={3} onChange={setRun} />
       </div>}

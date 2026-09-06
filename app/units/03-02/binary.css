@@ -624,6 +624,14 @@
 .error-explanation { margin-bottom: 15px; padding: 14px 16px; border-left: 6px solid var(--teal); border-radius: 0 12px 12px 0; background: var(--binary-soft); }
 .error-explanation h4 { margin: 0 0 5px; color: var(--teal-dark); font-size: 20px; }
 .error-explanation p { margin: 0; font-size: 16px; line-height: 1.7; }
+.dual-error-explanation > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 12px; }
+.dual-error-explanation article { padding: 13px 15px; border: 2px solid var(--line); border-radius: 12px; background: white; }
+.dual-error-explanation article:first-child { border-color: var(--coral); }
+.dual-error-explanation article:last-child { border-color: #d9a522; }
+.dual-error-explanation article > b { display: block; margin-bottom: 5px; color: var(--ink); font-size: 18px; }
+.dual-error-explanation article > p { font-size: 14px; }
+.error-kind-label { margin: 12px 0 0 !important; padding: 11px 13px; border-radius: 9px; color: var(--ink) !important; background: #fff0e8; font-size: 15px !important; font-weight: 900; text-align: center; }
+.error-kind-label.is-truncation { background: #fff8df; }
 .single-precision-rule { display: grid; grid-template-columns: 1fr 1.5fr auto; align-items: center; gap: 10px; margin: 14px 0; padding: 14px 16px; border: 3px solid var(--teal); border-radius: 13px; background: #eaf7ee; }
 .single-precision-rule b { color: var(--teal-dark); font-size: 17px; }
 .single-precision-rule span { font: 900 16px/1.5 Consolas,monospace; text-align: center; }
@@ -1060,7 +1068,7 @@
   .rounding-results { grid-template-columns: 1fr; }
   .rounding-comparison { grid-template-columns: 1fr; }
   .rounding-comparison > strong { grid-column: auto; }
-  .rounding-decision, .point-shift-comparison, .four-bit-rule, .plain-number-pair, .stored-number-pair, .machine-precision-result, .cancellation-normalization, .float-value-pair { grid-template-columns: 1fr; }
+  .rounding-decision, .point-shift-comparison, .four-bit-rule, .plain-number-pair, .stored-number-pair, .machine-precision-result, .cancellation-normalization, .float-value-pair, .dual-error-explanation > div { grid-template-columns: 1fr; }
   .rounding-decision > p, .normalization-hints .shift-hint-card { grid-column: auto; }
   .machine-precision-result > strong, .machine-precision-result > p, .cancellation-normalization > div, .cancellation-normalization > p { grid-column: auto; }
   .precision-mode-buttons { grid-template-columns: 1fr; }
