@@ -18,7 +18,7 @@ const cast = [
 const panels = [page1, page3, page5];
 const assets = [...cast.map(c => c.image.src), ...panels.map(p => p.src)];
 const duration = 50;
-const scoreUrl = `${input.src.split('/_next/')[0]}/audio/manga-teaser/denno-works-score.wav?v=comedy-144`;
+const scoreUrl = `${input.src.split('/_next/')[0]}/audio/manga-teaser/denno-works-score.wav?v=original-restored`;
 export default function Teaser() {
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -101,5 +101,6 @@ export default function Teaser() {
     {error && <p className="teaser-error" role="alert">{error} {!ready && <button onClick={() => { setError(''); setAttempt(a => a+1); }}>再読み込み</button>}</p>}
   </main>;
 }
+
 
 
