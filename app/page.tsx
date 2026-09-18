@@ -97,6 +97,19 @@ export default function Home() {
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
+        <div className="section-heading unit-group-heading">
+          <p className="eyebrow">UNIT 05</p>
+          <h2>情報通信ネットワーク</h2>
+        </div>
+        <Link className="unit-card unit-card-active" href="/units/05-01/">
+          <span className="unit-number">05-01</span>
+          <div>
+            <h3>ネットワークとプロトコル</h3>
+            <span className="textbook-page">教科書 pp.124–129</span>
+            <p>機器とサーバをつなぎ、TCP/IPでデータが届くしくみを体験する</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
       </section>
     </main>
   );
