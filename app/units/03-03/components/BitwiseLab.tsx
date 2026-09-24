@@ -5,10 +5,10 @@ import { ColorMaskLab } from './ColorMaskLab';
 import { Note, PrintBadge, SectionHeading } from './LessonParts';
 import { bitwiseOperation, type BitwiseOperation } from './logicModels';
 
-const operationInfo: Record<BitwiseOperation, { defaultMask: string; title: string; action: string; badge: string }> = {
-  AND: { defaultMask: '00001111', title: '必要なビットだけ取り出す', action: 'マスクが0の位置を0にし、1の位置は元のビットを残す。', badge: '教科書例3' },
-  OR: { defaultMask: '00001111', title: '指定したビットを1にする', action: 'マスクが1の位置を、元の値に関係なく1にする。', badge: '42' },
-  XOR: { defaultMask: '11110000', title: '指定したビットを反転する', action: 'マスクが1の位置だけ、0と1を入れ替える。', badge: '43' },
+const operationInfo: Record<BitwiseOperation, { defaultMask: string; term: string; shortAction: string; action: string; badge: string }> = {
+  AND: { defaultMask: '00001111', term: 'ビットクリア', shortAction: 'マスクが0の桁を0にする', action: 'AND演算で、マスクが0の位置を0にする操作を「ビットクリア」といいます。マスクが1の位置は、元のビットをそのまま残せます。', badge: '教科書例3' },
+  OR: { defaultMask: '00001111', term: 'ビットセット', shortAction: 'マスクが1の桁を1にする', action: 'OR演算で、マスクが1の位置を必ず1にする操作を「ビットセット」といいます。マスクが0の位置は、元のビットをそのまま残せます。', badge: 'プリント42' },
+  XOR: { defaultMask: '11110000', term: 'ビット反転', shortAction: 'マスクが1の桁を反転する', action: 'XOR演算で、マスクが1の位置だけ0と1を入れ替える操作を「ビット反転」といいます。マスクが0の位置は、元のビットをそのまま残せます。', badge: 'プリント43' },
 };
 
 export function BitwiseLab() {
@@ -28,9 +28,10 @@ export function BitwiseLab() {
   return <section className="logic-learning-section" id="bitwise">
     <SectionHeading number="04" label="論理演算 · 教科書 p.79" title="8個の回路で、ビット列を一気に操作。" question="元のビットとマスクを変え、実行ボタンで8桁をまとめて計算しよう。" />
     <div className="logic-panel bitwise-lab">
-      <div className="logic-panel-heading"><div><p className="logic-step-label">BIT MASK LAB</p><h3>取り出す・1にする・反転する</h3></div><div className="badge-pair"><PrintBadge numbers="42" /><PrintBadge numbers="43" /></div></div>
-      <div className="bitwise-tabs">{(['AND', 'OR', 'XOR'] as const).map(item => <button type="button" key={item} className={operation === item ? 'is-selected' : ''} aria-pressed={operation === item} onClick={() => chooseOperation(item)}><b>{item}</b><span>{operationInfo[item].title}</span></button>)}</div>
-      <div className="bitwise-story"><span>{info.badge}</span><h4>{info.title}</h4><p>{info.action}</p></div>
+      <div className="logic-panel-heading"><div><p className="logic-step-label">BIT MASK LAB</p><h3>ビットクリア・ビットセット・ビット反転</h3></div><div className="badge-pair"><PrintBadge numbers="42" /><PrintBadge numbers="43" /></div></div>
+      <div className="bitwise-term-intro"><b>演算と操作名をセットで覚えよう</b><p>マスクを使うと、変えたい桁だけを0にしたり、1にしたり、反転したりできます。</p></div>
+      <div className="bitwise-tabs" aria-label="ビット演算の用語解説">{(['AND', 'OR', 'XOR'] as const).map(item => <button type="button" key={item} className={operation === item ? 'is-selected' : ''} aria-pressed={operation === item} onClick={() => chooseOperation(item)}><b>{item}</b><strong>{operationInfo[item].term}</strong><span>{operationInfo[item].shortAction}</span></button>)}</div>
+      <div className="bitwise-story"><span>{info.badge}</span><h4>{operation}で行う「{info.term}」</h4><p>{info.action}</p></div>
       <div className="bit-matrix" role="group" aria-label="8ビットの論理演算">
         <div className="bit-row"><strong>元のビット</strong>{[...source].map((bit, index) => { const relation = executedResult ? bit === executedResult[index] ? 'is-same' : 'is-changed' : ''; return <button type="button" className={relation} key={index} aria-label={`左から${index + 1}番目の元ビット${bit}。押すと切り替え`} onClick={() => toggleSource(index)}>{bit}</button>; })}</div>
         <div className="bit-row mask"><strong>{operation}マスク</strong>{[...mask].map((bit, index) => { const relation = bit === '1' ? 'mask-one' : 'mask-zero'; return <button type="button" className={relation} key={index} aria-label={`左から${index + 1}番目のマスク${bit}。押すと切り替え`} onClick={() => toggleMask(index)}>{bit}</button>; })}</div>
