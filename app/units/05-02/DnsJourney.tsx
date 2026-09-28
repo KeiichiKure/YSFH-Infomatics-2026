@@ -1,0 +1,40 @@
+'use client';
+import {useState} from 'react';
+import {dnsSteps,type DnsMode} from './model';
+import {Section,Frame,Terms,Details,Guide,Notice,usePlayer} from './Parts';
+
+const initialCache:Record<string,string>={'www.weather.example.jp':'198.51.100.20','www.library.example.jp':'198.51.100.21','www.club.example.jp':'198.51.100.22'};
+const cacheLabel=(name:string)=>name.includes('weather')?'天気':name.includes('library')?'図書館':name.includes('club')?'部活動':name.includes('festival')?'文化祭':name.replace('www.','');
+const queries=[{name:'www.festival.example.jp',label:'文化祭サイト・初めて調べる',ip:'198.51.100.80'},{name:'www.weather.example.jp',label:'天気サイト・記憶にある',ip:'198.51.100.20'},{name:'www.library.example.jp',label:'図書館サイト',ip:'198.51.100.21'},{name:'www.club.example.jp',label:'部活動サイト',ip:'198.51.100.22'},{name:'www.festivl.example.jp',label:'文化祭サイト？・つづり違い',ip:''}] as const;
+type Query=typeof queries[number];
+type Delegation='none'|'jp'|'example';
+type Run={query:Query;mode:DnsMode;delegation:Delegation};
+const nodes=[{id:'端末',label:'自分の端末',x:10,y:48,ip:'192.168.1.120'},{id:'DNS',label:'いつものDNS',x:38,y:48,ip:'192.168.1.53'},{id:'ルート',label:'ルートDNS',x:72,y:16,ip:'192.0.2.1'},{id:'.jp',label:'.jp のDNS',x:72,y:48,ip:'192.0.2.53'},{id:'example.jp',label:'example.jp のDNS',x:72,y:80,ip:'192.0.2.54'},{id:'Web',label:'Webサーバ',x:10,y:82,ip:'198.51.100.80'}] as const;
+const edges=[['端末','DNS'],['DNS','ルート'],['DNS','.jp'],['DNS','example.jp'],['端末','Web']] as const;
+function arrowPosition(from:typeof nodes[number],to:typeof nodes[number]){if((from.id==='端末'&&to.id==='DNS')||(from.id==='DNS'&&to.id==='端末'))return{x:24,y:27};if(from.id==='Web'||to.id==='Web')return{x:25,y:69};if(from.id==='ルート'||to.id==='ルート')return{x:55,y:19};if(from.id==='.jp'||to.id==='.jp')return{x:55,y:39};return{x:55,y:69}}
+function packetType(kind:string,from:string){return kind==='referral'?'次に聞くDNS':kind==='answer'?'見つけた答え':kind==='error'?'名前がない':kind==='web'?from==='Web'?'Webページ':'Webの要求':'名前解決（問い合わせ）'}
+function Journey({chosen,run,cache,delegation,onSelect,onBegin,onResolved,onReferral}:{chosen:Query;run:Run|null;cache:Record<string,string>;delegation:Delegation;onSelect:(query:Query)=>void;onBegin:(query:Query)=>void;onResolved:(name:string,ip:string)=>void;onReferral:(level:'jp'|'example')=>void}){
+ const query=run?.query??chosen,mode=run?.mode??(query.ip?'cold':'missing');
+ const steps=dnsSteps(mode,query.name,query.ip||'198.51.100.80',run?.delegation??delegation),p=usePlayer(steps.length-1),step=steps[p.step],from=nodes.find(n=>n.id===step.from)!,to=nodes.find(n=>n.id===step.to)!;
+ const prior=steps.slice(0,p.step+1),known=prior.some(s=>!!s.known),jpKnown=(run?.delegation??delegation)!=='none'||prior.some(s=>s.from==='ルート'&&s.kind==='referral'),exampleKnown=(run?.delegation??delegation)==='example'||prior.some(s=>s.from==='.jp'&&s.kind==='referral');
+ const go=()=>{if(!run||p.step===steps.length-1){onBegin(chosen);p.reset();p.move(1);return}const upcoming=steps[p.step+1];if(upcoming.kind==='referral'&&upcoming.from==='ルート')onReferral('jp');if(upcoming.kind==='referral'&&upcoming.from==='.jp')onReferral('example');if(p.step+1===steps.length-1&&mode!=='missing')onResolved(query.name,query.ip);p.move(1)};
+ const select=(name:string)=>{onSelect(queries.find(q=>q.name===name)!);p.reset()};
+ const shownIp=(id:string,ip:string)=>id==='.jp'&&!jpKnown?'?':id==='example.jp'&&!exampleKnown?'?':id==='Web'&&!known?'?':id==='Web'?query.ip:ip;
+ return <Frame id="dns-lab" title="名前解決（問い合わせ）の矢印を追う" controls={<><button onClick={()=>p.move(-1)} disabled={!p.step}>← 戻る</button><label className="in-dns-control-select">何を聞く？<select value={chosen.name} onChange={e=>select(e.target.value)}>{queries.map(q=><option key={q.name} value={q.name}>{q.name}（{q.label}）</option>)}</select></label><button className="in-primary in-dns-next" onClick={go}>{!run?'この名前を調べる →':p.step===steps.length-1?'もう一度調べる →':'次へ →'}</button><span className="in-counter">{p.step+1} / {steps.length}</span></>}>
+  <div className="in-dns-question">{query.name} のIPアドレスは？</div><p className="in-small">DNS（ドメインネームシステム）は名前とIPを結ぶ仕組み。いつものDNSは<strong>ルートDNSの場所</strong>を最初から知っています。{(run?.delegation??delegation)==='example'?'前に紹介されたexample.jpの担当DNSも記憶中です。':(run?.delegation??delegation)==='jp'?'.jpの担当DNSも記憶中です。':'その先の担当DNSは、返事を受けて初めて分かります。'}</p>
+  <div className="in-dns-stage-grid"><div className="in-dns-visual"><svg className="in-dns-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><defs><marker id="dns-arrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5" fill="#d27336"/></marker></defs>{edges.map(([a,b])=>{const x=nodes.find(n=>n.id===a)!,y=nodes.find(n=>n.id===b)!;return <line key={a+b} x1={x.x} y1={x.y} x2={y.x} y2={y.y} className="in-dns-base"/>})}{p.step>0&&step.kind!=='search'&&<line key={`${query.name}-${p.step}`} x1={from.x} y1={from.y} x2={to.x} y2={to.y} className="in-dns-active" markerEnd="url(#dns-arrow)"/>}</svg>
+   {nodes.map(node=><div key={node.id} className={`in-dns-node ${node.id==='端末'||node.id==='Web'?'is-left':''} ${node.id===step.to?'is-target':''} ${node.id===step.from?'is-sender':''}`} style={{left:`${node.x}%`,top:`${node.y}%`}}><b>{node.label}</b><small>{shownIp(node.id,node.ip)}</small></div>)}
+   {p.step>0&&step.kind!=='search'&&<div key={p.step} className="in-dns-arrow-label in-dns-full-message" style={{left:`${arrowPosition(from,to).x}%`,top:`${arrowPosition(from,to).y}%`}}><b>{packetType(step.kind,step.from)}</b><small>{step.message}</small></div>}
+  </div>
+  <div className="in-dns-stage-side"><div className="in-dns-hints"><b>最初から知っている</b><small>ルートDNS → 192.0.2.1</small></div><div className={`in-dns-cache ${step.kind==='search'?'is-searching':''}`}><b>いつものDNSが記憶中</b>{jpKnown&&<small className="in-dns-delegation">.jpのDNS → 192.0.2.53</small>}{exampleKnown&&<small className="in-dns-delegation">example.jpのDNS → 192.0.2.54</small>}{Object.entries(cache).map(([name,ip])=><small key={name}>{cacheLabel(name)} → {ip}</small>)}{step.kind==='search'&&<strong>🔎 {step.message}</strong>}</div><div className="in-dns-visited"><b>調べた順番</b><ol>{steps.slice(1,p.step+1).map((s,i)=><li key={i} className={i===p.step-1?'is-now':''}><span>{i+1}</span>{s.title}</li>)}</ol>{p.step===0&&<p>「次へ」で問い合わせの中身が矢印のそばに現れます。</p>}</div>
+  </div></div>
+  <div className="in-two in-browser-pair in-dns-browser-result"><div><small>端末が知った宛先IP</small><code>{known?query.ip:'まだ分からない'}</code></div><div><small>ブラウザの画面</small><b>{mode==='missing'&&p.step===steps.length-1?'このサイトにアクセスできません':mode!=='missing'&&p.step===steps.length-1?'ページが表示された':'まだページは届いていない'}</b>{mode==='missing'&&p.step===steps.length-1&&<code>DNS_PROBE_FINISHED_NXDOMAIN</code>}</div></div>
+  <Notice title={step.title}>{step.reason}</Notice><p className="in-small">図中のIPは説明用の例です。担当DNSの記憶にも有効期限があり、期限が切れると再び上位DNSへ尋ねます。DNSが答えるのはホスト名のIP。index.htmlなどのページはWebサーバ側が選びます。</p>
+ </Frame>;
+}
+export function DnsJourney(){
+ const [cache,setCache]=useState(initialCache),[delegation,setDelegation]=useState<Delegation>('none'),[chosen,setChosen]=useState<Query>(queries[0]),[run,setRun]=useState<Run|null>(null);
+ const begin=(query:Query)=>setRun({query,mode:query.ip?cache[query.name]?'warm':'cold':'missing',delegation});
+ const resolved=(name:string,ip:string)=>setCache(c=>c[name]?c:{...c,[name]:ip});
+ return <Section id="dns" n={5} title="名前から宛先へ、サーバをたどる" blank="㉓㉔" page="p.134"><p className="in-lead">記憶にある名前、初めての名前、つづり違いを選んで比べよう。</p><Journey chosen={chosen} run={run} cache={cache} delegation={delegation} onSelect={q=>{setChosen(q);setRun(null)}} onBegin={begin} onResolved={resolved} onReferral={level=>setDelegation(level)}/><Guide mood="understood"><b>同じ名前をもう一度調べると？</b><p>初回の最後まで進めたら、同じ名前をもう一度調べよう。今度はいつものDNSの記憶だけで答えが返ります。別の名前も、example.jpの担当DNSまで記憶していれば途中から調べられます。</p></Guide><Details title="DNS階層とのつながり"><p>この模型はルートDNS → .jpのDNS → example.jpの権威DNSという委任を設定しています。AレコードはIPv4、AAAAレコードはIPv6、MXレコードはメールの配送先に関係します。</p><p><a href="https://jprs.jp/faq/use/" target="_blank" rel="noreferrer">JPRS：example.jp は例示用の名前</a></p></Details><Terms section={5}/></Section>;
+}

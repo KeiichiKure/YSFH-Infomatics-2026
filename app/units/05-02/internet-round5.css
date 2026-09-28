@@ -1,0 +1,91 @@
+/* The handoff finishes before the recipient card reveals its number. */
+.internet-unit button.in-primary:hover:not(:disabled),.internet-unit button[aria-pressed=true]:hover:not(:disabled){background:var(--teal-dark);border-color:var(--teal-dark);color:#fff}
+#internet-overview .in-alloc-arrow{height:34px;z-index:2}
+#internet-overview .in-alloc-arrow.is-moving em{left:50%;right:auto;top:-7px;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:in-alloc-handoff 1.05s ease-in-out both}
+@keyframes in-alloc-handoff{0%{transform:translate(-50%,-15px);opacity:0}20%{opacity:1}75%{transform:translate(-50%,13px);opacity:1}100%{transform:translate(-50%,17px);opacity:0}}
+
+#home-power .in-home-devices>div.is-disconnected .in-device{background:#ffe8e3;border-color:#ca6249;color:#8e3324;box-shadow:0 0 0 3px #d05e4633}
+#home-power .in-printer-open{display:block;background:#a74231!important;border-color:#852b22!important;color:#fff!important;font-weight:900;line-height:1.35;white-space:normal}
+#home-power .in-printer-open:hover{background:#8d3026!important;color:#fff!important}
+#home-power .in-home-feedback.is-error{min-height:92px}
+#home-power .in-home-actions:has(>div:only-child){display:block}
+#home-power .in-home-devices>div.is-disconnected .in-device code{color:#9d3024;font-weight:900}
+#home-power .in-ip-setting-button{display:block;width:100%;background:#e9f4ec;border-color:#a9cdb5;color:#155f43;font-size:11px}
+#home-power .in-ip-setting-button.is-error{background:#a74231;border-color:#852b22;color:#fff}
+#home-power .in-ip-setting-button.is-error:hover{background:#8d3026;color:#fff}
+#home-power .in-printer-setting{align-items:end}
+
+#napt-lab .in-napt-packet-card{display:block}
+#napt-lab .in-napt-packet-card>b{display:block;margin-bottom:6px;font-size:15px}
+#napt-lab .in-napt-current-route{display:flex;flex-wrap:wrap;gap:5px 15px}
+#napt-lab .in-napt-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+#napt-lab .in-napt-evidence>div{display:grid;gap:3px;padding:7px 9px;background:#fff;border:1px solid #d3c49b;border-radius:7px;min-width:0}
+#napt-lab .in-napt-evidence strong{font-size:12px}
+#napt-lab .in-napt-evidence code{font-size:16px;font-weight:850;overflow-wrap:anywhere}
+#napt-lab .in-napt-evidence .is-new{background:#fff0ba;border-color:#d79535;animation:in-memo-write .6s ease-out}
+#napt-lab .in-napt-mapping .in-memo-row{font-size:17px;font-weight:800;overflow-wrap:anywhere}
+#napt-lab .in-napt-current-route code{font-size:16px;font-weight:850}
+#napt-lab .in-napt-stage .in-napt-moving small{font-size:15px;font-weight:800}
+
+#dns-lab>.in-controls{display:grid;grid-template-columns:auto minmax(240px,1fr) auto auto;align-items:end;gap:7px}
+#dns-lab .in-dns-control-select{display:grid;gap:3px;min-width:0;font-weight:850;font-size:12px}
+#dns-lab .in-dns-control-select select{width:100%;min-height:41px;font-size:13px}
+#dns-lab .in-dns-next{white-space:nowrap;min-height:41px}
+#dns-lab .in-dns-stage-side .in-dns-cache{position:static!important;left:auto;top:auto;width:100%;padding:7px}
+#dns-lab .in-dns-stage-side .in-dns-cache b{font-size:12px}
+#dns-lab .in-dns-stage-side .in-dns-cache small{font-size:11px}
+#dns-lab .in-dns-hints{display:grid;gap:2px;padding:5px 7px;background:#e7eef8;border:1px solid #a6bdd7;border-radius:8px}
+#dns-lab .in-dns-hints b{font-size:11px}
+#dns-lab .in-dns-hints small,#dns-lab .in-dns-delegation{font-size:11px;font-weight:850}
+#dns-lab .in-dns-browser-result{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:5px 0}
+#dns-lab .in-dns-browser-result>div{min-height:0;padding:5px 9px}
+#dns-lab .in-dns-browser-result code,#dns-lab .in-dns-browser-result b{margin-top:2px;font-size:13px}
+#dns-lab .in-dns-arrow-label{animation:in-dns-stable-pop .3s ease-out both}
+#dns-lab .in-dns-node.is-target{animation:in-dns-stable-target .45s ease-out}
+@keyframes in-dns-stable-pop{from{opacity:0;filter:brightness(1.4)}to{opacity:1;filter:brightness(1)}}
+@keyframes in-dns-stable-target{from{box-shadow:0 0 0 0 #d2733600}to{box-shadow:0 0 0 4px #d2733640}}
+
+#sharing-lab .in-flow-people{grid-template-columns:.8fr 1.35fr .8fr}
+#sharing-lab .in-forked-flow{height:465px}
+#sharing-lab .in-forked-flow>svg path{vector-effect:non-scaling-stroke;stroke-width:6px;stroke:#95b8aa}
+#sharing-lab .in-forked-flow>svg path.is-sharing-active{stroke-width:8px;stroke:#217963}
+#sharing-lab .in-forked-flow>svg path.in-common-trunk{stroke-width:10px}
+#sharing-lab .in-flow-trunk{width:min(210px,75%);justify-self:center}
+#sharing-lab .in-flow-people{grid-template-rows:minmax(0,1fr);min-height:0}
+#sharing-lab .in-flow-people>div:first-child,#sharing-lab .in-flow-people>div:last-child{min-height:0;height:100%;grid-template-rows:repeat(3,minmax(0,1fr))}
+#sharing-lab .in-flow-person{min-height:0;overflow:hidden}
+#sharing-lab .in-attachment-toggle[aria-pressed=true]{background:#fff0bf;border-color:#c79539;color:#6a4413}
+#sharing-lab .in-nine-slots{grid-template-columns:repeat(auto-fit,minmax(42px,1fr));gap:3px}
+#sharing-lab .in-flow-queue em{font-size:10px}
+
+#routing-lab .in-route-mode{display:inline-block;background:#e7f2ee;color:#1c644f;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:850}
+#routing-lab .in-route-controls{display:flex;align-items:center;gap:7px}
+#routing-lab .in-route-controls .in-counter{margin-left:auto}
+#routing-lab .in-route-node[aria-label="R2の経路表を表示"] .in-local-bubble{top:auto;bottom:calc(100% + 8px);left:-35px}
+#routing-lab .in-route-node[aria-label="R4の経路表を表示"] .in-local-bubble{top:auto;bottom:calc(100% + 8px);left:-35px}
+#routing-lab .in-route-node[aria-label="R3の経路表を表示"] .in-local-bubble,#routing-lab .in-route-node[aria-label="R6の経路表を表示"] .in-local-bubble{top:auto;bottom:calc(100% + 8px);left:-45px}
+#routing-lab .in-route-node[aria-label="R6の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R4の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R3の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R2の経路表を表示"] .in-local-bubble::before{top:auto;bottom:-9px;border-left:0;border-top:0;border-right:2px solid #d6a155;border-bottom:2px solid #d6a155;left:calc(50% - 7px)}
+#routing-lab .in-route-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:3px 0 7px;font-size:12px;font-weight:800}
+#routing-lab .in-route-legend span{display:inline-flex;gap:5px;align-items:center}
+#routing-lab .in-route-legend i{display:inline-block;width:15px;height:15px;border-radius:4px}
+#routing-lab .in-route-legend .is-working{background:#fff0c8;border:2px solid #db843b}
+#routing-lab .in-route-legend .is-table{background:#fff;border:3px solid #197763}
+
+@media(max-width:760px){#internet-overview .in-alloc-arrow{height:38px}#internet-overview .in-alloc-arrow.is-moving em{font-size:10px;max-width:88%}#home-power .in-printer-setting{display:grid;grid-template-columns:1fr 1fr}#home-power .in-printer-setting label,#home-power .in-printer-setting small{grid-column:1/-1}#napt-lab>.in-controls{position:static}#napt-lab .in-napt-evidence{grid-template-columns:1fr}#napt-lab .in-napt-evidence code,#napt-lab .in-napt-current-route code,#napt-lab .in-napt-mapping .in-memo-row{font-size:14px}#napt-lab .in-napt-stage .in-napt-moving small{font-size:12px}#dns-lab>.in-controls{position:static;grid-template-columns:auto minmax(0,1fr);align-items:center}#dns-lab .in-dns-control-select{grid-column:2}#dns-lab .in-dns-next{grid-column:1/-1}#dns-lab>.in-controls .in-counter{grid-column:1/-1;text-align:right}#dns-lab .in-dns-stage-side .in-dns-cache small{font-size:10px}#sharing-lab .in-forked-flow{height:560px}#sharing-lab .in-flow-people{grid-template-columns:.8fr 1.35fr .8fr}#sharing-lab .in-flow-trunk{width:min(105px,75%)}#sharing-lab .in-flow-queue em{font-size:8px}#sharing-lab .in-sharing-switch button{font-size:10px}#routing-lab .in-route-controls button{font-size:11px;padding:6px}#routing-lab .in-route-node[aria-label="R4の経路表を表示"] .in-local-bubble{left:-30px;width:116px}#routing-lab .in-route-node[aria-label="R6の経路表を表示"] .in-local-bubble{left:-60px;width:120px}#routing-lab .in-route-node[aria-label="R6の経路表を表示"] .in-local-bubble::before{left:calc(50% + 18px)}}
+@media(prefers-reduced-motion:reduce){#internet-overview .in-alloc-arrow.is-moving em,#dns-lab .in-dns-arrow-label,#dns-lab .in-dns-node.is-target{animation-duration:.01ms!important}}
+
+#napt-lab>.in-controls .in-napt-switch{flex-basis:100%;display:flex;gap:8px;margin:4px 0 0;padding-top:9px;border-top:1px solid #d9e8df}
+#napt-lab>.in-controls .in-napt-switch button{font-size:14px;font-weight:800;min-width:110px}
+.in-prefix-explanation{background:#edf6f1;border:2px solid #92c4aa;border-radius:12px;padding:14px 17px;margin:4px 0 18px;font-size:15px;line-height:1.65}
+.in-prefix-explanation>b{display:block;font-size:17px;color:#13573f}
+.in-prefix-explanation p{margin:8px 0}
+.in-prefix-groups{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:10px 0}
+.in-prefix-groups span{text-align:center;background:white;border:1px solid #bad5c5;border-radius:7px;padding:6px 2px;font-weight:800}
+.in-prefix-groups span:nth-child(2){background:#fff0c2;border-color:#dca743}
+@media(max-width:760px){.in-prefix-explanation{font-size:13px;padding:12px}.in-prefix-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* NAPT操作は切替時にスクロール位置が変わってもボタンの位置を固定する */
+#napt-lab>.in-controls{position:static!important}
+
+#napt-lab>.in-body>.in-napt-switch{display:flex;gap:8px;margin:0 0 12px;padding:0 0 10px;border-bottom:1px solid #d9e8df}
+#napt-lab>.in-body>.in-napt-switch button{font-size:14px;font-weight:800;min-width:110px}

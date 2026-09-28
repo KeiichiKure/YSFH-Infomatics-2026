@@ -1,0 +1,13 @@
+'use client';
+import {useState} from 'react';
+import {bits} from './model';
+import {Section,Frame,Guide,Terms,Notice} from './Parts';
+import {PingLab} from './PingLab';
+
+export function AddressLab(){
+ const [octet,setOctet]=useState(3),[values,setValues]=useState([192,168,0,101]),[short,setShort]=useState(false);
+ const n=values[octet];
+ return <Section id="addresses" n={1} title="数字の住所を、ビットで見よう" blank="①〜⑥" page="pp.130–131"><p className="in-lead">前の単元で見たIPアドレス。その数字は、どんな仕組みでできている？</p><Frame id="ipv4-lab" title="IPv4 · 8ビットを4組ならべる"><div className="in-octets">{values.map((v,i)=><button key={i} aria-pressed={octet===i} onClick={()=>setOctet(i)}><small>第{i+1}組 · 8ビット</small><b>{v}</b><code>{bits(v)}</code></button>)}</div><p className="in-center">上の組を選び、下の <b>0・1</b> を押して変えてみよう。</p><div className="in-bits interactive">{[128,64,32,16,8,4,2,1].map(weight=><button key={weight} aria-label={`重み${weight}のビット`} aria-pressed={Boolean(n&weight)} onClick={()=>setValues(v=>v.map((x,i)=>i===octet?x^weight:x))}><small>{weight}</small><b>{n&weight?1:0}</b></button>)}</div><Notice title={`${[128,64,32,16,8,4,2,1].filter(w=>n&w).join(' + ')||'0'} = ${n}`}>8ビットは0〜255の256通り。4組合わせて <b>8 × 4 = 32ビット</b> です。表示中：<code>{values.join('.')}</code></Notice><button onClick={()=>{setValues([192,168,0,101]);setOctet(3)}}>教科書の例に戻す</button><p className="in-small">表記の仕組みを調べる操作です。作ったアドレスが端末へ割り当て可能とは限りません。</p></Frame>
+ <div className="in-panel"><div className="in-heading"><h3>IPv6は、16ビットを8組</h3><span className="in-chip">合計128ビット</span></div><p>1桁の16進数は4ビット。4桁ずつ「:」で区切ります。</p><div className="in-v6-comparison"><div><b>省略前 · 8組 × 16ビット</b><div className="in-v6-address">{['2001','0db8','0000','3456','308c','0000','0000','0000'].map((group,i)=><span key={i}><code>{short&&i===1?<><del>0</del>db8</>:short&&i===2?<><del>000</del>0</>:short&&i>=5?<del>{group}</del>:group}</code>{i<7&&<i>:</i>}</span>)}</div></div>{short&&<div className="in-v6-short"><b>省略後 · 同じアドレス</b><code>2001:db8:0:3456:308c::</code></div>}</div><button aria-pressed={short} onClick={()=>setShort(s=>!s)}>{short?'赤い取り消し線を隠す':'同じアドレスを短く表す'}</button>{short&&<div className="in-v6-explain"><div><b>0db8 → db8</b><p>組の先頭の0だけを消せます。途中の0は残します。</p></div><div><b>0000 → 0</b><p>1組だけなら、数字を全部消さずに0を1つ残します。</p></div><div><b>0000:0000:0000 → ::</b><p>連続する0だけの組は、1か所だけ「::」にまとめられます。ここで消えたのは後ろの3組です。</p></div></div>}<p className="in-small">「::」は連続した0の組をまとめた印です。1つのアドレスで2か所に使うと元の組数が分からなくなります。</p></div>
+ <PingLab/><Guide mood="understood"><b>名前札は、誰が重ならないようにしている？</b><p>グローバルIPアドレスは、インターネットレジストリが段階的に割り当て・管理します。IPv4には2³²通り、IPv6には2¹²⁸通りの表現がありますが、すべてを端末用に使えるわけではありません。</p></Guide><Terms section={1}/></Section>;
+}
