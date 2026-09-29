@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState,type CSSProperties} from 'react';
 import {Section,Frame,Guide,Notice} from './Parts';
+import {RoutingExperience} from './RoutingExperience';
 
 const people=[{id:'A',name:'Aさん',wish:'メールを送る',to:'メールサーバ'},{id:'B',name:'Bさん',wish:'資料を印刷する',to:'プリンター'},{id:'C',name:'Cさん',wish:'Webページを見る',to:'Webサーバ'}] as const;
 const contents:Record<string,{text:string;direction:'out'|'back'}>={A1:{text:'宛先と件名',direction:'out'},A2:{text:'メール本文',direction:'out'},A3:{text:'受付の返事',direction:'back'},B1:{text:'印刷設定',direction:'out'},B2:{text:'印刷データ',direction:'out'},B3:{text:'完了の返事',direction:'back'},C1:{text:'ページ要求',direction:'out'},C2:{text:'HTML',direction:'back'},C3:{text:'画像',direction:'back'}};
@@ -33,4 +34,4 @@ function SharingScene({mode,onMode,attachment,onAttachment}:{mode:'circuit'|'pac
 }
 function Sharing(){const [mode,setMode]=useState<'circuit'|'packet'>('circuit'),[attachment,setAttachment]=useState(false);return <SharingScene key={`${mode}-${attachment}`} mode={mode} onMode={setMode} attachment={attachment} onAttachment={setAttachment}/>}
 
-export function FlowRoutes(){return <Section id="routes" n={6} title="1本の回線を分け合う" blank="通信の比較" page="p.135"><p className="in-lead">3人の箱を同じ回線に流し、1人ずつ使う場合と箱ごとに交代する場合を比べよう。</p><Sharing/><Guide mood="understood"><b>細かく分けると、待ち時間はどう変わる？</b><p>回線交換では先の人が終えるまで待ちます。パケット交換なら箱ごとに交代でき、後から送る人も途中から回線を使えます。</p></Guide></Section>}
+export function FlowRoutes(){return <Section id="routes" n={6} title="回線を分け、次の道を選ぶ" blank="通信の比較" page="p.135"><p className="in-lead">3人の箱を同じ回線に流し、経路を調べる会話とWeb要求の道を追おう。</p><Sharing/><p className="in-small">発展：経路表の体験は、次のプリントの内容を先取りしています。</p><RoutingExperience/><Guide mood="understood"><b>番号が分かっても、届く道が必要。</b><p>DNSで名前から宛先IPを調べ、ルータは宛先IPと経路表を比べて次の道を選びます。</p></Guide></Section>}

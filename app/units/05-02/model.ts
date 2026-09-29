@@ -26,7 +26,7 @@ export function maskPrefix(mask:string):number|null {
 }
 export const sections = [
   ['addresses','IPアドレス'], ['lan','家の住所'], ['subnet','範囲と台数'],
-  ['names','ドメイン名'], ['dns','名前解決'], ['routes','回線を分け合う'],
+  ['names','ドメイン名'], ['dns','名前解決'], ['routes','回線と経路'],
 ] as const;
 export const terms = [
   ['①','IPv4','32ビットのIPアドレスを使う規格。8ビットずつ4組に分けて表す。',1],
