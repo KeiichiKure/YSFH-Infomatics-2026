@@ -110,8 +110,16 @@ export default function Home() {
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
+        <Link className="unit-card unit-card-active" href="/units/05-02/">
+          <span className="unit-number">05-02</span>
+          <div>
+            <h3>インターネットの仕組み</h3>
+            <span className="textbook-page">教科書 pp.130–135</span>
+            <p>IPアドレス、DNS、回線共有を動かして、Webページが届く道をたどる</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
       </section>
     </main>
   );
 }
-
