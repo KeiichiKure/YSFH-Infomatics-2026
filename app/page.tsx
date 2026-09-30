@@ -119,6 +119,15 @@ export default function Home() {
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
+        <Link className="unit-card unit-card-active" href="/units/05-03/">
+          <span className="unit-number">05-03</span>
+          <div>
+            <h3>Webページとネットワークセキュリティ</h3>
+            <span className="textbook-page">教科書 pp.136–141</span>
+            <p>Webとメールが届く道をたどり、脅威の見分け方と守り方を学ぶ</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
       </section>
     </main>
   );
