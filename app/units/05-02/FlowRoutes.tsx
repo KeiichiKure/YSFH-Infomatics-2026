@@ -34,4 +34,4 @@ function SharingScene({mode,onMode,attachment,onAttachment}:{mode:'circuit'|'pac
 }
 function Sharing(){const [mode,setMode]=useState<'circuit'|'packet'>('circuit'),[attachment,setAttachment]=useState(false);return <SharingScene key={`${mode}-${attachment}`} mode={mode} onMode={setMode} attachment={attachment} onAttachment={setAttachment}/>}
 
-export function FlowRoutes(){return <Section id="routes" n={6} title="回線を分け、次の道を選ぶ" blank="通信の比較" page="p.135"><p className="in-lead">3人の箱を同じ回線に流し、経路を調べる会話とWeb要求の道を追おう。</p><Sharing/><p className="in-small">発展：経路表の体験は、次のプリントの内容を先取りしています。</p><RoutingExperience/><Guide mood="understood"><b>番号が分かっても、届く道が必要。</b><p>DNSで名前から宛先IPを調べ、ルータは宛先IPと経路表を比べて次の道を選びます。</p></Guide></Section>}
+export function FlowRoutes(){return <Section id="routes" n={6} title="回線を分け、次の道を選ぶ" blank="通信の比較" page="p.135"><p className="in-lead">3人の箱を同じ回線に流し、経路を調べる会話とWeb要求の道を追おう。</p><Sharing/><RoutingExperience/><Guide mood="understood"><b>番号が分かっても、届く道が必要。</b><p>DNSで名前から宛先IPを調べ、ルータは宛先IPと経路表を比べて次の道を選びます。</p></Guide></Section>}

@@ -62,9 +62,10 @@
 #routing-lab .in-route-controls{display:flex;align-items:center;gap:7px}
 #routing-lab .in-route-controls .in-counter{margin-left:auto}
 #routing-lab .in-route-node[aria-label="R2の経路表を表示"] .in-local-bubble{top:auto;bottom:calc(100% + 8px);left:-35px}
-#routing-lab .in-route-node[aria-label="R4の経路表を表示"] .in-local-bubble{top:auto;bottom:calc(100% + 8px);left:-35px}
+#routing-lab .in-route-node[aria-label="R4の経路表を表示"] .in-local-bubble{top:calc(100% + 8px);bottom:auto;left:-35px}
+#routing-lab .in-route-node[aria-label="R4の経路表を表示"] .in-local-bubble::before{left:calc(50% - 7px)}
 #routing-lab .in-route-node[aria-label="R3の経路表を表示"] .in-local-bubble,#routing-lab .in-route-node[aria-label="R6の経路表を表示"] .in-local-bubble{top:auto;bottom:calc(100% + 8px);left:-45px}
-#routing-lab .in-route-node[aria-label="R6の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R4の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R3の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R2の経路表を表示"] .in-local-bubble::before{top:auto;bottom:-9px;border-left:0;border-top:0;border-right:2px solid #d6a155;border-bottom:2px solid #d6a155;left:calc(50% - 7px)}
+#routing-lab .in-route-node[aria-label="R6の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R3の経路表を表示"] .in-local-bubble::before,#routing-lab .in-route-node[aria-label="R2の経路表を表示"] .in-local-bubble::before{top:auto;bottom:-9px;border-left:0;border-top:0;border-right:2px solid #d6a155;border-bottom:2px solid #d6a155;left:calc(50% - 7px)}
 #routing-lab .in-route-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:3px 0 7px;font-size:12px;font-weight:800}
 #routing-lab .in-route-legend span{display:inline-flex;gap:5px;align-items:center}
 #routing-lab .in-route-legend i{display:inline-block;width:15px;height:15px;border-radius:4px}

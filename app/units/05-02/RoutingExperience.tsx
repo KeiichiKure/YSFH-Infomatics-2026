@@ -63,7 +63,7 @@ export function RoutingExperience(){
  const restart=()=>{setKnown({Web:false,Video:false});setMode('discover');setStep(0);setSelected('R1')};
  const activeNodes=new Set([current.speaker]);
  const selectedRows=(['Web','Video'] as Destination[]).map(target=>({target,visible:available(selected,target,target===destination?step:0,known[target],mode==='discover'&&target===destination)}));
- return <Frame id="routing-lab" title="矢印を追って、経路表を育てる">
+ return <Frame id="routing-lab" title="【発展】矢印を追って、経路表を育てる">
   <div className="in-route-controls"><button disabled={step===0} onClick={back}>← 戻る</button><button className="in-primary" onClick={advance}>{step===route.length-1?'もう一度見る →':'次へ →'}</button><span className="in-counter">{step+1} / {route.length}</span><button onClick={restart}>最初から</button></div>
   <div className="in-route-options"><label>どちらを見たい？<select value={destination} onChange={e=>changeDestination(e.target.value as Destination)}><option value="Web">ニュースWeb</option><option value="Video">動画サーバ</option></select></label><span className="in-route-mode">{mode==='repeat'?'✓ 経路表に記録あり · 問い合わせを省略':'初回 · 経路表にまだ記録なし'}</span></div>
   <p className="in-route-intent">{d.host} を開く · 宛先IP <strong>{mode==='repeat'||step>=2?d.ip:'DNSで調べる前は？'}</strong></p><div className="in-route-legend"><span><i className="is-working"/> オレンジ＝いま動く機器</span><span><i className="is-table"/> 緑の枠＝下に表示中の経路表</span></div>
