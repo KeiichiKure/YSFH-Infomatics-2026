@@ -78,10 +78,9 @@ function RouteTable({kind,selected,destination}:{kind:Kind;selected:NodeId;desti
 }
 function Journey({kind,receive='IMAP',onReceive}:{kind:Kind;receive?:Receive;onReceive?:(value:Receive)=>void}){
  const stages=kind==='web'?webStages:mailStages(receive),player=useSteps(stages.length-1),stage=stages[player.step];
- const [manualSelection,setManualSelection]=useState<{step:number;id:NodeId}|null>(null),[guess,setGuess]=useState<string|null>(null);
+ const [manualSelection,setManualSelection]=useState<{step:number;id:NodeId}|null>(null);
  const selected=manualSelection?.step===player.step?manualSelection.id:stage.focus??(routerIds.includes(stage.actor)?stage.actor:'r1');
  const select=(id:NodeId)=>setManualSelection({step:player.step,id});
- const correct=kind==='web'?'R2':'R3';
  const arrived=kind==='web'?Math.max(0,...stages.slice(0,player.step+1).map(s=>s.arrived??0)):0;
  const prepareIndex=webStages.findIndex(s=>s.title==='3つの返事を用意');
  return <Frame id={kind==='web'?'web-journey':'mail-journey'} title={kind==='web'?'Webページはどう届く？':'メールはどう届き、どう読む？'} controls={<StepControls player={player} max={stages.length-1}/>}>
@@ -89,7 +88,7 @@ function Journey({kind,receive='IMAP',onReceive}:{kind:Kind;receive?:Receive;onR
  <div className="s03-stage"><div><small>いまの場面 · {player.step+1}/{stages.length}</small><h4>{stage.title}</h4></div><span className="s03-stage-type">{kind==='web'?'HTTPS とパケット':'SMTP → POP / IMAP'}</span></div>
  <Map kind={kind} receive={receive} stage={stage} step={player.step} selected={selected} onSelect={select} prepareIndex={prepareIndex} arrived={arrived}/>
  {kind==='mail'&&<details className="s03-mx-note"><summary>補足：MXとは？</summary><p>MXはDNSにある「そのドメインへのメールを受け取るサーバ名」の記録です。MX自体はIPアドレスではありません。サーバ名を調べた後、そのIPアドレスを調べて配送します。この図では教科書に合わせ、その名前解決をまとめて示しています。 <a href="https://www.rfc-editor.org/rfc/rfc6950.html" target="_blank" rel="noreferrer">技術資料</a></p></details>}
- <Notice title={stage.title}>{stage.detail}</Notice><div className="s03-route-question"><b>経路表で確かめよう：R1が選ぶ次のルータは？</b><div>{['R2','R3'].map(hop=><button key={hop} type="button" aria-pressed={guess===hop} onClick={()=>{setGuess(hop);select('r1')}}>{hop}</button>)}</div><p role="status">{guess===null?'R1の経路表を見て選ぼう。':guess===correct?`✓ 正解！ ${kind==='web'?'Webサーバ':'受信側メールサーバ'}の宛先IPに対し、R1の表では${correct}です。`:`× 今回の宛先IPに対するR1の表は${correct}です。R2とR3は行き先が違います。`}</p></div><p className="in-small">05-02の「隣へ尋ねて経路表を育てる」は仕組みを学ぶための模型です。ここでは経路が記録済みとして転送します。DNSの名前の記憶とルータの経路表は別です。図のHTTPS・SMTPの内容は学習用に見せています。</p></Frame>;
+ <Notice title={stage.title}>{stage.detail}</Notice><p className="in-small">05-02の「隣へ尋ねて経路表を育てる」は仕組みを学ぶための模型です。ここでは経路が記録済みとして転送します。DNSの名前の記憶とルータの経路表は別です。図のHTTPS・SMTPの内容は学習用に見せています。</p></Frame>;
 }
 export function WebLesson(){return <Section id="web" n={1} title="Webページが表示されるまで" blank="①〜⑥" page="p.136"><p className="in-lead">URLを入力してから画面にページが現れるまで、05-02で育てた経路表を使って追おう。</p><Journey kind="web"/><Guide mood="understood"><b>DNSが返したのは住所。<br/>ページを返すのはWebサーバだよ。</b><p>ルータは宛先IPで次を選びます。HTTPSはWebの要求と応答をTLSで保護し、データは下位層の仕組みで運ばれます。</p></Guide><Terms section={1}/></Section>}
 function MailJourney(){const [receive,setReceive]=useState<Receive>('POP');return <Journey key={receive} kind="mail" receive={receive} onReceive={setReceive}/>}

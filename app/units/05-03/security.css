@@ -38,11 +38,6 @@
 .s03-delivered-pieces span{display:block;font-size:12px;border:1px dashed #b7c8c3;color:#708079;padding:6px 9px;border-radius:7px;background:#fff}
 .s03-delivered-pieces span.is-arrived{border-style:solid;border-color:#54a084;color:#185f47;background:#e7f5ed;font-weight:800}
 .s03-delivered-pieces strong{font-size:13px;background:#fff0c9;padding:6px 9px;border-radius:7px}
-.s03-route-question{margin-top:15px;padding:14px;border:1px solid #d0dfd6;border-radius:11px;background:#f9fcf9}
-.s03-route-question>b{display:block;font-size:14px}
-.s03-route-question>div{display:flex;gap:7px;margin-top:8px}
-.s03-route-question button{min-width:74px}
-.s03-route-question p{font-size:13px;min-height:34px;margin:7px 0 0}
 .s03-mode,.s03-tab-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:15px 0}
 .s03-mode span{font-size:13px;font-weight:800;margin-right:4px}
 .s03-policy-layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
