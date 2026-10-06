@@ -1,0 +1,31 @@
+{
+  "title": "Bike Sharing",
+  "author": "Hadi Fanaee-T",
+  "year": 2013,
+  "source": "https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset",
+  "doi": "https://doi.org/10.24432/C5W894",
+  "download": "https://archive.ics.uci.edu/static/public/275/bike+sharing+dataset.zip",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "retrieved": "2026-10-02",
+  "hourCsvSha256": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+  "columns": [
+    "dteday",
+    "hr",
+    "workingday",
+    "weathersit",
+    "temp",
+    "cnt",
+    "casual",
+    "registered"
+  ],
+  "rowCount": 17379,
+  "rentalTotal": 3292679,
+  "period": [
+    "2011-01-01",
+    "2012-12-31"
+  ],
+  "changes": "All hourly rows retained. Selected columns parsed as numbers; original normalized temperature retained. No synthetic rows or zero-filled missing hours. Browser filters and averages these rows.",
+  "temperatureNote": "The legacy ZIP README and current UCI webpage describe Celsius conversion differently. This lesson avoids that inconsistency by preserving temp as a normalized index and never converting to Celsius.",
+  "countsNote": "UCI landing-page Instances says 17389, but the downloaded hour.csv and ZIP README have 17379 hourly records. Counts here are verified from the actual file."
+}

@@ -1,0 +1,24 @@
+.communication-unit #people-lab .cm-body{min-height:548px;gap:8px;padding:12px}
+.communication-unit .cm-people-integrated{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;flex:none}
+.communication-unit .cm-people-integrated .cm-scene{padding:8px}
+.communication-unit .cm-people-choices{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.communication-unit .cm-people-integrated .cm-feedback{padding:10px;min-height:100px}
+.communication-unit .cm-people-top{display:grid;grid-template-columns:1fr 1.2fr;gap:10px;align-items:center}
+.communication-unit .cm-people-integrated .cm-people-map{height:200px;width:100%;margin:0}
+.communication-unit .cm-people-map text{font-size:24px}
+.communication-unit .cm-people-map .cm-flow{stroke-width:3}
+.communication-unit .cm-people-answer{display:grid;grid-template-columns:minmax(0,.4fr) minmax(0,.6fr);gap:12px;padding:10px;border:1px solid #99c2aa;border-radius:10px;background:#f2faf4}
+.communication-unit .cm-people-illustration{margin:0;align-self:center}
+.communication-unit .cm-people-illustration .cm-scene-image{width:100%;height:auto;object-fit:contain;display:block}
+.communication-unit .cm-chosen-context{color:var(--ink);min-width:0}
+.communication-unit .cm-chosen-context>b{font-size:18px;color:#20563a}
+.communication-unit .cm-chosen-context h4{font-size:16px;margin:6px 0 4px}
+.communication-unit .cm-chosen-context p{font-size:14px;line-height:1.45;margin:3px 0}
+.communication-unit .cm-chosen-context .cm-chosen-example{margin:0 0 5px}
+.communication-unit .cm-trait{padding:6px 9px;border-radius:8px;border:1px solid;margin-top:5px}
+.communication-unit .cm-trait>strong{font-size:16px}
+.communication-unit .cm-trait p{margin:2px 0 0}
+.communication-unit .cm-trait.is-benefit{background:#e6f5ed;border-color:#8cbaa1;color:#20563a}
+.communication-unit .cm-trait.is-limit{background:#fff2df;border-color:#d3ae72;color:#75491d}
+.communication-unit .cm-chosen-idea{background:#fff;border-radius:6px;padding:5px 7px}
+@media(max-width:760px){.communication-unit #people-lab .cm-body{min-height:0}.communication-unit .cm-people-top,.communication-unit .cm-people-integrated,.communication-unit .cm-people-answer{grid-template-columns:1fr}.communication-unit .cm-people-integrated .cm-feedback{min-height:0}.communication-unit .cm-people-integrated .cm-people-map{height:auto}}

@@ -1,0 +1,9 @@
+.communication-unit .cm-check-evidence{gap:7px;margin:8px 0}
+.communication-unit .cm-check-evidence li{padding:5px 9px}
+.communication-unit .cm-check-evidence li.is-good{background:#edf7ef;border-left-color:#247b52;color:#205238}
+.communication-unit .cm-check-evidence li.is-bad{background:#fff1ec;border-left-color:#bd574a;color:#8b3028}
+.communication-unit .cm-check-evidence b{display:block;font-size:16px;line-height:1.4}
+.communication-unit .cm-check-evidence p{line-height:1.45;margin:3px 0 0}
+.communication-unit .cm-official-reminder{border:1px solid #c7a953;background:#fff8e4;border-radius:8px;padding:8px;font-size:14px;line-height:1.5}
+.communication-unit .cm-official-reminder>b{font-size:16px}
+.communication-unit .cm-official-reminder p{font-size:14px;line-height:1.5;margin:4px 0 0}

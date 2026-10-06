@@ -37,3 +37,6 @@ next-env.d.ts
 /outputs/
 /work/
 
+# Classroom test records and local teacher credentials
+/tmp/02-04-poll/
+

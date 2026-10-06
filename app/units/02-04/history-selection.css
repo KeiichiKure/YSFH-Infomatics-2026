@@ -1,0 +1,36 @@
+.communication-unit #history-lab .cm-body{min-height:0;padding:12px}
+.communication-unit .cm-history-selection{display:grid;grid-template-columns:144px minmax(0,1fr);gap:12px;align-items:start}
+.communication-unit .cm-history-years>b{display:block;font-size:14px;margin-bottom:6px}
+.communication-unit .cm-history-years ol{margin:0;padding:0 0 0 9px;list-style:none;border-left:3px solid #c4d6cd;display:grid;gap:5px}
+.communication-unit .cm-history-years button{display:flex;align-items:center;justify-content:space-between;gap:5px;width:100%;min-height:42px;padding:6px 8px;text-align:left}
+.communication-unit .cm-history-years button b{font-size:16px;white-space:nowrap}
+.communication-unit .cm-history-years button span{font-size:14px}
+.communication-unit .cm-history-years button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 0 0 2px #b0d6c9}
+.communication-unit .cm-history-selected{min-width:0}
+.communication-unit .cm-history-selected>h4{font-size:20px;line-height:1.4;margin:0 0 8px}
+.communication-unit .cm-history-selected>h4>span{color:var(--teal-dark);white-space:nowrap}
+.communication-unit .cm-history-selected-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.communication-unit .cm-history-life,.communication-unit .cm-history-facts{min-width:0;display:grid;gap:8px}
+.communication-unit .cm-history-life figure{margin:0;min-width:0}
+.communication-unit .cm-history-life .cm-scene-image{width:100%;height:270px;object-fit:contain;background:#f5f6f0}
+.communication-unit .cm-history-life figcaption{display:grid;gap:2px;font-size:14px;line-height:1.45;padding-top:5px}
+.communication-unit .cm-history-life figcaption small{font-size:12px;color:var(--muted)}
+.communication-unit .cm-history-japan{padding:8px 10px;border-left:3px solid var(--yellow);background:#fff6df;border-radius:0 7px 7px 0}
+.communication-unit .cm-history-japan>b,.communication-unit .cm-history-experience>b,.communication-unit .cm-history-fact>b,.communication-unit .cm-history-milestone b{font-size:16px}
+.communication-unit .cm-history-japan p,.communication-unit .cm-history-facts p{font-size:16px;line-height:1.5;margin:4px 0 0}
+.communication-unit .cm-history-experience{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#f4f8f5}
+.communication-unit .cm-history-experience>div{margin-top:4px}
+.communication-unit .cm-history-experience a{font-size:14px;font-weight:800;text-decoration:underline;color:var(--teal-dark);overflow-wrap:anywhere}
+.communication-unit .cm-history-experience p{font-size:14px;line-height:1.45;margin:2px 0 0}
+.communication-unit .cm-history-milestone,.communication-unit .cm-history-fact{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#f5f8f5}
+.communication-unit .cm-history-milestone>div{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.communication-unit .cm-history-fact.is-benefit{background:#edf7ef;border-color:#b2ccb8}
+.communication-unit .cm-history-fact.is-limit{background:#fff5e8;border-color:#e2caae}
+.communication-unit .cm-history-fact>b{display:flex;gap:7px;flex-wrap:wrap}
+.communication-unit .cm-history-fact>b span{font-size:14px;color:var(--teal-dark)}
+.communication-unit .cm-history-source-list{padding-left:20px;font-size:14px;line-height:1.6}
+.communication-unit .cm-history-source-list li{margin:8px 0}
+@media(max-width:1100px) and (min-width:761px){.communication-unit .cm-history-selection{grid-template-columns:130px minmax(0,1fr);gap:10px}.communication-unit .cm-history-selected-grid{grid-template-columns:1fr}.communication-unit .cm-history-life{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.communication-unit .cm-history-life figure{grid-row:span 2}.communication-unit .cm-history-life .cm-scene-image{height:180px}.communication-unit .cm-history-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.communication-unit .cm-history-selection{grid-template-columns:1fr;gap:14px}.communication-unit .cm-history-years ol{grid-template-columns:1fr;gap:5px}.communication-unit .cm-history-years button{justify-content:flex-start;gap:18px;min-height:40px}.communication-unit .cm-history-years button b{min-width:90px}.communication-unit .cm-history-selected-grid{grid-template-columns:1fr}.communication-unit .cm-history-life .cm-scene-image{height:auto}.communication-unit .cm-history-facts p,.communication-unit .cm-history-japan p{font-size:16px}}
+
+.communication-unit .cm-history-important{color:#b12f32;font-weight:800;background:#fff0ed;border-radius:3px;padding:0 2px}

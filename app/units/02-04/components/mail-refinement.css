@@ -1,0 +1,47 @@
+.communication-unit #compose-lab .cm-mail-body{min-height:185px}
+.communication-unit #compose-lab .cm-checks label{min-height:36px}
+.communication-unit #compose-lab .cm-split{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+.communication-unit #compose-lab .cm-mail-change{background:#fff0ad;outline:2px solid #a87919;outline-offset:2px;font-weight:800;border-radius:3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.communication-unit #compose-lab .cm-mail-linebreak-change{background:#fff9dd;outline:2px solid #a87919;outline-offset:-3px}
+.communication-unit #compose-lab .cm-mail-comparison{display:grid;grid-template-columns:1fr 20px 1fr;gap:6px;align-items:start;margin-top:8px}
+.communication-unit #compose-lab .cm-mail-comparison>div{padding:7px;border-radius:7px;border:1px solid #b9c8cf;background:#fff}
+.communication-unit #compose-lab .cm-mail-comparison>div:last-child{background:#eaf6ee;border-color:#a1bea9}
+.communication-unit #compose-lab .cm-mail-comparison strong{font-size:14px}
+.communication-unit #compose-lab .cm-mail-comparison p{font-size:14px;line-height:1.4;margin:3px 0 0}
+.communication-unit #compose-lab .cm-mail-change-state{font-weight:800}
+.communication-unit #visibility-lab .cm-body{padding:10px;gap:6px}
+.communication-unit #visibility-lab .cm-visibility-split{grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:12px}
+.communication-unit #visibility-lab h4{margin:0 0 6px;font-size:16px;line-height:1.4}
+.communication-unit #visibility-lab .cm-from{margin:0 0 6px;font-size:14px;line-height:1.4}
+.communication-unit #visibility-lab .cm-role-table{grid-template-columns:1fr;gap:4px}
+.communication-unit #visibility-lab .cm-role-table fieldset{display:flex;flex-direction:row;align-items:center;padding:3px 5px;border:2px solid transparent;border-radius:8px;gap:6px;min-height:44px}
+.communication-unit #visibility-lab .cm-role-table legend{float:left;flex:none;width:134px;line-height:1.4;font-size:14px}
+.communication-unit #visibility-lab>header{padding-top:10px;padding-bottom:10px}
+.communication-unit #visibility-lab>footer{padding-top:8px;padding-bottom:8px}
+.communication-unit #visibility-lab .cm-role-table legend b,.communication-unit #visibility-lab .cm-role-table legend span{display:block}
+.communication-unit #visibility-lab .cm-role-table legend span{font-weight:400;color:var(--muted);font-size:14px;line-height:1.4}
+.communication-unit #visibility-lab .cm-role-table fieldset.cm-viewer-setting{background:#fff8e4;border-color:#af812c}
+.communication-unit #visibility-lab .cm-role-table button.cm-viewer-role{outline:2px solid #af812c;outline-offset:1px;font-weight:900}
+.communication-unit #visibility-lab .cm-presets{margin:6px 0;gap:6px}
+.communication-unit #visibility-lab .cm-feedback{min-height:84px;padding:8px;line-height:1.4}
+.communication-unit #visibility-lab .cm-feedback p{font-size:14px;line-height:1.4}
+.communication-unit #visibility-lab .cm-viewers{margin-bottom:6px;gap:4px}
+.communication-unit #visibility-lab .cm-viewers button{min-height:36px;padding:5px}
+.communication-unit #visibility-lab .cm-received-mail{min-height:0}
+.communication-unit #visibility-lab .cm-received-mail>h4{padding:7px 9px;margin:0;font-size:14px;line-height:1.4}
+.communication-unit #visibility-lab .cm-mail dl{padding:4px 9px}
+.communication-unit #visibility-lab .cm-mail dl>div{padding:2px 0;font-size:14px;line-height:1.4}
+.communication-unit #visibility-lab .cm-mail-body{padding:8px 9px;min-height:0;font-size:14px;line-height:1.4}
+.communication-unit #visibility-lab .cm-viewer-header{border-radius:5px;background:#fff1c4;outline:2px solid #af812c;outline-offset:1px}
+.communication-unit #visibility-lab .cm-viewer-address{font-weight:900;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.communication-unit #visibility-lab .cm-hidden-recipient{margin:0;padding:5px 9px;background:#fff1c4;font-size:14px;line-height:1.4}
+.communication-unit #visibility-lab .cm-recipient-reaction{margin-top:6px;padding:8px 10px;border:1px solid #a5c7b4;border-radius:9px;background:#edf6ef}
+.communication-unit #visibility-lab .cm-recipient-reaction h4{font-size:14px;margin-bottom:3px}
+.communication-unit #visibility-lab .cm-recipient-reaction>strong{display:block;font-size:18px;line-height:1.4;font-weight:900;color:#205c3b}
+.communication-unit #visibility-lab .cm-recipient-reaction p{font-size:14px;line-height:1.4;margin:4px 0 0}
+.communication-unit #visibility-lab .cm-recipient-reaction.is-warning{background:#fff0e8;border-color:#c58a72}
+.communication-unit #visibility-lab .cm-recipient-reaction.is-warning>strong{color:#893e23}
+.communication-unit #visibility-lab .cm-inbox-wait{min-height:240px;padding:16px}
+@media(max-width:1100px){.communication-unit #visibility-lab .cm-visibility-split{grid-template-columns:1fr}.communication-unit #visibility-lab .cm-role-table{grid-template-columns:1fr 1fr}.communication-unit #visibility-lab .cm-role-table fieldset{flex-direction:column;align-items:stretch}.communication-unit #visibility-lab .cm-role-table legend{float:none;width:auto}}
+@media(max-width:760px){.communication-unit #visibility-lab .cm-role-table{grid-template-columns:1fr}.communication-unit #visibility-lab .cm-role-table fieldset{flex-direction:column;align-items:stretch}.communication-unit #visibility-lab .cm-role-table legend{display:flex;gap:8px;align-items:baseline}.communication-unit #visibility-lab .cm-role-table legend span{overflow-wrap:anywhere}.communication-unit #visibility-lab .cm-visibility-split{grid-template-columns:1fr}.communication-unit #visibility-lab .cm-mail-body{font-size:16px;line-height:1.5}.communication-unit #visibility-lab .cm-recipient-reaction>strong{font-size:18px}}
+@media(max-width:760px){.communication-unit #compose-lab .cm-split{grid-template-columns:1fr}}
