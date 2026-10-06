@@ -79,6 +79,13 @@ function validCode(value, sessions) {
   if (sessions.some(s => s.active && String(s.code) === code)) pollError('このコードは受付中の授業で使用されています。別の4桁を選んでください。');
   return code;
 }
+function withAllResults(view, votes) {
+  // A class voter can compare the same topic globally without casting a second vote.
+  // Unvoted topics retain the same privacy gate as the class result.
+  const matching = votes.filter(v => v.topic === view.session.topic && v.condition === 'base');
+  const group = round => { const list = matching.filter(v => v.round === round); return { total: list.length, counts: [0,1,2,3].map(c => list.filter(v => v.choice === c).length), reasons: list.filter(v => v.visible && v.reason).map(v => ({ id:v.id, choice:v.choice, reason:v.reason, at:v.at })) }; };
+  return { ...view, all: view.visible ? { first:group(1), second:group(2) } : null };
+}
 function publicSnapshot(votes, participant, topic, now, round = 1) {
   if (!Number.isInteger(topic) || topic < 0 || topic > 3) pollError('課題を選んでください。');
   const matching = votes.filter(v => v.topic === topic && v.condition === 'base');
@@ -93,5 +100,5 @@ function submitPublicVote(session, participant, input, now, id) {
   if (input.sessionId !== 'community' || session.id !== 'community') pollError('全体投票の課題を確認してください。');
   return submitLearnerVote(session, participant, input, now, id);
 }
-const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, publicSnapshot, submitPublicVote };
+const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, withAllResults, publicSnapshot, submitPublicVote };
 if (typeof module !== 'undefined') module.exports = PollCore;

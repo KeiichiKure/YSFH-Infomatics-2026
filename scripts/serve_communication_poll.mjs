@@ -8,7 +8,7 @@ const privateDir=path.resolve('tmp/02-04-poll');await mkdir(privateDir,{recursiv
 let db;try{db=JSON.parse(await readFile(path.join(privateDir,'state.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;db={secret:randomBytes(32).toString('hex'),admin:randomBytes(32).toString('hex'),sessions:[Core.newSession(randomUUID(),'動作確認用の授業','0123',new Date().toISOString())]};}
 if(!db.sessions.some(s=>s.id==='community'))db.sessions.push(Core.newSession('community','全体投票（コードなし）','',new Date().toISOString()));
 const allVotes=()=>db.sessions.flatMap(s=>s.votes.map(v=>({...v,scope:s.id})));
-function learnerView(s,p,topic=0,round=1){const now=new Date().toISOString(),v=Core.learnerSnapshot(s,p,topic,round,now);v.topics=[0,1,2,3].map(t=>Core.learnerSnapshot(s,p,t,1,now));return v;}
+function learnerView(s,p,topic=0,round=1){const now=new Date().toISOString(),votes=allVotes(),make=(topic,round)=>Core.withAllResults(Core.learnerSnapshot(s,p,topic,round,now),votes),v=make(topic,round);v.topics=[0,1,2,3].map(t=>make(t,1));return v;}
 function publicView(p,topic=0,round=1){const now=new Date().toISOString(),votes=allVotes(),v=Core.publicSnapshot(votes,p,topic,now,round);v.topics=[0,1,2,3].map(t=>Core.publicSnapshot(votes,p,t,now));return v;}
 async function persist(){const file=path.join(privateDir,'state.json');await writeFile(file+'.next',JSON.stringify(db));await rename(file+'.next',file);}await persist();
 await writeFile(path.join(privateDir,'teacher-url.txt'),'http://127.0.0.1:3065'+prefix+'/02-04-poll/teacher.html#'+db.admin);

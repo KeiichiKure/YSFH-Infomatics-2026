@@ -3,6 +3,8 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('授業投票')
     .addItem('保存先を初期設定（コピー後も実行）', 'setup_')
     .addItem('新しい授業を作る', 'newLesson_')
+    .addItem('一括登録用シートを開く', 'openRegistration_')
+    .addItem('入力した授業を一括登録', 'registerFromSheet_')
     .addSeparator().addItem('授業の受付・閲覧を終了', 'finishLesson_')
     .addSeparator().addItem('選択した回答の理由を非表示', 'hideReason_')
     .addItem('選択した回答の理由を再公開', 'showReason_')
@@ -47,12 +49,15 @@ function setup_() {
   ss.getSheetByName('送信記録').hideSheet(); onOpen();
   SpreadsheetApp.getUi().alert('保存先を設定しました。新しい授業を作り、授業コードを案内してください。');
 }
-function writeLesson_(t,s,row) {
+function lessonRow_(s) {
   const meta = Object.assign({},s);delete meta.votes;delete meta.requests;delete meta._row;delete meta._voteRows;
-  const data = [s.id,textCell_(s.title),s.code,s.topic+1,s.condition,s.phase,s.active,s.createdAt,JSON.stringify(meta)];
+  return [s.id,textCell_(s.title),s.code,s.topic+1,s.condition,s.phase,s.active,s.createdAt,JSON.stringify(meta)];
+}
+function writeLesson_(t,s,row) {
+  const data = lessonRow_(s);
   const target = row || t.lessons.getLastRow() + 1;
   // Keep leading zeroes in a code such as 0123; never treat codes as numbers.
-  t.lessons.getRange(target,3).setNumberFormat('@');
+  t.lessons.getRange(target,2,1,2).setNumberFormat('@');
   if(row)t.lessons.getRange(row,1,1,9).setValues([data]);else t.lessons.appendRow(data);
   invalidate_(s.id);
 }
@@ -64,8 +69,10 @@ function loadLesson_(t,id,includeRequests) {
 }
 function lessonForRead_(id) { const key='poll:lesson:'+id,cached=cacheRead_(key);if(cached)return cached;const s=loadLesson_(tables_(),id,false);cacheWrite_(key,s);return s; }
 function classView_(s,participant,topic,round) {
-  const now=new Date().toISOString(),topics=[0,1,2,3].map(i=>PollCore.learnerSnapshot(s,participant,i,1,now));
-  const view=PollCore.learnerSnapshot(s,participant,topic===undefined?0:topic,round===undefined?1:round,now);view.topics=topics;return view;
+  const now=new Date().toISOString(),votes=s.votes.some(v=>v.participant===participant)?publicVotes_():[];
+  const make=(i,r)=>PollCore.withAllResults(PollCore.learnerSnapshot(s,participant,i,r,now),votes);
+  const topics=[0,1,2,3].map(i=>make(i,1));
+  const view=make(topic===undefined?0:topic,round===undefined?1:round);view.topics=topics;return view;
 }
 function writeVote_(t,s,v,excluded) {
   const row=s._voteRows&&s._voteRows[v.id];
@@ -144,6 +151,44 @@ function newLesson_() {
   const codeInput=ui.prompt('授業コードを指定','生徒に案内する4桁の数字（例：0123、1001）',ui.ButtonSet.OK_CANCEL);if(codeInput.getSelectedButton()!==ui.Button.OK)return;
   const s=withLock_(()=>{const t=tables_(),code=PollCore.validCode(codeInput.getResponseText(),rows_(t.lessons).map(r=>({code:r[2],active:r[6]===true})));const s=PollCore.newSession(Utilities.getUuid(),title,code,new Date().toISOString());writeLesson_(t,s);PropertiesService.getScriptProperties().setProperty('CURRENT_LESSON',s.id);t.ss.setActiveSheet(t.lessons);return s;});
   ui.alert('授業を作りました','授業コード：'+s.code+'\n生徒は投票画面で入力します。',ui.ButtonSet.OK);
+}
+function openRegistration_() {
+  const t=tables_(),sh=t.ss.getSheetByName('授業登録')||t.ss.insertSheet('授業登録');
+  if(!sh.getLastRow()){
+    sh.getRange(1,1,1,4).setValues([['授業コード（4桁）','授業名','登録結果','授業コードを授業名にする']]);
+    sh.getRange('A:B').setNumberFormat('@');sh.getRange('D2').insertCheckboxes().setValue(false);
+    sh.getRange('D2').setNote('チェックすると、全ての入力行で授業コードを授業名として登録します。授業名の列は空欄で構いません。');
+    sh.getRange('A1').setNote('2行目から4桁のコードと授業名を入力し、授業投票メニューの「入力した授業を一括登録」を選びます。');
+    sh.setFrozenRows(1);sh.getRange(1,1,1,4).setBackground('#247b7e').setFontColor('#ffffff').setFontWeight('bold');
+    sh.setColumnWidth(1,160);sh.setColumnWidth(2,240);sh.setColumnWidth(3,430);sh.setColumnWidth(4,280);sh.getRange('C:C').setWrap(true);
+  }
+  t.ss.setActiveSheet(sh);
+}
+function registerLessons_(entries,useCodeAsTitle) {
+  if(!Array.isArray(entries)||entries.length>100)throw new Error('一度に登録する授業は100件以内にしてください。');
+  return withLock_(()=>{
+    const t=tables_(),existing=rows_(t.lessons).filter(r=>r[0]&&r[8]).map(r=>({id:r[0],title:JSON.parse(r[8]).title,code:String(r[2]),active:r[6]===true})),created=[];
+    const results=entries.map(entry=>{
+      if(!String(entry.code||'').trim()&&!String(entry.title||'').trim())return '';
+      try{
+        const code=PollCore.validCode(String(entry.code||'').trim(),[]),title=useCodeAsTitle?code:PollCore.validText(String(entry.title||''),60,'授業名');
+        const current=existing.find(s=>s.active&&s.code===code);
+        if(current){if(current.title===title)return '登録済み（既存の授業を使用）';throw new Error('このコードは受付中の別の授業名で使用されています。');}
+        const s=PollCore.newSession(Utilities.getUuid(),title,code,new Date().toISOString());created.push(s);existing.push(s);return '登録しました';
+      }catch(e){return 'エラー：'+e.message;}
+    });
+    if(created.length){const start=t.lessons.getLastRow()+1;t.lessons.getRange(start,2,created.length,2).setNumberFormat('@');t.lessons.getRange(start,1,created.length,9).setValues(created.map(lessonRow_));PropertiesService.getScriptProperties().setProperty('CURRENT_LESSON',created[created.length-1].id);SpreadsheetApp.flush();}
+    return {results,created:created.length,existing:results.filter(r=>r.indexOf('登録済み')===0).length,errors:results.filter(r=>r.indexOf('エラー')===0).length};
+  });
+}
+function registerFromSheet_() {
+  const t=tables_(),sh=t.ss.getSheetByName('授業登録');if(!sh){openRegistration_();SpreadsheetApp.getUi().alert('「授業登録」のA列に4桁コード、B列に授業名を入力してください。入力後にもう一度「入力した授業を一括登録」を選びます。');return;}
+  const rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,2).getDisplayValues():[];
+  while(rows.length&&!rows[rows.length-1][0].trim()&&!rows[rows.length-1][1].trim())rows.pop();
+  if(!rows.length){SpreadsheetApp.getUi().alert('A列に登録する4桁コードを入力してください。');return;}
+  const result=registerLessons_(rows.map(r=>({code:r[0],title:r[1]})),sh.getRange('D2').getValue()===true);
+  sh.getRange(2,3,result.results.length,1).setValues(result.results.map(r=>[r]));t.ss.setActiveSheet(sh);
+  SpreadsheetApp.getUi().alert('一括登録しました','新規：'+result.created+'件 ／ 登録済み：'+result.existing+'件 ／ エラー：'+result.errors+'件\n各行の「登録結果」を確認してください。',SpreadsheetApp.getUi().ButtonSet.OK);
 }
 function act_(action,value) { withLock_(()=>{const t=tables_(),s=currentLesson_(t);PollCore.manage(s,action,value===undefined&&action==='topic'?s.topic+1:value);writeLesson_(t,s,s._row);SpreadsheetApp.flush();invalidate_(s.id);}); }
 function discussion_(){act_('phase','discussion');}function reconsider_(){act_('phase','reconsider');}function closeTopic_(){act_('phase','closed');}function nextTopic_(){act_('topic');}function extra_(){act_('extra');}function finishLesson_(){act_('finish');}
@@ -233,6 +278,13 @@ function validCode(value, sessions) {
   if (sessions.some(s => s.active && String(s.code) === code)) pollError('このコードは受付中の授業で使用されています。別の4桁を選んでください。');
   return code;
 }
+function withAllResults(view, votes) {
+  // A class voter can compare the same topic globally without casting a second vote.
+  // Unvoted topics retain the same privacy gate as the class result.
+  const matching = votes.filter(v => v.topic === view.session.topic && v.condition === 'base');
+  const group = round => { const list = matching.filter(v => v.round === round); return { total: list.length, counts: [0,1,2,3].map(c => list.filter(v => v.choice === c).length), reasons: list.filter(v => v.visible && v.reason).map(v => ({ id:v.id, choice:v.choice, reason:v.reason, at:v.at })) }; };
+  return { ...view, all: view.visible ? { first:group(1), second:group(2) } : null };
+}
 function publicSnapshot(votes, participant, topic, now, round = 1) {
   if (!Number.isInteger(topic) || topic < 0 || topic > 3) pollError('課題を選んでください。');
   const matching = votes.filter(v => v.topic === topic && v.condition === 'base');
@@ -247,9 +299,9 @@ function submitPublicVote(session, participant, input, now, id) {
   if (input.sessionId !== 'community' || session.id !== 'community') pollError('全体投票の課題を確認してください。');
   return submitLearnerVote(session, participant, input, now, id);
 }
-const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, publicSnapshot, submitPublicVote };
+const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, withAllResults, publicSnapshot, submitPublicVote };
 
-return {newSession,validText,snapshot,submitVote,learnerSnapshot,submitLearnerVote,manage,validCode,publicSnapshot,submitPublicVote};
+return {newSession,validText,snapshot,submitVote,learnerSnapshot,submitLearnerVote,manage,validCode,withAllResults,publicSnapshot,submitPublicVote};
 }());
 
 /* Shared lesson content; copied into the Apps Script package by the packaging script. */

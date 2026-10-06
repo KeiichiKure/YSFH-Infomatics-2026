@@ -4,7 +4,7 @@ function mock(){
  class Sheet{constructor(cols){this.values=[Array(cols).fill('header')];this.failAppend=false;}getLastRow(){return this.values.length;}getLastColumn(){return this.values[0].length;}appendRow(row){if(this.failAppend){this.failAppend=false;throw new Error('通信テスト');}this.values.push([...row]);}getRange(r,c,h=1,w=1){return {setNumberFormat:()=>{},getValues:()=>{reads++;return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>this.values[r-1+i]?.[c-1+j]??''));},setValues:rows=>rows.forEach((row,i)=>{this.values[r-1+i]||=[];row.forEach((v,j)=>this.values[r-1+i][c-1+j]=v);})};}}
  const sheets={'授業':new Sheet(9),'回答':new Sheet(11),'送信記録':new Sheet(3)},props=new Map([['BOUND_ID','new-sheet'],['SCRIPT_ID','new-script'],['SECRET','private-test-secret']]);let opens=0,locked=0;
  const ss={getId:()=> 'new-sheet',getSheetByName:name=>sheets[name]};
- const ctx={CacheService:{getScriptCache:()=>({get:k=>cacheValues.get(k)||null,put:(k,v)=>cacheValues.set(k,v),removeAll:ks=>ks.forEach(k=>cacheValues.delete(k))})},SpreadsheetApp:{getActiveSpreadsheet:()=>null,openById:id=>{assert.equal(id,'new-sheet');opens++;return ss;},flush:()=>{}},PropertiesService:{getScriptProperties:()=>({getProperty:k=>props.get(k)})},ScriptApp:{getScriptId:()=> 'new-script'},LockService:{getScriptLock:()=>({waitLock:()=>{locked++;},releaseLock:()=>{locked--;}})},Utilities:{getUuid:randomUUID,base64EncodeWebSafe:v=>Buffer.from(typeof v==='string'?v:v).toString('base64url'),base64DecodeWebSafe:v=>Buffer.from(v,'base64url'),computeHmacSha256Signature:(v,s)=>[...createHmac('sha256',s).update(v).digest()],newBlob:v=>({getDataAsString:()=>Buffer.from(v).toString('utf8'),getBytes:()=>[...Buffer.from(v)]})}};
+ const ctx={CacheService:{getScriptCache:()=>({get:k=>cacheValues.get(k)||null,put:(k,v)=>cacheValues.set(k,v),removeAll:ks=>ks.forEach(k=>cacheValues.delete(k))})},SpreadsheetApp:{getActiveSpreadsheet:()=>null,openById:id=>{assert.equal(id,'new-sheet');opens++;return ss;},flush:()=>{}},PropertiesService:{getScriptProperties:()=>({getProperty:k=>props.get(k),setProperty:(k,v)=>props.set(k,v)})},ScriptApp:{getScriptId:()=> 'new-script'},LockService:{getScriptLock:()=>({waitLock:()=>{locked++;},releaseLock:()=>{locked--;}})},Utilities:{getUuid:randomUUID,base64EncodeWebSafe:v=>Buffer.from(typeof v==='string'?v:v).toString('base64url'),base64DecodeWebSafe:v=>Buffer.from(v,'base64url'),computeHmacSha256Signature:(v,s)=>[...createHmac('sha256',s).update(v).digest()],newBlob:v=>({getDataAsString:()=>Buffer.from(v).toString('utf8'),getBytes:()=>[...Buffer.from(v)]})}};
  vm.createContext(ctx);vm.runInContext(fs.readFileSync('poll/google/Code.gs','utf8'),ctx);const s=ctx.PollCore.newSession('lesson','確認授業','TESTCODE',new Date().toISOString());ctx.writeLesson_({lessons:sheets['授業']},s);
  return {ctx,sheets,props,reads:()=>reads,opens:()=>opens,locked:()=>locked};
 }
@@ -41,4 +41,26 @@ test('全体の考え直しを保存し、全体キャッシュも更新する',
  const m=mock(),j=m.ctx.joinPublicPoll('visitor',2),p={...payload(),sessionId:'community',topic:2,reason:''};m.ctx.votePublicPoll(p,j.token);
  const initial=m.ctx.readPublicPoll(2,j.token,1);assert.equal(initial.first.total,1);const reads=m.reads();m.ctx.readPublicPoll(2,j.token,1);assert.equal(m.reads(),reads);
  m.ctx.votePublicPoll({...p,round:2,choice:0,requestId:randomUUID()},j.token);const after=m.ctx.readPublicPoll(2,j.token,2);assert.equal(after.first.total,1);assert.equal(after.second.total,1);assert.equal(after.mine.second.choice,0);
+});
+test('一括登録でコードを授業名にし、先頭0と内部データを保つ。再実行しても重複しない',()=>{
+ const m=mock(),entries=[{code:'0031',title:''},{code:'2601',title:'無視される名前'},{code:'2602',title:''}];
+ const result=m.ctx.registerLessons_(entries,true);assert.equal(result.created,3);assert.equal(result.errors,0);
+ const rows=m.sheets['授業'].values.slice(2);assert.equal(new Set(rows.map(r=>r[0])).size,3);for(const row of rows){assert.equal(row[1],row[2]);assert.equal(JSON.parse(row[8]).title,row[2]);assert.equal(row[6],true);}
+ assert.equal(m.ctx.joinPoll('0031','visitor').snapshot.session.title,'0031');assert.equal(m.ctx.registerLessons_(entries,true).existing,3);assert.equal(m.sheets['授業'].values.length,5);assert.equal(m.locked(),0);
+});
+test('名前を指定する一括登録は不正な行と重複コードを報告し、正常な行だけを登録する',()=>{
+ const m=mock(),r=m.ctx.registerLessons_([{code:'3101',title:'1組'},{code:'3102',title:''},{code:'123',title:'短いコード'},{code:'3101',title:'別のクラス'},{code:'3103',title:'3組'},{code:'',title:''}],false);
+ assert.equal(r.created,2);assert.equal(r.errors,3);assert.equal(r.results[5],'');assert.equal(m.ctx.joinPoll('3103','visitor').snapshot.session.title,'3組');
+ const old=m.ctx.loadLesson_(m.ctx.tables_(),m.sheets['授業'].values[2][0]);old.active=false;m.ctx.writeLesson_(m.ctx.tables_(),old,old._row);assert.equal(m.ctx.registerLessons_([{code:'3101',title:'新年度1組'}],false).created,1);
+});
+test('クラス参加の全体比較は投票後だけ公開し、別クラス・全体投票を含めても自分の票は変えない',()=>{
+ const m=mock();m.ctx.registerLessons_([{code:'4001',title:'1組'},{code:'4002',title:'2組'}],false);
+ const a=m.ctx.joinPoll('4001','student-a'),b=m.ctx.joinPoll('4002','student-b');assert.equal(a.snapshot.all,null);
+ const make=(j,choice,round=1)=>({...payload(),sessionId:j.snapshot.session.id,choice,round,reason:''});
+ m.ctx.votePoll(b.snapshot.session.id,make(b,0),b.token);
+ const global=m.ctx.joinPublicPoll('visitor',0);m.ctx.votePublicPoll({...payload(),sessionId:'community',choice:1,reason:'全体の理由'},global.token);
+ const v=m.ctx.votePoll(a.snapshot.session.id,make(a,3),a.token);assert.equal(v.first.total,1);assert.equal(v.all.first.total,3);assert.equal(v.all.first.reasons.length,1);assert.equal(v.mine.first.choice,3);assert.equal(v.topics[1].all,null);
+ assert.equal(m.ctx.loadLesson_(m.ctx.tables_(),a.snapshot.session.id).votes.length,1);assert.equal(m.sheets['回答'].values.length,4);
+ const next=m.ctx.votePoll(a.snapshot.session.id,make(a,2,2),a.token);assert.equal(next.all.first.total,3);assert.equal(next.all.second.total,1);assert.equal(next.second.total,1);
+ assert.throws(()=>m.ctx.readPoll(a.snapshot.session.id,b.token,0,1),/コード/);
 });

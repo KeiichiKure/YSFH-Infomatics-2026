@@ -19,6 +19,7 @@
 .barrow{grid-template-columns:125px minmax(0,1fr) max-content}
 .barrow strong{white-space:nowrap}
 @media(max-width:700px){.tabs{grid-template-columns:1fr 1fr}.scene-facts{font-size:16px}.scene-facts b{font-size:16px}}
+.rounds{flex-wrap:wrap}
 </style></head><body><main id="poll-app"></main><script>window.POLL_EMBED = <?!= embed ?>;</script><script>/* Shared lesson content; copied into the Apps Script package by the packaging script. */
 globalThis.PollContent = {
   choices: ['直接・同期', '直接・非同期', '間接・同期', '間接・非同期'],
@@ -38,7 +39,7 @@ if (typeof module !== 'undefined') module.exports = globalThis.PollContent;
   const googleMode = typeof google !== 'undefined' && google.script && google.script.run;
   const prefix = location.pathname.includes('/YSFH-Infomatics-2026/') ? '/YSFH-Infomatics-2026' : '';
   let mode='all', code='', sessionId='', auth='', snap=null, selectedTopic=0, selectedRound=1, roundView=1;
-  let choice=null, draft='', pending=null, editing=true, busy=false, connecting=false, failed=false, status='', timer, refreshing=false, epoch=0;
+  let choice=null, draft='', pending=null, editing=true, busy=false, connecting=false, failed=false, status='', timer, refreshing=false, epoch=0, showAll=false;
   const topics=new Map(), earlyDrafts=new Map(), expanded=new Set();
   function storageGet(k){try{return localStorage.getItem(k);}catch{return null;}}
   function storageSet(k,v){try{localStorage.setItem(k,v);}catch{/* Keep working in memory. */}}
@@ -81,7 +82,7 @@ if (typeof module !== 'undefined') module.exports = globalThis.PollContent;
     if(busy||pending)return;
     nextCode=nextCode.trim().replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0));
     if(nextMode==='class'&&!/^\d{4}$/.test(nextCode)){status='授業コードは4桁の数字で入力してください。';failed=true;renderJoin(nextCode);return;}
-    const currentEpoch=++epoch;clearTimeout(timer);topics.clear();earlyDrafts.clear();mode=nextMode;code=nextCode;sessionId='';auth='';selectedTopic=0;selectedRound=roundView=1;choice=null;draft='';pending=null;editing=true;connecting=true;failed=false;
+    const currentEpoch=++epoch;clearTimeout(timer);topics.clear();earlyDrafts.clear();mode=nextMode;code=nextCode;sessionId='';auth='';selectedTopic=0;selectedRound=roundView=1;choice=null;draft='';pending=null;editing=true;connecting=true;failed=false;showAll=false;
     status='接続を準備しています。先に課題を読んで、方法を選んでおこう。';snap=placeholder(0);render();
     try{
       const joined=await call(mode==='all'?'join-public':'join',{code,topic:0});if(currentEpoch!==epoch)return;
@@ -113,14 +114,14 @@ if (typeof module !== 'undefined') module.exports = globalThis.PollContent;
   function reasons(view){return el('section',{class:'reasons'},el('h3',{},'この方法を選んだ理由'),el('p',{},'理由は任意です。書かれている意見を比べよう。人数の多さは正しさを決めません。'),el('div',{class:'reason-grid'},C.choices.map((label,i)=>{const list=view.reasons.filter(r=>r.choice===i),key=roundView+':'+i,shown=expanded.has(key)?list:list.slice(0,2);return el('section',{class:'reason-group'},el('h4',{},label+' · 理由 '+list.length+'件'),shown.map(r=>el('p',{class:'reason-card'},r.reason)),list.length===0?el('p',{class:'empty'},'共有されている理由は、まだありません。'):null,list.length>2?button(expanded.has(key)?'少なく表示する':'この選択の理由をすべて読む',()=>{expanded.has(key)?expanded.delete(key):expanded.add(key);render();}):null);})));}
   function render(){
     if(!snap){renderJoin();return;}
-    const s=snap.session,t=C.topics[selectedTopic],own=ownVote(),showForm=editing||!own,view=roundView===2?snap.second:snap.first,viewOwn=ownVote(snap,roundView);
+    const s=snap.session,t=C.topics[selectedTopic],own=ownVote(),showForm=editing||!own,results=mode==='class'&&showAll&&snap.all?snap.all:snap,view=roundView===2?results.second:results.first,viewOwn=ownVote(snap,roundView);
     const scene=el('section',{class:'scene'},el('h3',{},'課題：'+t.title),el('p',{},t.task),el('ul',{class:'scene-facts'},t.facts.map(f=>el('li',{},el('b',{},f[0]+'：'),f[1]))),el('p',{class:'instruction'},'主に使う方法を一つ選ぼう。理由は空欄でも投票できます。'));
     const panel=el('section',{class:'panel'}),add=(...parts)=>panel.append(...parts.filter(p=>p!=null));
     if(showForm){
       const textarea=el('textarea',{id:'vote-reason',rows:'3',maxlength:'400',value:draft,disabled:busy||Boolean(pending),placeholder:'任意・200字以内。良いところと気になるところを書いてもOK。',oninput:e=>{draft=e.target.value;saveDraft();document.getElementById('send-vote').disabled=busy||connecting||!auth||choice===null||[...draft.trim()].length>200;document.getElementById('reason-count').textContent=[...draft.trim()].length+' / 200字';}});
       add(el('h3',{},selectedRound===2?'考え直した方法を選ぼう':'あなたなら、どう伝える？'),el('div',{class:'choices'},C.choices.map((label,i)=>button(label,()=>{choice=i;saveDraft();render();},{'aria-pressed':choice===i,disabled:busy||Boolean(pending)}))),el('label',{class:'reason-label',for:'vote-reason'},'なぜ選んだ？ 良いところと気になるところ（任意）'),textarea,el('div',{class:'actions'},button(connecting?'接続を準備中…':pending?'保存を再確認する':own?'投票を修正する':selectedRound===2?'考え直しを投票する':'この方法に投票する',send,{id:'send-vote',class:'primary',disabled:busy||connecting||!auth||choice===null||[...draft.trim()].length>200}),own&&!pending?button('結果へ戻る',()=>{editing=false;render();refresh();}):null,selectedRound===2&&!own?button('初回の結果へ戻る',()=>selectTopic(selectedTopic,1)):null,el('span',{id:'reason-count',class:'counter'},[...draft.trim()].length+' / 200字')),el('p',{class:'privacy'},googleMode?'方法と任意の理由をGoogleへ匿名で保存します。':'確認用サーバーへ保存します。Googleには送信しません。'));
     }else if(snap.visible&&view){
-      add(el('div',{class:'rounds'},button('初回の結果',()=>{roundView=1;render();},{'aria-pressed':roundView===1}),button('考え直しの結果',()=>{roundView=2;render();},{'aria-pressed':roundView===2})),el('div',{class:'totals'},el('h3',{},mode==='all'?'全クラスの投票':'この授業の投票'),el('strong',{'data-testid':'vote-total'},view.total+'票')),el('div',{class:'bars'},C.choices.map((label,i)=>{const pc=view.total?Math.round(view.counts[i]/view.total*100):0;return el('div',{class:'barrow'},el('b',{},label),el('div',{class:'bartrack'},el('span',{style:'width:'+pc+'%'})),el('strong',{},view.counts[i]+'票 · '+pc+'%'));})),viewOwn?el('div',{class:'own'},'自分の投票：'+C.choices[viewOwn.choice]):null,el('div',{class:'question'},el('b',{},'ペアで考えよう'),el('p',{},t.question)),button('もう一度投票する（考え直し）',()=>selectTopic(selectedTopic,2,true),{class:'primary'}),viewOwn?button('この回の自分の投票を修正する',()=>selectTopic(selectedTopic,roundView,true)):null);
+      add(el('div',{class:'rounds'},button('初回の結果',()=>{roundView=1;render();},{'aria-pressed':roundView===1}),button('考え直しの結果',()=>{roundView=2;render();},{'aria-pressed':roundView===2}),mode==='class'?button('全投票結果を見る '+(showAll?'ON':'OFF'),()=>{showAll=!showAll;expanded.clear();render();},{'aria-label':'全投票結果を見る','aria-pressed':showAll,disabled:!snap.all}):null),el('div',{class:'totals'},el('h3',{},mode==='all'||showAll?'全クラスの投票':'この授業の投票'),el('strong',{'data-testid':'vote-total'},view.total+'票')),el('div',{class:'bars'},C.choices.map((label,i)=>{const pc=view.total?Math.round(view.counts[i]/view.total*100):0;return el('div',{class:'barrow'},el('b',{},label),el('div',{class:'bartrack'},el('span',{style:'width:'+pc+'%'})),el('strong',{},view.counts[i]+'票 · '+pc+'%'));})),viewOwn?el('div',{class:'own'},'自分の投票：'+C.choices[viewOwn.choice]):null,el('div',{class:'question'},el('b',{},'ペアで考えよう'),el('p',{},t.question)),button('もう一度投票する（考え直し）',()=>selectTopic(selectedTopic,2,true),{class:'primary'}),viewOwn?button('この回の自分の投票を修正する',()=>selectTopic(selectedTopic,roundView,true)):null);
     }
     const message=status||(showForm?'方法の選択は必須、理由は任意です。結果は投票後に見られます。':'数秒ごとに集計を自動更新しています。多数派も少数派も、理由を比べよう。');
     app.replaceChildren(el('section',{class:'poll-activity'},heading(),el('div',{class:'toolbar'},el('span',{class:'badge'},s.title+' · '+(selectedRound===2?'考え直し':'初回')),button('参加方法を変える',leave,{disabled:busy||Boolean(pending)})),el('nav',{class:'tabs','aria-label':'4つの課題'},C.topics.map((topic,i)=>button((i+1)+' '+topic.title,()=>selectTopic(i),{'aria-pressed':i===selectedTopic,disabled:busy||Boolean(pending)}))),el('div',{class:'layout','data-testid':'activity-main'},scene,panel),el('p',{class:'message'+(failed?' error':''),id:'poll-status',role:'status','aria-live':'polite'},message),!auth&&!connecting?button('接続を再確認する',()=>start(mode,code)):null,el('p',{class:'counter',id:'poll-updated'},snap.now?'最終確認：'+new Date(snap.now).toLocaleTimeString('ja-JP'):connecting?'課題はすぐに読めます。接続後に投票を保存できます。':'')));

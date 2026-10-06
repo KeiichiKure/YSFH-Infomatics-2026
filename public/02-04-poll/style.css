@@ -19,3 +19,4 @@
 .barrow{grid-template-columns:125px minmax(0,1fr) max-content}
 .barrow strong{white-space:nowrap}
 @media(max-width:700px){.tabs{grid-template-columns:1fr 1fr}.scene-facts{font-size:16px}.scene-facts b{font-size:16px}}
+.rounds{flex-wrap:wrap}
