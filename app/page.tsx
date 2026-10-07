@@ -8,7 +8,7 @@ export default function Home() {
           <span className="brand-mark" aria-hidden="true">01</span>
           <span>理数情報ラボ</span>
         </Link>
-        <span className="privacy-pill">記録・ログインなし</span>
+        <span className="privacy-pill">ログイン不要</span>
       </header>
 
       <section className="home-hero">
@@ -63,6 +63,15 @@ export default function Home() {
             <h3>データの圧縮</h3>
             <span className="textbook-page">教科書 pp.62–65</span>
             <p>圧縮率、圧縮・復元のしくみ、画像形式を操作で比べる</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
+        <Link className="unit-card unit-card-active" href="/units/02-04/">
+          <span className="unit-number">02-04</span>
+          <div>
+            <h3>コミュニケーションとメディア</h3>
+            <span className="textbook-page">教科書 pp.38–41</span>
+            <p>伝え方の投票、通信の歴史、実データ分析、メールの宛先を体験する</p>
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
