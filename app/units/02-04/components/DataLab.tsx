@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Frame, Note, Feedback } from './LessonParts';
 import { analyzeBikeRows, defaultBikeFilters, type BikeDataset, type BikeFilters, type BikeMode } from './bikeDataModels';
 
@@ -14,40 +14,42 @@ function HourChart({ values }: { values: (number | null)[] }) {
   </svg>;
 }
 export function DataLab({ basePath }: { basePath: string }) {
-  const [data, setData] = useState<BikeDataset | null>(null), [loading, setLoading] = useState(false), [error, setError] = useState('');
-  const [filters, setFilters] = useState<BikeFilters>({ ...defaultBikeFilters }), [mode, setMode] = useState<BikeMode>('temperature'), [analyzed, setAnalyzed] = useState(false);
-  const result = data && analyzed ? analyzeBikeRows(data.records, filters, mode) : null;
+  const [data, setData] = useState<BikeDataset | null>(null), [loading, setLoading] = useState(true), [error, setError] = useState('');
+  const [filters, setFilters] = useState<BikeFilters>({ ...defaultBikeFilters }), [mode, setMode] = useState<BikeMode>('temperature');
+  const result = useMemo(() => data ? analyzeBikeRows(data.records, filters, mode) : null, [data, filters, mode]);
   const max = Math.max(1, ...(result?.groups.map(g => g.mean ?? 0) ?? []));
-  function select(key: keyof BikeFilters, value: string) { setFilters(f => ({ ...f, [key]: value })); setAnalyzed(false); }
-  async function load() {
-    setLoading(true); setError('');
-    try {
-      const response = await fetch(basePath + '/data/02-04/bike-hour.json');
-      if (!response.ok) throw new Error('読み込みに失敗しました。');
-      const next = await response.json() as BikeDataset;
-      if (next.rowCount !== 17379 || next.records.length !== 17379 || next.rentalTotal !== 3292679) throw new Error('データの確認に失敗しました。');
-      setData(next);
-    } catch { setError('データを読み込めませんでした。もう一度お試しください。'); }
-    finally { setLoading(false); }
-  }
+  function select(key: keyof BikeFilters, value: string) { setFilters(f => ({ ...f, [key]: value })); }
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const response = await fetch(basePath + '/data/02-04/bike-hour.json', { signal: controller.signal });
+        if (!response.ok) throw new Error('読み込みに失敗しました。');
+        const next = await response.json() as BikeDataset;
+        if (next.rowCount !== 17379 || next.records.length !== 17379 || next.rentalTotal !== 3292679) throw new Error('データの確認に失敗しました。');
+        if (!controller.signal.aborted) setData(next);
+      } catch { if (!controller.signal.aborted) setError('データを読み込めませんでした。ページを再読み込みしてください。'); }
+      finally { if (!controller.signal.aborted) setLoading(false); }
+    }
+    void load();
+    return () => controller.abort();
+  }, [basePath]);
   return <>
     <Frame id="data-lab" title="実データで、自転車の利用を調べる" controls={<>
-      {!data ? <button className="cm-primary" disabled={loading} onClick={load}>{loading ? '読み込み中…' : '実データを読み込む'}</button> : <button className="cm-primary" onClick={() => setAnalyzed(true)}>この条件で集計する</button>}
-      <button onClick={() => { setFilters({ ...defaultBikeFilters }); setMode('temperature'); setAnalyzed(false); }}>条件を最初へ</button>
-      <span className="cm-counter">{data ? fmt(data.rowCount) + '時間分を読み込み済み' : '公開実データ・2011〜2012年'}</span>
+      <span className="cm-counter">{data ? fmt(data.rowCount) + '時間分を読み込み済み・条件を選ぶと自動で集計' : loading ? '公開実データを読み込み中…' : '公開実データ・2011〜2012年'}</span>
     </>}>
       <p className="cm-task">米国ワシントンD.C.の貸自転車。<b>どんな条件で利用が増える？</b>予想し、平均を比べて配置計画を考えよう。</p>
       <div className="cm-split cm-data-layout">
         <div className="cm-data-settings">
-          <fieldset><legend>比べる観点</legend><div className="cm-options cm-stacked">{modes.map(m => <button key={m.id} aria-pressed={mode === m.id} onClick={() => { setMode(m.id); setAnalyzed(false); }}>{m.label}</button>)}</div></fieldset>
+          <fieldset><legend>比べる観点</legend><div className="cm-options cm-stacked">{modes.map(m => <button key={m.id} aria-pressed={mode === m.id} onClick={() => setMode(m.id)}>{m.label}</button>)}</div></fieldset>
           <fieldset><legend>年</legend><div className="cm-options">{[['all', '両年'], ['2011', '2011'], ['2012', '2012']].map(([v, label]) => <button key={v} aria-pressed={filters.year === v} onClick={() => select('year', v)}>{label}</button>)}</div></fieldset>
           <fieldset><legend>勤務日・休日</legend><div className="cm-options">{[['all', 'すべて'], ['1', '勤務日'], ['0', '休日']].map(([v, label]) => <button key={v} aria-pressed={filters.work === v} onClick={() => select('work', v)}>{label}</button>)}</div></fieldset>
           <fieldset><legend>天気</legend><div className="cm-options cm-weather-filters">{[['all', 'すべて'], ['1', '晴れ・薄曇り'], ['2', '霧・曇り'], ['3', '雨・雪']].map(([v, label]) => <button key={v} aria-pressed={filters.weather === v} onClick={() => select('weather', v)}>{label}</button>)}</div></fieldset>
         </div>
-        <div className="cm-data-output">
+        <div className="cm-data-output" aria-busy={loading}>
           <div className="cm-data-stats"><div><small>集計した記録</small><b>{result ? fmt(result.hours) + '時間' : '—'}</b></div><div><small>利用回数の合計</small><b>{result ? fmt(result.rentals) + '回' : '—'}</b></div><div><small>1時間の平均</small><b>{result?.mean != null ? result.mean.toFixed(1) + '回' : '—'}</b></div></div>
-          <div className="cm-data-chart">{result ? mode === 'hour' ? <HourChart values={result.groups.map(g => g.mean)} /> : <div className="cm-real-bars">{result.groups.map(g => <div key={g.label}><b>{g.label}</b><div><span style={{ width: ((g.mean ?? 0) / max * 100) + '%' }} /></div><strong>{g.mean == null ? '記録なし' : g.mean.toFixed(1) + '回／時'}</strong><small>n＝{fmt(g.hours)}時間</small></div>)}</div> : <div className="cm-data-wait"><span aria-hidden="true">▥</span><b>{data ? '条件を選んだら、集計してみよう' : '約329万回の利用をまとめた記録'}</b><p>{data ? '気温・天気・時間帯を変えて比較できます。' : '17,379時間分。元の利用ログを研究者が時間別に集計し、気象情報を組み合わせたデータです。'}</p></div>}</div>
-          <Feedback state={error ? 'bad' : 'waiting'}>{error ? <p>{error}</p> : result ? <><b>✓ 条件に合う記録を集計しました</b><p>平均＝利用回数の合計÷記録の時間数。条件を変えて、傾向が同じか比べよう。記録数nが少ない群には注意。</p></> : <><b>予想 → 条件を選ぶ → 集計 → 比較</b><p>条件を変えると結果は待機に戻ります。平均と記録数を一緒に見よう。</p></>}</Feedback>
+          <div className="cm-data-chart">{result ? mode === 'hour' ? <HourChart values={result.groups.map(g => g.mean)} /> : <div className="cm-real-bars">{result.groups.map(g => <div key={g.label}><b>{g.label}</b><div><span style={{ width: ((g.mean ?? 0) / max * 100) + '%' }} /></div><strong>{g.mean == null ? '記録なし' : g.mean.toFixed(1) + '回／時'}</strong><small>n＝{fmt(g.hours)}時間</small></div>)}</div> : <div className="cm-data-wait"><span aria-hidden="true">▥</span><b>{loading ? '実データを読み込んでいます' : '約329万回の利用をまとめた記録'}</b><p>17,379時間分。元の利用ログを研究者が時間別に集計し、気象情報を組み合わせたデータです。</p></div>}</div>
+          <Feedback state={error ? 'bad' : result ? 'good' : 'waiting'}>{error ? <p>{error}</p> : result ? <><b>✓ 条件に合う記録を集計しました</b><p>平均＝利用回数の合計÷記録の時間数。条件を変えて、傾向が同じか比べよう。記録数nが少ない群には注意。</p></> : <><b>データは自動で読み込みます</b><p>条件を選ぶと、読み込み後に平均と記録数を表示します。</p></>}</Feedback>
         </div>
       </div>
     </Frame>
