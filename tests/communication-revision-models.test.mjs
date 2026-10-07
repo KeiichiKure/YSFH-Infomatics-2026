@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { analyzeBikeRows, selectBikeRows, defaultBikeFilters } from '../app/units/02-04/components/bikeDataModels.ts';
+import { analyzeBikeRows, selectBikeRows, defaultBikeFilters, bikeTemperatureCelsius, bikeChartMax } from '../app/units/02-04/components/bikeDataModels.ts';
 import { planningCases, proposeCommunication } from '../app/units/02-04/components/planningModels.ts';
 import { recipientThought, sendMail, initialAssignment } from '../app/units/02-04/components/communicationModels.ts';
 
@@ -38,6 +38,24 @@ test('means divide by observed hours and grouped totals conserve every observati
   assert.ok(weather.groups[0].mean > weather.groups[2].mean);
   const empty = analyzeBikeRows([], defaultBikeFilters, 'hour');
   assert.equal(empty.mean, null); assert.ok(empty.groups.every(g => g.mean === null));
+});
+test('hourly temperature follows the current UCI Celsius definition and groups threshold values correctly', () => {
+  assert.equal(bikeTemperatureCelsius(0), -8);
+  assert.equal(bikeTemperatureCelsius(1), 39);
+  assert.equal(bikeTemperatureCelsius(.5), 15.5);
+  const temperatures = [-8, 9.9, 10, 19.9, 20, 29.9, 30, 39];
+  const rows = temperatures.map(t => ['2011-01-01', 0, 1, 1, (t + 8) / 47, 1, 0, 1]);
+  const result = analyzeBikeRows(rows, defaultBikeFilters, 'temperature');
+  assert.deepEqual(result.groups.map(g => g.hours), [2, 2, 2, 2]);
+  assert.deepEqual(result.groups.map(g => g.label), ['10℃未満', '10℃以上20℃未満', '20℃以上30℃未満', '30℃以上']);
+});
+test('fixed graph scales contain every supported filter combination without clipping any group', () => {
+  for (const year of ['all', '2011', '2012']) for (const work of ['all', '1', '0']) for (const weather of ['all', '1', '2', '3']) {
+    for (const mode of ['temperature', 'weather', 'hour']) {
+      const groups = analyzeBikeRows(data.records, {year, work, weather}, mode).groups;
+      assert.ok(groups.every(g => g.mean === null || (g.mean >= 0 && g.mean <= bikeChartMax[mode])), `${mode}: ${year}/${work}/${weather}`);
+    }
+  }
 });
 test('planning gives benefits, constraints and examples without inventing direct asynchronous conversation', () => {
   for (let i = 0; i < planningCases.length; i++) for (const place of ['直接', '間接']) for (const time of ['同期', '非同期']) {

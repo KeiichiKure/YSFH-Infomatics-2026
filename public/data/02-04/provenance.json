@@ -25,7 +25,23 @@
     "2011-01-01",
     "2012-12-31"
   ],
-  "changes": "All hourly rows retained. Selected columns parsed as numbers; original normalized temperature retained. No synthetic rows or zero-filled missing hours. Browser filters and averages these rows.",
-  "temperatureNote": "The legacy ZIP README and current UCI webpage describe Celsius conversion differently. This lesson avoids that inconsistency by preserving temp as a normalized index and never converting to Celsius.",
-  "countsNote": "UCI landing-page Instances says 17389, but the downloaded hour.csv and ZIP README have 17379 hourly records. Counts here are verified from the actual file."
+  "changes": "All hourly rows retained. Selected columns parsed as numbers; original normalized temperature retained in the stored records. Browser converts hourly temp to Celsius using the current UCI definition (temp * 47 - 8), groups at 10/20/30 Celsius, and filters and averages the observed rows. No synthetic rows or zero-filled missing hours.",
+  "temperatureNote": "Celsius display follows the current UCI hourly definition: (t - (-8)) / (39 - (-8)); inverse t = temp * 47 - 8. The legacy ZIP README instead describes division by 41; it is preserved unchanged as a source document. Displayed Celsius values use the current landing-page definition, verified 2026-10-07.",
+  "countsNote": "UCI landing-page Instances says 17389, but the downloaded hour.csv and ZIP README have 17379 hourly records. Counts here are verified from the actual file.",
+  "chartScales": {
+    "note": "Fixed per comparison mode across every year/work/weather filter combination.",
+    "hour": [
+      0,
+      800
+    ],
+    "temperature": [
+      0,
+      500
+    ],
+    "unit": "rentals per observed hour",
+    "weather": [
+      0,
+      300
+    ]
+  }
 }
