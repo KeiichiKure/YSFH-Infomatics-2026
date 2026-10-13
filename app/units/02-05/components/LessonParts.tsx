@@ -22,8 +22,8 @@ export function Frame({ id, title, children, footer, note }: { id: string; title
   const ref = useRef<HTMLDivElement>(null);
   return <div className="id-frame" id={id} ref={ref}><header><h3>{title}</h3><button type="button" className="id-fit" onClick={() => ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })}>画面に合わせる</button></header>{children}{note && <p className="id-small id-frame-note">{note}</p>}{footer && <footer className="id-player">{footer}</footer>}</div>;
 }
-export function Feedback({ title, children, tone = 'wait' }: { title: string; children: ReactNode; tone?: 'wait' | 'good' | 'bad' | 'neutral' }) {
-  return <div className={`id-feedback ${tone}`} role="status">{title.startsWith('✓ 全問正解')&&<Image className="id-celebration" src={celebrating} alt="全問正解を喜ぶ生徒" width={32} height={40}/>}<strong>{title}</strong><p>{typeof children === 'string' ? <KeyText>{children}</KeyText> : children}</p></div>;
+export function Feedback({ title, children, tone = 'wait', example }: { title: string; children: ReactNode; tone?: 'wait' | 'good' | 'bad' | 'neutral'; example?: ReactNode }) {
+  return <div className={`id-feedback ${tone}`} role="status">{title.startsWith('✓ 全問正解')&&<Image className="id-celebration" src={celebrating} alt="全問正解を喜ぶ生徒" width={32} height={40}/>}<strong>{title}</strong><p>{typeof children === 'string' ? <KeyText>{children}</KeyText> : children}</p>{example}</div>;
 }
 export function KeyText({children}:{children:string}) {
   const keys=[...new Set([...terms.map(t=>t.term),'ちらばり','散らばり','ベン図','状態遷移図','フローチャート','カテゴリー','ロケーション','アルファベット','階層','時系列','割合','比較'])].sort((a,b)=>b.length-a.length);

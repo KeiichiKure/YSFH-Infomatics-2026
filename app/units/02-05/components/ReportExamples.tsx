@@ -1,4 +1,7 @@
 import {KeyText} from './LessonParts';
+import Image from 'next/image';
+import conceptImage from '@/public/images/02-05/framework-concept-v2.png';
+import {SpreadDiagram} from './SpreadDiagram';
 import type {Question} from './SequenceQuiz';
 const reports=[
  {title:'資源ごみの分別に関する調査',body:'分別への意識を調べるため、20人に質問した。ペットボトルを分別する人は12人、紙を分別する人は9人で、両方を分別する人は5人だった。どちらも分別しない人は4人だった。2種類の回答の重なりを整理し、次の呼びかけを考察する。',name:'ベン図',after:'図1に示すように、両方を分別する人は5人、どちらも分別しない人は4人であった。重なりを分けて数え、改善の対象を考察した。'},
@@ -22,10 +25,11 @@ const methods:Record<string,string>={
  'コンセプトマップ':'概念同士を、関係の言葉で結んで意味を示す図です。'
 };
 const mismatches=[
- '今回は状態の移り変わりや時間順の数値ではなく、2種類の回答の重なりを伝えたい文章です。',
- '今回は人数の内訳や数値のちらばりではなく、操作によって変わる部屋の状態を説明しています。',
- '今回は複数の得点のバランスや2つの数値の関係ではなく、未記入の有無で処理が分かれる手順です。',
- '今回は状態の変化や概念の関係ではなく、40人を重ならない3種類に分けた内訳です。',
- '今回は集合の重なりや全体の内訳ではなく、毎日の高さの変化を追う記録です。'
+ '今回は、2種類の回答の重なりを伝えたい文章です。',
+ '今回は、操作によって変わる部屋の状態を説明しています。',
+ '今回は、未記入の有無で処理が分かれる手順です。',
+ '今回は、40人の昼食を3種類に分けた内訳です。',
+ '今回は、毎日の高さの変化を追う記録です。'
 ];
-export const reportQuestions:Question[]=reports.map((r,i)=>({prompt:['分別の2種類の回答の「重なり」を図にするなら？','予約・開始・終了と「状態」の関係を図にするなら？','未記入があるかで分かれる「処理」を図にするなら？','昼食の全体に対する「割合」を図にするなら？','日数による苗の高さの「変化」を図にするなら？'][i],options:choices[i],correct:[0,1,2,1,0][i],model:true,visual:<Report type={i}/>,answerVisual:<Report type={i} answer/>,why:choices[i].map(o=>o===r.name?`${r.name}：${methods[o]} 左に提案例を示しました。図番号と、図から読み取れることを文章に添えます。`:`${o}は、${methods[o]} ${mismatches[i]} もう一度考えてみよう。`)}));
+function MethodExample({name}:{name:string}){const reportIndex=reports.findIndex(r=>r.name===name),spreadIndex=['箱ひげ図','散布図','レーダーチャート'].indexOf(name);return <figure className="id-method-example"><figcaption>選んだ表現の例：{name}</figcaption><span className="id-method-context">{reportIndex>=0?reports[reportIndex].title:spreadIndex>=0?['東京・那覇の日最高気温','気温とアイスクリーム支出','中高生のネット利用内容'][spreadIndex]:'植物・光合成・根の関係'}</span>{reportIndex>=0?<ReportDiagram type={reportIndex}/>:spreadIndex>=0?<SpreadDiagram type={spreadIndex} example/>:<Image src={conceptImage} alt="植物・光合成・根・光・水・養分を関係の言葉で結んだコンセプトマップ"/>}{spreadIndex===2&&<span className="id-method-legend">緑：中学生 ／ 赤：高校生</span>}</figure>;}
+export const reportQuestions:Question[]=reports.map((r,i)=>({prompt:['分別の2種類の回答の「重なり」を図にするなら？','予約・開始・終了と「状態」の関係を図にするなら？','未記入があるかで分かれる「処理」を図にするなら？','昼食の全体に対する「割合」を図にするなら？','日数による苗の高さの「変化」を図にするなら？'][i],options:choices[i],correct:[0,1,2,1,0][i],model:true,visual:<Report type={i}/>,answerVisual:<Report type={i} answer/>,feedbackVisuals:choices[i].map(o=><MethodExample key={o} name={o}/>),why:choices[i].map(o=>o===r.name?`${r.name}：${methods[o]} 左に提案例を示しました。図番号と、図から読み取れることを文章に添えます。`:`${o}は、${methods[o]} ${mismatches[i]} 例と見比べて考え直そう。`)}));

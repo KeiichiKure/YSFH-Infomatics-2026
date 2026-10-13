@@ -364,7 +364,17 @@
  .information-design-unit #inclusive-quiz .id-quiz-columns { min-height:0; }
 }
 
-.information-design-unit #visualization-quiz .id-quiz-columns { min-height:484px; }
+.information-design-unit #visualization-quiz .id-quiz-columns { min-height:512px; }
+.information-design-unit .id-method-example { margin:8px 0 0; padding:8px; border:1px solid #d8c58a; border-radius:8px; background:white; }
+.information-design-unit .id-method-example figcaption { font-size:16px; font-weight:700; }
+.information-design-unit .id-method-context,.information-design-unit .id-method-legend { display:block; font-size:14px; line-height:1.45; margin-top:4px; }
+.information-design-unit .id-method-example :is(svg,img) { display:block; width:100%; height:170px; object-fit:contain; margin:6px auto 0; }
+.information-design-unit .id-method-example svg text { font-size:28px; }
+.information-design-unit .id-method-example .id-chart text { font-size:30px; }
+@media(min-width:761px) {
+ .information-design-unit #visualization-quiz .id-options { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ .information-design-unit #visualization-quiz .id-options button { flex-direction:column; gap:2px; text-align:center; justify-content:center; min-height:64px; }
+}
 @media(max-width:760px) {
  .information-design-unit #visualization-quiz .id-quiz-columns { min-height:0; }
 }
