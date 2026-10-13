@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-13",
+  "mode": "builtin",
+  "purpose": "コップの左側製品写真を斜め上から見せ、飲み口と穴を明示。右側の使用動作を維持。",
+  "images": [
+    {
+      "name": "cup-body-pair-v2",
+      "prompt": "Edit this two-panel teaching photograph. Preserve the RIGHT panel as closely as possible: same Japanese toddler, face, hands, cup, action, background, framing and light. Preserve the two equally sized side-by-side panels, white gutter, wide 2:1 layout. Change ONLY the LEFT product photograph's camera angle to an unmistakable HIGH THREE-QUARTER VIEW from about 45-55 degrees ABOVE the tabletop, looking down into or onto the top of the cup. The upper surface must be large and clearly visible. Keep the whole cup inside the left frame, sufficiently large, all handles visible if present. Same cup design and color as the right panel, pale wood table, no hands on the product. No words, labels, logos, arrows, diagrams or extra panels. This is a functional close-up to understand how the mouth contacts the cup. Do not merely raise the camera a tiny bit: the top must be clearly seen from above. LEFT: cream handleless open tumbler. Show the fully open broad circular rim as a large ellipse and clearly visible INNER WALL and empty interior, conveying no lid or straw. Right stays child trying to hold wide cream cup.",
+      "reference": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-body-pair.png",
+      "generated": "C:/Users/teacher/.codex/generated_images/01a10fe2-2fa5-73c1-8ea0-c664222b6135/exec-1a67a4e4-1c40-4bba-a0bc-46b895cc1423.png",
+      "saved": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-body-pair-v2.png"
+    },
+    {
+      "name": "cup-handles-pair-v2",
+      "prompt": "Edit this two-panel teaching photograph. Preserve the RIGHT panel as closely as possible: same Japanese toddler, face, hands, cup, action, background, framing and light. Preserve the two equally sized side-by-side panels, white gutter, wide 2:1 layout. Change ONLY the LEFT product photograph's camera angle to an unmistakable HIGH THREE-QUARTER VIEW from about 45-55 degrees ABOVE the tabletop, looking down into or onto the top of the cup. The upper surface must be large and clearly visible. Keep the whole cup inside the left frame, sufficiently large, all handles visible if present. Same cup design and color as the right panel, pale wood table, no hands on the product. No words, labels, logos, arrows, diagrams or extra panels. This is a functional close-up to understand how the mouth contacts the cup. Do not merely raise the camera a tiny bit: the top must be clearly seen from above. LEFT: blue small OPEN-TOP mug with TWO side handles. Show the large open top ellipse, inner wall and bottom inside the cup, plus both handle holes. No lid, spout or straw. Right stays child lifting blue mug by both handles.",
+      "reference": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-handles-pair.png",
+      "generated": "C:/Users/teacher/.codex/generated_images/01a10fe2-2fa5-73c1-8ea0-c664222b6135/exec-81fab2b6-9738-43b6-8ae7-f854f45e4a59.png",
+      "saved": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-handles-pair-v2.png"
+    },
+    {
+      "name": "cup-straw-pair-v2",
+      "prompt": "Edit this two-panel teaching photograph. Preserve the RIGHT panel as closely as possible: same Japanese toddler, face, hands, cup, action, background, framing and light. Preserve the two equally sized side-by-side panels, white gutter, wide 2:1 layout. Change ONLY the LEFT product photograph's camera angle to an unmistakable HIGH THREE-QUARTER VIEW from about 45-55 degrees ABOVE the tabletop, looking down into or onto the top of the cup. The upper surface must be large and clearly visible. Keep the whole cup inside the left frame, sufficiently large, all handles visible if present. Same cup design and color as the right panel, pale wood table, no hands on the product. No words, labels, logos, arrows, diagrams or extra panels. This is a functional close-up to understand how the mouth contacts the cup. Do not merely raise the camera a tiny bit: the top must be clearly seen from above. LEFT: blue-lidded clear two-handle straw cup. Show the broad circular TOP of the blue lid from above, exactly one thin drinking STRAW emerging through a visible lid opening. Hollow opening at the upper end of straw should be visible. Lid closed; no spout. Right stays child drinking through straw with cup UPRIGHT.",
+      "reference": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-straw-pair.png",
+      "generated": "C:/Users/teacher/.codex/generated_images/01a10fe2-2fa5-73c1-8ea0-c664222b6135/exec-b7076034-2868-4e76-8648-6ca69d28f123.png",
+      "saved": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-straw-pair-v2.png"
+    },
+    {
+      "name": "cup-spout-pair-v2",
+      "prompt": "Edit this two-panel teaching photograph. Preserve the RIGHT panel as closely as possible: same Japanese toddler, face, hands, cup, action, background, framing and light. Preserve the two equally sized side-by-side panels, white gutter, wide 2:1 layout. Change ONLY the LEFT product photograph's camera angle to an unmistakable HIGH THREE-QUARTER VIEW from about 45-55 degrees ABOVE the tabletop, looking down into or onto the top of the cup. The upper surface must be large and clearly visible. Keep the whole cup inside the left frame, sufficiently large, all handles visible if present. Same cup design and color as the right panel, pale wood table, no hands on the product. No words, labels, logos, arrows, diagrams or extra panels. This is a functional close-up to understand how the mouth contacts the cup. Do not merely raise the camera a tiny bit: the top must be clearly seen from above. LEFT: pale green-lidded clear two-handle sippy cup. Show the broad green lid TOP from above, and a SHORT, WIDE, flattened molded SIPPY SPOUT attached near the FRONT edge of the lid. Crucial: draw a clearly visible small dark OVAL DRINKING OPENING on the sloped upper TIP face of this broad spout, so pupils understand where liquid comes out and where lips go. The spout is broad and short, NOT a thin straw, NOT a closed solid bump. No internal or external straw. Both green handles visible. Right stays child tilting matching green sippy cup with lips at this broad spout.",
+      "reference": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-spout-pair.png",
+      "generated": "C:/Users/teacher/.codex/generated_images/01a10fe2-2fa5-73c1-8ea0-c664222b6135/exec-e1d194ce-7d35-4c82-99d5-0d66e490169c.png",
+      "saved": "C:/Users/teacher/Documents/呉/理数情報2026/AI Web教材/public/images/02-05/cup-spout-pair-v2.png"
+    }
+  ]
+}

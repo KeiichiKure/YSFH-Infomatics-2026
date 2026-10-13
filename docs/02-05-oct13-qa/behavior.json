@@ -1,0 +1,646 @@
+{
+  "checks": [
+    "fictional 17% ad leads into consumer impression, equal 150g dry rice, 300/360g cooked yield, same 150g portions 50/41.7g sugar versus whole batches 100/100g; calculation matches and two source notes remain separate",
+    "quiz feedback refers students to the new explanation",
+    "wind uses same-size arrows: 1 down for north wind, 2 and 3 up for south wind; direction and speed match source table",
+    "four new high-angle cup/action pairs load first; opening/hole described in alts; captions follow the corresponding half",
+    "all new cards, wind views and student explanation reflow at five viewport sizes; individual cup cards remain within classroom screen height",
+    "signifier remains a separate compact comparison, switching back restores all four cup pairs",
+    "all 18 activity frames remain within classroom height except the explicitly requested long cup gallery; no console or asset errors"
+  ],
+  "states": [
+    {
+      "width": 1280,
+      "id": "carb-comparison-explanation",
+      "boxes": [
+        {
+          "height": 476.375,
+          "width": 478
+        },
+        {
+          "height": 476.375,
+          "width": 478
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "id": "action-cues-quiz",
+      "boxes": [
+        {
+          "height": 420.96875,
+          "width": 489
+        },
+        {
+          "height": 420.96875,
+          "width": 489
+        },
+        {
+          "height": 420.96875,
+          "width": 489
+        },
+        {
+          "height": 420.96875,
+          "width": 489
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "focus": 0,
+      "height": 565.765625,
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "focus": 1,
+      "height": 644.921875,
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "focus": 2,
+      "height": 596.15625,
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "focus": 3,
+      "height": 596.15625,
+      "overflow": 0
+    },
+    {
+      "width": 1366,
+      "id": "carb-comparison-explanation",
+      "boxes": [
+        {
+          "height": 476.375,
+          "width": 521
+        },
+        {
+          "height": 476.375,
+          "width": 521
+        }
+      ]
+    },
+    {
+      "width": 1366,
+      "id": "action-cues-quiz",
+      "boxes": [
+        {
+          "height": 442.46875,
+          "width": 532
+        },
+        {
+          "height": 442.46875,
+          "width": 532
+        },
+        {
+          "height": 442.46875,
+          "width": 532
+        },
+        {
+          "height": 442.46875,
+          "width": 532
+        }
+      ]
+    },
+    {
+      "width": 1366,
+      "focus": 0,
+      "height": 565.765625,
+      "overflow": 0
+    },
+    {
+      "width": 1366,
+      "focus": 1,
+      "height": 639.546875,
+      "overflow": 0
+    },
+    {
+      "width": 1366,
+      "focus": 2,
+      "height": 596.15625,
+      "overflow": 0
+    },
+    {
+      "width": 1366,
+      "focus": 3,
+      "height": 596.15625,
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "id": "carb-comparison-explanation",
+      "boxes": [
+        {
+          "height": 476.375,
+          "width": 455
+        },
+        {
+          "height": 476.375,
+          "width": 455
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "id": "action-cues-quiz",
+      "boxes": [
+        {
+          "height": 409.46875,
+          "width": 466
+        },
+        {
+          "height": 409.46875,
+          "width": 466
+        },
+        {
+          "height": 409.46875,
+          "width": 466
+        },
+        {
+          "height": 409.46875,
+          "width": 466
+        }
+      ]
+    },
+    {
+      "width": 1024,
+      "focus": 0,
+      "height": 565.765625,
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "focus": 1,
+      "height": 644.921875,
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "focus": 2,
+      "height": 596.15625,
+      "overflow": 0
+    },
+    {
+      "width": 1024,
+      "focus": 3,
+      "height": 596.15625,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "id": "carb-comparison-explanation",
+      "boxes": [
+        {
+          "height": 535.15625,
+          "width": 324
+        },
+        {
+          "height": 529.546875,
+          "width": 324
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "id": "action-cues-quiz",
+      "boxes": [
+        {
+          "height": 393.65625,
+          "width": 332
+        },
+        {
+          "height": 393.65625,
+          "width": 332
+        },
+        {
+          "height": 393.65625,
+          "width": 332
+        },
+        {
+          "height": 393.65625,
+          "width": 332
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "focus": 0,
+      "height": 954.296875,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "focus": 1,
+      "height": 1052.875,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "focus": 2,
+      "height": 984.6875,
+      "overflow": 0
+    },
+    {
+      "width": 390,
+      "focus": 3,
+      "height": 1005.6875,
+      "overflow": 0
+    },
+    {
+      "width": 640,
+      "id": "carb-comparison-explanation",
+      "boxes": [
+        {
+          "height": 419.96875,
+          "width": 574
+        },
+        {
+          "height": 419.96875,
+          "width": 574
+        }
+      ]
+    },
+    {
+      "width": 640,
+      "id": "action-cues-quiz",
+      "boxes": [
+        {
+          "height": 467.46875,
+          "width": 582
+        },
+        {
+          "height": 467.46875,
+          "width": 582
+        },
+        {
+          "height": 467.46875,
+          "width": 582
+        },
+        {
+          "height": 467.46875,
+          "width": 582
+        }
+      ]
+    },
+    {
+      "width": 640,
+      "focus": 0,
+      "height": 817.09375,
+      "overflow": 0
+    },
+    {
+      "width": 640,
+      "focus": 1,
+      "height": 894.671875,
+      "overflow": 0
+    },
+    {
+      "width": 640,
+      "focus": 2,
+      "height": 847.484375,
+      "overflow": 0
+    },
+    {
+      "width": 640,
+      "focus": 3,
+      "height": 847.484375,
+      "overflow": 0
+    },
+    {
+      "width": 1280,
+      "frames": [
+        {
+          "id": "poster-lab",
+          "height": 523.390625,
+          "extendedCups": false
+        },
+        {
+          "id": "common-charts-lab",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "spread-lab",
+          "height": 494,
+          "extendedCups": false
+        },
+        {
+          "id": "misleading-lab",
+          "height": 522.15625,
+          "extendedCups": false
+        },
+        {
+          "id": "diagram-comparison-lab",
+          "height": 540,
+          "extendedCups": false
+        },
+        {
+          "id": "visualization-quiz",
+          "height": 666.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "latch-overview",
+          "height": 589.4375,
+          "extendedCups": false
+        },
+        {
+          "id": "latch-quiz",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "framework-overview",
+          "height": 494,
+          "extendedCups": false
+        },
+        {
+          "id": "framework-quiz",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "map-placement",
+          "height": 596.15625,
+          "extendedCups": false
+        },
+        {
+          "id": "pictogram-example",
+          "height": 479.75,
+          "extendedCups": false
+        },
+        {
+          "id": "sign-color-lab",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "entrance-examples",
+          "height": 492.59375,
+          "extendedCups": false
+        },
+        {
+          "id": "color-vision-lab",
+          "height": 475.390625,
+          "extendedCups": false
+        },
+        {
+          "id": "action-cues-quiz",
+          "height": 1172.71875,
+          "extendedCups": true
+        },
+        {
+          "id": "inclusive-quiz",
+          "height": 678.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "checkpoint-lab",
+          "height": 654.796875,
+          "extendedCups": false
+        }
+      ]
+    },
+    {
+      "width": 1366,
+      "frames": [
+        {
+          "id": "poster-lab",
+          "height": 523.390625,
+          "extendedCups": false
+        },
+        {
+          "id": "common-charts-lab",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "spread-lab",
+          "height": 494,
+          "extendedCups": false
+        },
+        {
+          "id": "misleading-lab",
+          "height": 513.1875,
+          "extendedCups": false
+        },
+        {
+          "id": "diagram-comparison-lab",
+          "height": 540,
+          "extendedCups": false
+        },
+        {
+          "id": "visualization-quiz",
+          "height": 666.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "latch-overview",
+          "height": 589.4375,
+          "extendedCups": false
+        },
+        {
+          "id": "latch-quiz",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "framework-overview",
+          "height": 494,
+          "extendedCups": false
+        },
+        {
+          "id": "framework-quiz",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "map-placement",
+          "height": 596.15625,
+          "extendedCups": false
+        },
+        {
+          "id": "pictogram-example",
+          "height": 454.15625,
+          "extendedCups": false
+        },
+        {
+          "id": "sign-color-lab",
+          "height": 654.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "entrance-examples",
+          "height": 486.109375,
+          "extendedCups": false
+        },
+        {
+          "id": "color-vision-lab",
+          "height": 475.390625,
+          "extendedCups": false
+        },
+        {
+          "id": "action-cues-quiz",
+          "height": 1215.71875,
+          "extendedCups": true
+        },
+        {
+          "id": "inclusive-quiz",
+          "height": 678.796875,
+          "extendedCups": false
+        },
+        {
+          "id": "checkpoint-lab",
+          "height": 654.796875,
+          "extendedCups": false
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "frames": [
+        {
+          "id": "poster-lab",
+          "height": 826.546875,
+          "extendedCups": false
+        },
+        {
+          "id": "common-charts-lab",
+          "height": 1016.40625,
+          "extendedCups": false
+        },
+        {
+          "id": "spread-lab",
+          "height": 792.5,
+          "extendedCups": false
+        },
+        {
+          "id": "misleading-lab",
+          "height": 1126.921875,
+          "extendedCups": false
+        },
+        {
+          "id": "diagram-comparison-lab",
+          "height": 644.328125,
+          "extendedCups": false
+        },
+        {
+          "id": "visualization-quiz",
+          "height": 938.859375,
+          "extendedCups": false
+        },
+        {
+          "id": "latch-overview",
+          "height": 2003.65625,
+          "extendedCups": false
+        },
+        {
+          "id": "latch-quiz",
+          "height": 1001.71875,
+          "extendedCups": false
+        },
+        {
+          "id": "framework-overview",
+          "height": 819.96875,
+          "extendedCups": false
+        },
+        {
+          "id": "framework-quiz",
+          "height": 789.140625,
+          "extendedCups": false
+        },
+        {
+          "id": "map-placement",
+          "height": 1005.6875,
+          "extendedCups": false
+        },
+        {
+          "id": "pictogram-example",
+          "height": 845.71875,
+          "extendedCups": false
+        },
+        {
+          "id": "sign-color-lab",
+          "height": 997.953125,
+          "extendedCups": false
+        },
+        {
+          "id": "entrance-examples",
+          "height": 1243.46875,
+          "extendedCups": false
+        },
+        {
+          "id": "color-vision-lab",
+          "height": 874.03125,
+          "extendedCups": false
+        },
+        {
+          "id": "action-cues-quiz",
+          "height": 2188.96875,
+          "extendedCups": true
+        },
+        {
+          "id": "inclusive-quiz",
+          "height": 1076.375,
+          "extendedCups": false
+        },
+        {
+          "id": "checkpoint-lab",
+          "height": 1160.859375,
+          "extendedCups": false
+        }
+      ]
+    }
+  ],
+  "arrows": [
+    {
+      "label": "北から南へ吹く風、弱めを1本の矢印で表す",
+      "paths": [
+        {
+          "direction": "south",
+          "d": "M50 15V59M42 49l8 10 8-10",
+          "stroke": "4"
+        }
+      ]
+    },
+    {
+      "label": "南から北へ吹く風、中くらいを2本の矢印で表す",
+      "paths": [
+        {
+          "direction": "north",
+          "d": "M39 60V16M31 26l8-10 8 10",
+          "stroke": "4"
+        },
+        {
+          "direction": "north",
+          "d": "M61 60V16M53 26l8-10 8 10",
+          "stroke": "4"
+        }
+      ]
+    },
+    {
+      "label": "南から北へ吹く風、強めを3本の矢印で表す",
+      "paths": [
+        {
+          "direction": "north",
+          "d": "M28 60V16M20 26l8-10 8 10",
+          "stroke": "4"
+        },
+        {
+          "direction": "north",
+          "d": "M50 60V16M42 26l8-10 8 10",
+          "stroke": "4"
+        },
+        {
+          "direction": "north",
+          "d": "M72 60V16M64 26l8-10 8 10",
+          "stroke": "4"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
