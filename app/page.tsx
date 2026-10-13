@@ -75,6 +75,15 @@ export default function Home() {
           </div>
           <span className="unit-status">学習する →</span>
         </Link>
+        <Link className="unit-card unit-card-active" href="/units/02-05/">
+          <span className="unit-number">02-05</span>
+          <div>
+            <h3>情報デザイン</h3>
+            <span className="textbook-page">教科書 pp.42–47</span>
+            <p>ポスター・グラフ・案内の例から、可視化・構造化・抽象化を学ぶ</p>
+          </div>
+          <span className="unit-status">学習する →</span>
+        </Link>
         <div className="section-heading unit-group-heading">
           <p className="eyebrow">UNIT 03</p>
           <h2>コンピュータのしくみ</h2>
