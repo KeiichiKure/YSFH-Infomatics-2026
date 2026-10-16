@@ -18,6 +18,21 @@ export default function Home() {
           <p className="hero-lead">
             答えを覚える前に、まず動かしてみる。理数情報の学びを、自分のペースで深めるウェブ教材です。
           </p>
+          <div className="hero-actions">
+            <a
+              className="primary-button"
+              href="https://script.google.com/a/macros/edu.city.yokohama.jp/s/AKfycbyknHkVo9fkchJtL2k9TvRNWLwXJ3DdkMD_RineCUfytH7H8TOpxzdntVKK7Rcu3KT5/exec"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-describedby="quiz-access-note"
+            >
+              <span>理数情報2026テスト対策アプリ</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <p className="hero-note" id="quiz-access-note">
+            ※ テスト対策アプリは関係者のみ利用可能です。リンクは別のタブで開きます。
+          </p>
         </div>
         <div className="hero-visual" aria-label="連続的な波が0と1のデジタルデータへ変わるイメージ">
           <div className="signal-card signal-card-analog">
