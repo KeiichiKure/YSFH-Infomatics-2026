@@ -1,0 +1,55 @@
+{
+  "topicUiChecks": [
+    "課題：明日の部活動の連絡",
+    "課題：集合まであと15分",
+    "課題：文化祭の出し物を決める"
+  ],
+  "measurements": [
+    {
+      "activityHeight": 666.46875,
+      "headerHeight": 38.390625,
+      "pageWidth": 1265,
+      "viewport": [
+        1280,
+        720
+      ]
+    },
+    {
+      "activityHeight": 666.46875,
+      "headerHeight": 38.390625,
+      "pageWidth": 1351,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "activityHeight": 666.46875,
+      "headerHeight": 38.390625,
+      "pageWidth": 985,
+      "viewport": [
+        1000,
+        720
+      ]
+    },
+    {
+      "activityHeight": 666.46875,
+      "headerHeight": 38.390625,
+      "pageWidth": 1009,
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "activityHeight": 1205.640625,
+      "headerHeight": 74.390625,
+      "pageWidth": 375,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ],
+  "blankReasonAccepted": true
+}

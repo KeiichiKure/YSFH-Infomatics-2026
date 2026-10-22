@@ -1,0 +1,45 @@
+<!doctype html><html lang="ja"><head><base target="_top"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px/1.6 system-ui,sans-serif;margin:24px;color:#173b3e;background:#fffdf5}button{font:inherit;padding:12px 20px;border:1px solid #247b7e;border-radius:8px;background:#247b7e;color:white}pre{white-space:pre-wrap;background:#edf5ef;padding:18px;border-radius:12px}iframe{width:23%;height:60px;border:1px solid #ccc;margin:4px}#frames{display:flex;flex-wrap:wrap}</style></head><body><h1>40人同時利用の確認</h1><p>本番と同じGoogleの参加・投票・閲覧処理へ、40人分のリクエストを送ります。確認用の授業だけに記録し、全クラス集計には含めません。</p><button id="start" disabled>接続画面を4つ準備しています…</button><pre id="result">準備中</pre><div id="frames"></div><script>
+const cfg=<?!= config ?>,result=document.getElementById('result'),start=document.getElementById('start'),times=[],retries={count:0};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function report(data){let target=parent;while(target!==window){target.postMessage(data,'*');if(target===target.parent)break;target=target.parent;}}
+function rpc(name,args){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('timeout')),45000),done=fn=>x=>{clearTimeout(timer);fn(x);};google.script.run.withSuccessHandler(done(resolve)).withFailureHandler(done(e=>reject(new Error(e.message))))[name](...args);});}
+async function call(name,args){for(let i=0;;i++)try{const t=performance.now(),r=await rpc(name,args);times.push(performance.now()-t);return r;}catch(e){if(i>=8||!/通信|接続|集中|同時|実行|サービス|Lock|timeout|Service|Too many|invoked/i.test(e.message))throw e;retries.count++;await sleep(Math.min(20000,1000*2**i)+Math.random()*4000);}}
+if(cfg.worker!==null){
+ document.querySelector('h1').textContent='接続 '+(cfg.worker+1);document.querySelector('p').remove();start.remove();
+ let started=false;
+ async function runWorker(){
+  if(started)return;started=true;
+  try{
+   const students=await Promise.all(Array.from({length:10},async(_,i)=>{const identity='load-'+cfg.worker+'-'+i+'-'+cfg.key;return {i:cfg.worker*10+i,join:await call('joinPoll',[cfg.code,identity])};}));
+   for(const topic of [0,1,2,3])for(const round of [1,2]){
+    await Promise.all(students.map(async s=>{const input={sessionId:s.join.snapshot.session.id,topic,round,condition:'base',choice:s.i%4,reason:round===2?'確認用の意見：条件と相手の都合を考え直した。':'確認用の意見：表情・記録・距離・時間を比べた。',requestId:crypto.randomUUID()};
+     await call('votePoll',[input.sessionId,input,s.join.token]);
+     if(topic===0&&round===1)await call('votePoll',[input.sessionId,input,s.join.token]);
+     await call('readPoll',[input.sessionId,s.join.token,topic,round]);
+    }));
+    result.textContent='課題'+(topic+1)+'・'+round+'回目を確認';report({type:'load-progress',key:cfg.key,worker:cfg.worker,topic,round});
+   }
+   report({type:'load-done',key:cfg.key,worker:cfg.worker,students:10,times,retries:retries.count,sessionId:students[0].join.snapshot.session.id,token:students[0].join.token});result.textContent='10人完了';
+  }catch(e){result.textContent=e.message;report({type:'load-error',key:cfg.key,worker:cfg.worker,error:e.message});}
+ }
+ report({type:'load-ready',key:cfg.key,worker:cfg.worker});
+ if(cfg.runAt)sleep(Math.max(0,cfg.runAt-Date.now())).then(runWorker);
+}else{
+ const frames=[],ready=new Set(),done=new Map(),events=[];let began;
+ for(let worker=0;worker<4;worker++){const f=document.createElement('iframe');f.title='確認用接続'+(worker+1);f.src=cfg.url+'?loadTest='+encodeURIComponent(cfg.key)+'&worker='+worker;frames.push(f);document.getElementById('frames').append(f);}
+ start.onclick=()=>{began=performance.now();start.disabled=true;start.textContent='40人分を確認しています…';const runAt=Date.now()+15000;frames.forEach((f,i)=>f.src=cfg.url+'?loadTest='+encodeURIComponent(cfg.key)+'&worker='+i+'&runAt='+runAt);};
+ window.addEventListener('message',async e=>{
+  const d=e.data;if(d?.key!==cfg.key||!frames.some(f=>f.contentWindow===e.source)&&!String(e.origin).endsWith('script.googleusercontent.com'))return;
+  if(d.type==='load-ready'){ready.add(d.worker);if(ready.size===4&&!began){start.disabled=false;start.textContent='40人の参加・投票・閲覧を同時に確認する';result.textContent='準備完了：4接続×10人。課題4つ・初回と考え直しの320票を確認します。';}}
+  if(d.type==='load-progress'){events.push('接続'+(d.worker+1)+'：課題'+(d.topic+1)+'／'+d.round+'回目 完了');result.textContent=events.slice(-8).join('\n');}
+  if(d.type==='load-error'){result.textContent+='\nエラー：'+d.error;start.textContent='確認に失敗しました';}
+  if(d.type==='load-done'){
+   done.set(d.worker,d);if(done.size!==4)return;
+   try{const sample=[...done.values()][0],checks=[];for(let topic=0;topic<4;topic++){const v=await call('readPoll',[sample.sessionId,sample.token,topic,2]);checks.push({topic:topic+1,first:v.first.total,second:v.second.total,counts:v.first.counts,pass:v.first.total===40&&v.second.total===40&&v.first.counts.every(n=>n===10)});}
+    const all=[...done.values()].flatMap(x=>x.times).sort((a,b)=>a-b),summary={success:checks.every(x=>x.pass),students:40,votes:320,duplicateRequests:40,elapsedSeconds:Math.round((performance.now()-began)/100)/10,rpcMedianMs:Math.round(all[Math.floor(all.length*.5)]),rpcP95Ms:Math.round(all[Math.floor(all.length*.95)]),retries:[...done.values()].reduce((n,x)=>n+x.retries,0),checks};
+    result.textContent=JSON.stringify(summary,null,2);start.textContent=summary.success?'40人分の確認に成功':'集計を再確認してください';
+   }catch(e){result.textContent+='\n最終確認エラー：'+e.message;}
+  }
+ });
+}
+</script></body></html>

@@ -1,0 +1,63 @@
+{
+  "success": true,
+  "students": 40,
+  "votes": 320,
+  "duplicateRequests": 40,
+  "elapsedSeconds": 131.6,
+  "rpcMedianMs": 1006,
+  "rpcP95Ms": 1811,
+  "retries": 40,
+  "checks": [
+    {
+      "topic": 1,
+      "first": 40,
+      "second": 40,
+      "counts": [
+        10,
+        10,
+        10,
+        10
+      ],
+      "pass": true
+    },
+    {
+      "topic": 2,
+      "first": 40,
+      "second": 40,
+      "counts": [
+        10,
+        10,
+        10,
+        10
+      ],
+      "pass": true
+    },
+    {
+      "topic": 3,
+      "first": 40,
+      "second": 40,
+      "counts": [
+        10,
+        10,
+        10,
+        10
+      ],
+      "pass": true
+    },
+    {
+      "topic": 4,
+      "first": 40,
+      "second": 40,
+      "counts": [
+        10,
+        10,
+        10,
+        10
+      ],
+      "pass": true
+    }
+  ],
+  "checkedAt": "2026-10-22",
+  "deploymentVersion": 9,
+  "environment": "One browser, four independent Apps Script HTML frames, ten simulated participants per frame; real production Google RPCs, isolated testing lesson; successful-attempt RPC timings exclude retry backoff."
+}

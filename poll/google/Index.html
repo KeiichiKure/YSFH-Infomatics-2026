@@ -39,21 +39,31 @@ if (typeof module !== 'undefined') module.exports = globalThis.PollContent;
   const googleMode = typeof google !== 'undefined' && google.script && google.script.run;
   const prefix = location.pathname.includes('/YSFH-Infomatics-2026/') ? '/YSFH-Infomatics-2026' : '';
   let mode='all', code='', sessionId='', auth='', snap=null, selectedTopic=0, selectedRound=1, roundView=1;
-  let choice=null, draft='', pending=null, editing=true, busy=false, connecting=false, failed=false, status='', timer, refreshing=false, epoch=0, showAll=false;
+  let choice=null, draft='', pending=null, editing=true, busy=false, connecting=false, failed=false, status='', timer, refreshing=false, epoch=0, showAll=false, readFailures=0, lastRefresh=0;
   const topics=new Map(), earlyDrafts=new Map(), expanded=new Set();
   function storageGet(k){try{return localStorage.getItem(k);}catch{return null;}}
   function storageSet(k,v){try{localStorage.setItem(k,v);}catch{/* Keep working in memory. */}}
   const participant=storageGet('cm-poll-browser-v1')||crypto.randomUUID();storageSet('cm-poll-browser-v1',participant);
+  const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  const transient=e=>/通信|接続|集中|同時|実行|タイム|サービス|ネットワーク|サーバー|Lock|wait|timeout|Service|Too many|invoked|Failed to fetch/i.test(e.message);
   function el(tag,attrs,...children){const n=document.createElement(tag);Object.entries(attrs||{}).forEach(([k,v])=>{if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(k==='class')n.className=v;else if(k==='value')n.value=v;else if(k==='disabled')n.disabled=v;else n.setAttribute(k,String(v));});children.flat().forEach(c=>{if(c!=null)n.append(c instanceof Node?c:document.createTextNode(String(c)));});return n;}
   const button=(label,fn,attrs)=>el('button',{type:'button',onclick:fn,...attrs},label);
   function embed(){const p=new URLSearchParams(location.search);return window.POLL_EMBED||{channel:p.get('channel'),parentOrigin:p.get('parentOrigin')};}
-  function heading(){return el('header',{class:'activity-heading'},el('h2',{},'この場面なら、どう伝える？'),button('画面に合わせる',()=>{const e=embed();if(top!==window&&e.parentOrigin)top.postMessage({type:'cm-poll-align',channel:e.channel},e.parentOrigin);}));}
+  function heading(){return el('header',{class:'activity-heading'},el('h2',{},'この場面なら、どう伝える？'),!editing?button('最新の結果に更新',()=>{if(!refreshing&&Date.now()-lastRefresh>=2000)refresh();}):null,button('画面に合わせる',()=>{const e=embed();if(top!==window&&e.parentOrigin)top.postMessage({type:'cm-poll-align',channel:e.channel},e.parentOrigin);}));}
   function resize(){requestAnimationFrame(()=>{const e=embed();if(top!==window&&e.channel&&e.parentOrigin)top.postMessage({type:'cm-poll-height',channel:e.channel,height:Math.ceil(app.getBoundingClientRect().height)+16},e.parentOrigin);});}
-  async function call(method,value){
-    if(googleMode)return new Promise((resolve,reject)=>{const run=google.script.run.withSuccessHandler(resolve).withFailureHandler(e=>reject(new Error(e.message)));if(method==='join')run.joinPoll(value.code,participant);else if(method==='join-public')run.joinPublicPoll(participant,value.topic);else if(method==='snapshot'){if(mode==='all')run.readPublicPoll(value.topic,auth,value.round);else run.readPoll(sessionId,auth,value.topic,value.round);}else if(mode==='all')run.votePublicPoll(value,auth);else run.votePoll(sessionId,value,auth);});
+  async function callOnce(method,value){
+    if(googleMode)return new Promise((resolve,reject)=>{const deadline=setTimeout(()=>reject(new Error('通信の応答に時間がかかっています。')),45000),done=fn=>v=>{clearTimeout(deadline);fn(v);};const run=google.script.run.withSuccessHandler(done(resolve)).withFailureHandler(done(e=>reject(new Error(e.message))));if(method==='join')run.joinPoll(value.code,participant);else if(method==='join-public')run.joinPublicPoll(participant,value.topic);else if(method==='snapshot'){if(mode==='all')run.readPublicPoll(value.topic,auth,value.round);else run.readPoll(sessionId,auth,value.topic,value.round);}else if(mode==='all')run.votePublicPoll(value,auth);else run.votePoll(sessionId,value,auth);});
     const response=await fetch(prefix+'/api/poll/'+method,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope:mode,...value,token:auth,participant})});
     if(response.status===404)throw new Error('共有投票の接続先が未設定です。先生の投票設定を確認してください。');
     const result=await response.json();if(!response.ok||result.error)throw new Error(result.error||'保存を確認できませんでした。');return result;
+  }
+  async function call(method,value){
+    const operationEpoch=epoch;
+    // Join retries belong in the background: scenarios and drafts remain usable.
+    for(let attempt=0;;attempt++)try{return await callOnce(method,value);}catch(e){
+      if(!['join','join-public'].includes(method)||!transient(e)||attempt>=7||operationEpoch!==epoch)throw e;
+      await pause(Math.min(15000,1200*2**attempt)+Math.random()*3500);
+    }
   }
   function draftKey(topic=selectedTopic,round=selectedRound){return 'cm-poll-draft:'+sessionId+':'+topic+':base:'+round;}
   function ownVote(s=snap,round=selectedRound){return s&&(round===2?s.mine.second:s.mine.first);}
@@ -70,21 +80,23 @@ if (typeof module !== 'undefined') module.exports = globalThis.PollContent;
     if(editing)return;
     if(JSON.stringify({...before,now:null})!==JSON.stringify({...snap,now:null})){status='';failed=false;render();}
   }
-  function schedule(){clearTimeout(timer);if(!snap||connecting||editing||!auth)return;timer=setTimeout(refresh,4000+Math.random()*1000);}
+  function schedule(){clearTimeout(timer);if(!snap||connecting||editing||!auth)return;timer=setTimeout(refresh,Math.min(60000,10000*2**readFailures)+Math.random()*6000);}
   async function refresh(){
     clearTimeout(timer);if(!snap||connecting||editing||!auth)return;if(document.hidden||busy||refreshing){schedule();return;}
-    const currentEpoch=epoch;refreshing=true;
-    try{const next=await call('snapshot',{sessionId,topic:selectedTopic,round:selectedRound});if(currentEpoch!==epoch)return;accept(next);if(failed){failed=false;status='接続が戻りました。';render();}}
-    catch(e){if(currentEpoch===epoch){failed=true;status=e.message+' 再接続を自動で試しています。';render();}}
+    const currentEpoch=epoch;refreshing=true;lastRefresh=Date.now();
+    try{const next=await call('snapshot',{sessionId,topic:selectedTopic,round:selectedRound});if(currentEpoch!==epoch)return;readFailures=0;accept(next);if(failed){failed=false;status='接続が戻りました。';render();}}
+    catch(e){if(currentEpoch===epoch){readFailures=Math.min(3,readFailures+1);failed=true;status='前回取得した結果を表示しています。'+e.message+' 自動で再接続します。';render();}}
     finally{refreshing=false;if(currentEpoch===epoch)schedule();}
   }
   async function start(nextMode,nextCode=''){
     if(busy||pending)return;
     nextCode=nextCode.trim().replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0));
     if(nextMode==='class'&&!/^\d{4}$/.test(nextCode)){status='授業コードは4桁の数字で入力してください。';failed=true;renderJoin(nextCode);return;}
-    const currentEpoch=++epoch;clearTimeout(timer);topics.clear();earlyDrafts.clear();mode=nextMode;code=nextCode;sessionId='';auth='';selectedTopic=0;selectedRound=roundView=1;choice=null;draft='';pending=null;editing=true;connecting=true;failed=false;showAll=false;
+    const currentEpoch=++epoch;clearTimeout(timer);topics.clear();earlyDrafts.clear();mode=nextMode;code=nextCode;sessionId='';auth='';selectedTopic=0;selectedRound=roundView=1;choice=null;draft='';pending=null;editing=true;connecting=true;failed=false;showAll=false;readFailures=0;
     status='接続を準備しています。先に課題を読んで、方法を選んでおこう。';snap=placeholder(0);render();
     try{
+      // Spread 40 simultaneous joins without delaying the already visible task.
+      if(googleMode)await pause(Math.random()*3500);
       const joined=await call(mode==='all'?'join-public':'join',{code,topic:0});if(currentEpoch!==epoch)return;
       saveDraft();auth=joined.token;sessionId=joined.snapshot.session.id;ingest(joined.snapshot);connecting=false;snap=forRound(topics.get(selectedTopic));loadDraft();earlyDrafts.forEach((d,k)=>{const [topic,round]=k.split(':').map(Number);if(d.choice!==null||d.reason)storageSet(draftKey(topic,round),JSON.stringify(d));});earlyDrafts.clear();status='';failed=false;render();schedule();
     }catch(e){if(currentEpoch!==epoch)return;connecting=false;failed=true;status=e.message+' 「接続を再確認する」からやり直せます。';render();}
@@ -100,9 +112,9 @@ if (typeof module !== 'undefined') module.exports = globalThis.PollContent;
     try{accept(await call('vote',pending),true);schedule();}
     catch(e){
       busy=false;failed=true;
-      const retry=/通信|接続|同時|実行|タイム|サービス|ネットワーク|サーバー|Lock|wait|timeout|Service|Too many|invoked|Failed to fetch/i.test(e.message)&&attempt<3;
+      const retry=transient(e)&&attempt<8;
       status=retry?'送信が集中しています。同じ投票の保存を自動で再確認します…':e.message+' 同じ内容で保存を再確認できます。';
-      if(retry){busy=true;const currentEpoch=epoch;setTimeout(()=>{if(currentEpoch===epoch&&pending){busy=false;send(attempt+1);}},1800*2**attempt+Math.random()*2500);}
+      if(retry){busy=true;const currentEpoch=epoch;setTimeout(()=>{if(currentEpoch===epoch&&pending){busy=false;send(attempt+1);}},Math.min(20000,1400*2**attempt)+Math.random()*4500);}
       render();
     }
   }
@@ -123,12 +135,12 @@ if (typeof module !== 'undefined') module.exports = globalThis.PollContent;
     }else if(snap.visible&&view){
       add(el('div',{class:'rounds'},button('初回の結果',()=>{roundView=1;render();},{'aria-pressed':roundView===1}),button('考え直しの結果',()=>{roundView=2;render();},{'aria-pressed':roundView===2}),mode==='class'?button('全投票結果を見る '+(showAll?'ON':'OFF'),()=>{showAll=!showAll;expanded.clear();render();},{'aria-label':'全投票結果を見る','aria-pressed':showAll,disabled:!snap.all}):null),el('div',{class:'totals'},el('h3',{},mode==='all'||showAll?'全クラスの投票':'この授業の投票'),el('strong',{'data-testid':'vote-total'},view.total+'票')),el('div',{class:'bars'},C.choices.map((label,i)=>{const pc=view.total?Math.round(view.counts[i]/view.total*100):0;return el('div',{class:'barrow'},el('b',{},label),el('div',{class:'bartrack'},el('span',{style:'width:'+pc+'%'})),el('strong',{},view.counts[i]+'票 · '+pc+'%'));})),viewOwn?el('div',{class:'own'},'自分の投票：'+C.choices[viewOwn.choice]):null,el('div',{class:'question'},el('b',{},'ペアで考えよう'),el('p',{},t.question)),button('もう一度投票する（考え直し）',()=>selectTopic(selectedTopic,2,true),{class:'primary'}),viewOwn?button('この回の自分の投票を修正する',()=>selectTopic(selectedTopic,roundView,true)):null);
     }
-    const message=status||(showForm?'方法の選択は必須、理由は任意です。結果は投票後に見られます。':'数秒ごとに集計を自動更新しています。多数派も少数派も、理由を比べよう。');
+    const message=status||(showForm?'方法の選択は必須、理由は任意です。結果は投票後に見られます。':'約10〜16秒おきに自動更新します。「最新の結果に更新」でも確認できます。');
     app.replaceChildren(el('section',{class:'poll-activity'},heading(),el('div',{class:'toolbar'},el('span',{class:'badge'},s.title+' · '+(selectedRound===2?'考え直し':'初回')),button('参加方法を変える',leave,{disabled:busy||Boolean(pending)})),el('nav',{class:'tabs','aria-label':'4つの課題'},C.topics.map((topic,i)=>button((i+1)+' '+topic.title,()=>selectTopic(i),{'aria-pressed':i===selectedTopic,disabled:busy||Boolean(pending)}))),el('div',{class:'layout','data-testid':'activity-main'},scene,panel),el('p',{class:'message'+(failed?' error':''),id:'poll-status',role:'status','aria-live':'polite'},message),!auth&&!connecting?button('接続を再確認する',()=>start(mode,code)):null,el('p',{class:'counter',id:'poll-updated'},snap.now?'最終確認：'+new Date(snap.now).toLocaleTimeString('ja-JP'):connecting?'課題はすぐに読めます。接続後に投票を保存できます。':'')));
     if(snap.visible&&view&&!showForm){const organize=el('details',{class:'organize'},el('summary',{},'伝え方の良さと課題を整理する'),t.points.map(p=>el('p',{},p)),el('p',{},'直接・非同期：対面の会話自体は同期です。事前に文章を送り、後で会う案は「間接・非同期＋直接・同期」の組合せです。'),el('p',{},'追加で考えるなら：'+t.extra));app.append(viewOwn?el('section',{class:'own-reason'},el('h3',{},'自分の理由'),el('p',{},viewOwn.reason||'理由は未記入（任意）')):el('span'),reasons(view),organize);}
     resize();
   }
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!editing&&!connecting)refresh();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!editing&&!connecting){clearTimeout(timer);timer=setTimeout(refresh,Math.random()*5000);}});
   renderJoin();new ResizeObserver(resize).observe(app);
 }());
 </script></body></html>
