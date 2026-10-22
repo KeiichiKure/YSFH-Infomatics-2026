@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[4461,[],""]
+3:I[3865,[],""]
+:HL["/YSFH-Infomatics-2026/research/aiera2026/snapshots/revision-2/_next/static/css/b86b764b626f0b8c.css","style"]
+:HL["/YSFH-Infomatics-2026/research/aiera2026/snapshots/revision-2/_next/static/css/f9517b99461703d7.css","style"]
+0:{"rsc":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/YSFH-Infomatics-2026/research/aiera2026/snapshots/revision-2/_next/static/css/b86b764b626f0b8c.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/YSFH-Infomatics-2026/research/aiera2026/snapshots/revision-2/_next/static/css/f9517b99461703d7.css","precedence":"next"}]],["$","html",null,{"lang":"ja","children":["$","body",null,{"children":["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"dg1Nm8NZ9pNZgOidh4FII"}
