@@ -51,6 +51,10 @@ function learnerView(session, topic, round) {
 function learnerSnapshot(session, participant, topic, round, now) {
   return snapshot(learnerView(session, topic, round), participant, now, false);
 }
+function resultsSnapshot(session, topic, round, now) {
+  // Viewing an ended class is allowed; it never reopens voting or creates a voter.
+  return snapshot(learnerView({...session, active:true}, topic, round), null, now, true);
+}
 function submitLearnerVote(session, participant, input, now, id) {
   if (input.condition !== 'base') pollError('投票条件を確認してください。');
   return submitVote(learnerView(session, input.topic, input.round), participant, input, now, id);
@@ -86,12 +90,12 @@ function withAllResults(view, votes) {
   const group = round => { const list = matching.filter(v => v.round === round); return { total: list.length, counts: [0,1,2,3].map(c => list.filter(v => v.choice === c).length), reasons: list.filter(v => v.visible && v.reason).map(v => ({ id:v.id, choice:v.choice, reason:v.reason, at:v.at })) }; };
   return { ...view, all: view.visible ? { first:group(1), second:group(2) } : null };
 }
-function publicSnapshot(votes, participant, topic, now, round = 1) {
+function publicSnapshot(votes, participant, topic, now, round = 1, resultsOnly = false) {
   if (!Number.isInteger(topic) || topic < 0 || topic > 3) pollError('課題を選んでください。');
   const matching = votes.filter(v => v.topic === topic && v.condition === 'base');
   if (![1,2].includes(round)) pollError('投票回を確認してください。');
   const ownVotes = [1,2].map(r => matching.find(v => v.scope === 'community' && v.participant === participant && v.round === r));
-  const visible = Boolean(ownVotes[0]);
+  const visible = resultsOnly || Boolean(ownVotes[0]);
   const group = round => { const list = matching.filter(v => v.round === round); return { total: list.length, counts: [0,1,2,3].map(c => list.filter(v => v.choice === c).length), reasons: list.filter(v => v.visible && v.reason).map(v => ({ id: v.id, choice: v.choice, reason: v.reason, at: v.at })) }; };
   const own = vote => vote ? { id: vote.id, choice: vote.choice, reason: vote.reason, at: vote.at } : null;
   return { session: { id:'community', title:'全クラスの蓄積', topic, condition:'base', phase:round === 2 ? 'reconsider' : 'initial', scope:'all' }, now, visible, mine:{ first:own(ownVotes[0]), second:own(ownVotes[1]) }, first:visible ? group(1) : null, second:visible ? group(2) : null };
@@ -100,5 +104,5 @@ function submitPublicVote(session, participant, input, now, id) {
   if (input.sessionId !== 'community' || session.id !== 'community') pollError('全体投票の課題を確認してください。');
   return submitLearnerVote(session, participant, input, now, id);
 }
-const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, withAllResults, publicSnapshot, submitPublicVote };
+const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, resultsSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, withAllResults, publicSnapshot, submitPublicVote };
 if (typeof module !== 'undefined') module.exports = PollCore;

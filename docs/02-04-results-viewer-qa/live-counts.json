@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-23",
+  "deploymentVersion": 11,
+  "initialCrossCheck": [
+    {
+      "topic": "1 進路の大事な相談",
+      "first": "33票",
+      "second": "2票"
+    },
+    {
+      "topic": "2 明日の部活動の連絡",
+      "first": "21票",
+      "second": "14票"
+    },
+    {
+      "topic": "3 集合まであと15分",
+      "first": "19票",
+      "second": "0票"
+    },
+    {
+      "topic": "4 文化祭の出し物を決める",
+      "first": "11票",
+      "second": "0票"
+    }
+  ],
+  "initialRealVotes": 100,
+  "allOriginalRealVoteIdsPreserved": true,
+  "realVoteRowsAtLaterRead": 184,
+  "testLessonsRemoved": 10,
+  "testVotesRemoved": 320,
+  "testReceiptsRemoved": 346,
+  "testRowsRemaining": 0,
+  "backupPrefix": "退避_20261023015508_",
+  "note": "Live classes continued voting during verification; totals increase after each observation."
+}

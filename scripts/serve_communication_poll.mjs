@@ -13,7 +13,8 @@ function publicView(p,topic=0,round=1){const now=new Date().toISOString(),votes=
 async function persist(){const file=path.join(privateDir,'state.json');await writeFile(file+'.next',JSON.stringify(db));await rename(file+'.next',file);}await persist();
 await writeFile(path.join(privateDir,'teacher-url.txt'),'http://127.0.0.1:3065'+prefix+'/02-04-poll/teacher.html#'+db.admin);
 const sign=value=>createHmac('sha256',db.secret).update(value).digest('base64url');
-function token(sessionId,participant){const payload=Buffer.from(JSON.stringify({sessionId,participant})).toString('base64url');return payload+'.'+sign(payload);}
+function token(sessionId,participant,role='voter'){const payload=Buffer.from(JSON.stringify({sessionId,participant,role})).toString('base64url');return payload+'.'+sign(payload);}
+function resultsView(id,topic=0,round=1){const now=new Date().toISOString(),votes=allVotes().filter(v=>!db.sessions.find(s=>s.id===v.scope)?.testing),s=db.sessions.find(s=>s.id===id);const make=(i,r)=>id==='community'?Core.publicSnapshot(votes,null,i,now,r,true):Core.withAllResults(Core.resultsSnapshot(s,i,r,now),votes);return {...make(topic,round),topics:[0,1,2,3].map(i=>make(i,1))};}
 function decode(value){if(typeof value!=='string')throw new Error('授業へ参加し直してください。');const [payload,sig]=value.split('.');const expected=sign(payload||'');if(!sig||sig.length!==expected.length||!timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))throw new Error('授業へ参加し直してください。');return JSON.parse(Buffer.from(payload,'base64url').toString());}
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.txt':'text/plain; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.webp':'image/webp','.csv':'text/csv; charset=utf-8'};
 let queue=Promise.resolve();const serialized=fn=>{const next=queue.then(fn);queue=next.catch(()=>{});return next;};
@@ -33,6 +34,11 @@ http.createServer(async(req,res)=>{
      else if(b.action){const s=db.sessions.find(s=>s.id===b.sessionId);Core.manage(s,b.action,b.value);await persist();}
      return{sessions:db.sessions.map(s=>({...s,requests:undefined,votes:s.votes.map(v=>({id:v.id,topic:v.topic,condition:v.condition,round:v.round,choice:v.choice,reason:v.reason,visible:v.visible}))}))};
     }
+    if(method==='join-results'){
+     const code=String(b.code||'').trim();if(code&&!/^\d{4}$/.test(code))throw new Error('授業コードは4桁の数字で入力してください。');
+     const candidates=db.sessions.filter(s=>s.code===code),s=code?(candidates.find(s=>s.active)||candidates.at(-1)):db.sessions.find(s=>s.id==='community');if(!s)throw new Error('授業コードを確認してください。');
+     return {token:token(s.id,null,'viewer'),snapshot:resultsView(s.id,b.topic)};
+    }
     if(method==='join-public'){
      const s=db.sessions.find(s=>s.id==='community'),participant=sign('community:'+Core.validText(b.participant,100,'参加の情報'));
      return {token:token(s.id,participant),snapshot:publicView(participant,b.topic)};
@@ -43,6 +49,9 @@ http.createServer(async(req,res)=>{
      const participant=sign(device+':'+s.id);return{token:token(s.id,participant),snapshot:learnerView(s,participant)};
     }
     const identity=decode(b.token),s=db.sessions.find(s=>s.id===identity.sessionId);
+    if(identity.role==='viewer'){
+     if(method!=='snapshot'||!b.resultsOnly)throw new Error('閲覧専用の画面からは投票できません。');return resultsView(identity.sessionId,b.topic,b.round);
+    }
     if(identity.sessionId==='community'){
       if(method==='snapshot')return publicView(identity.participant,b.topic,b.round);
       if(method==='vote'){Core.submitPublicVote(s,identity.participant,b,new Date().toISOString(),randomUUID());await persist();return publicView(identity.participant,b.topic,b.round);}

@@ -9,6 +9,7 @@ function onOpen() {
     .addItem('保存待ちの回答をシートへ反映', 'flushPendingVotes_')
     .addItem('40人同時利用の確認画面を作る', 'prepareClassroomTest_')
     .addItem('確認用の授業を終了する', 'finishClassroomTest_')
+    .addItem('テストデータを退避して削除', 'archiveTestData_')
     .addSeparator().addItem('授業の受付・閲覧を終了', 'finishLesson_')
     .addSeparator().addItem('選択した回答の理由を非表示', 'hideReason_')
     .addItem('選択した回答の理由を再公開', 'showReason_')
@@ -85,14 +86,24 @@ function writeVote_(t,s,v,excluded) {
   invalidate_(s.id);
 }
 function sign_(value) { return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(value,PropertiesService.getScriptProperties().getProperty('SECRET'))).replace(/=+$/,''); }
-function token_(s,participant) { const raw=Utilities.base64EncodeWebSafe(JSON.stringify({sessionId:s.id,participant})).replace(/=+$/,'');return raw+'.'+sign_(raw); }
-function identity_(id,token) {
+function token_(s,participant,role) { const raw=Utilities.base64EncodeWebSafe(JSON.stringify({sessionId:s.id,participant,role:role||'voter'})).replace(/=+$/,'');return raw+'.'+sign_(raw); }
+function identity_(id,token,role) {
   if(typeof token!=='string'||token.length>1500)throw new Error('授業へ参加し直してください。');
   const parts=token.split('.');const expected=sign_(parts[0]);let difference=expected.length^(parts[1]||'').length;
   for(let i=0;i<expected.length;i++)difference|=expected.charCodeAt(i)^((parts[1]||'').charCodeAt(i)||0);
   if(parts.length!==2||difference)throw new Error('授業へ参加し直してください。');
   const value=JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString());
-  if(value.sessionId!==id)throw new Error('授業コードを確認してください。');return value.participant;
+  if(value.sessionId!==id)throw new Error('授業コードを確認してください。');
+  if((value.role||'voter')!==(role||'voter'))throw new Error('閲覧専用の画面からは投票できません。参加方法を変えてください。');return value.participant;
+}
+function joinResults(code,topic) {
+  code=String(code||'').trim();if(code&&!/^\d{4}$/.test(code))throw new Error('授業コードは4桁の数字で入力してください。');
+  maybeFlushInbox_();const store=readStore_();let id='community';
+  if(code){const rows=store.lessons.filter(r=>String(r[2])===code);const row=rows.find(r=>r[6]===true)||rows[rows.length-1];if(!row)throw new Error('授業コードを確認してください。');id=row[0];}
+  return {token:token_({id},null,'viewer'),snapshot:fastView_(store,inbox_(),id,null,topic,1,true)};
+}
+function readResults(id,token,topic,round) {
+  identity_(id,token,'viewer');maybeFlushInbox_();return fastView_(readStore_(),inbox_(),id,null,topic,round,true);
 }
 function joinPoll(code,browserKey) {
   code=PollCore.validText(code,16,'授業コード').toUpperCase();browserKey=PollCore.validText(browserKey,100,'参加の情報');

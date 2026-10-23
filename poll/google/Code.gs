@@ -9,6 +9,7 @@ function onOpen() {
     .addItem('保存待ちの回答をシートへ反映', 'flushPendingVotes_')
     .addItem('40人同時利用の確認画面を作る', 'prepareClassroomTest_')
     .addItem('確認用の授業を終了する', 'finishClassroomTest_')
+    .addItem('テストデータを退避して削除', 'archiveTestData_')
     .addSeparator().addItem('授業の受付・閲覧を終了', 'finishLesson_')
     .addSeparator().addItem('選択した回答の理由を非表示', 'hideReason_')
     .addItem('選択した回答の理由を再公開', 'showReason_')
@@ -85,14 +86,24 @@ function writeVote_(t,s,v,excluded) {
   invalidate_(s.id);
 }
 function sign_(value) { return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(value,PropertiesService.getScriptProperties().getProperty('SECRET'))).replace(/=+$/,''); }
-function token_(s,participant) { const raw=Utilities.base64EncodeWebSafe(JSON.stringify({sessionId:s.id,participant})).replace(/=+$/,'');return raw+'.'+sign_(raw); }
-function identity_(id,token) {
+function token_(s,participant,role) { const raw=Utilities.base64EncodeWebSafe(JSON.stringify({sessionId:s.id,participant,role:role||'voter'})).replace(/=+$/,'');return raw+'.'+sign_(raw); }
+function identity_(id,token,role) {
   if(typeof token!=='string'||token.length>1500)throw new Error('授業へ参加し直してください。');
   const parts=token.split('.');const expected=sign_(parts[0]);let difference=expected.length^(parts[1]||'').length;
   for(let i=0;i<expected.length;i++)difference|=expected.charCodeAt(i)^((parts[1]||'').charCodeAt(i)||0);
   if(parts.length!==2||difference)throw new Error('授業へ参加し直してください。');
   const value=JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString());
-  if(value.sessionId!==id)throw new Error('授業コードを確認してください。');return value.participant;
+  if(value.sessionId!==id)throw new Error('授業コードを確認してください。');
+  if((value.role||'voter')!==(role||'voter'))throw new Error('閲覧専用の画面からは投票できません。参加方法を変えてください。');return value.participant;
+}
+function joinResults(code,topic) {
+  code=String(code||'').trim();if(code&&!/^\d{4}$/.test(code))throw new Error('授業コードは4桁の数字で入力してください。');
+  maybeFlushInbox_();const store=readStore_();let id='community';
+  if(code){const rows=store.lessons.filter(r=>String(r[2])===code);const row=rows.find(r=>r[6]===true)||rows[rows.length-1];if(!row)throw new Error('授業コードを確認してください。');id=row[0];}
+  return {token:token_({id},null,'viewer'),snapshot:fastView_(store,inbox_(),id,null,topic,1,true)};
+}
+function readResults(id,token,topic,round) {
+  identity_(id,token,'viewer');maybeFlushInbox_();return fastView_(readStore_(),inbox_(),id,null,topic,round,true);
 }
 function joinPoll(code,browserKey) {
   code=PollCore.validText(code,16,'授業コード').toUpperCase();browserKey=PollCore.validText(browserKey,100,'参加の情報');
@@ -253,11 +264,11 @@ function sessionFromStore_(store,queue,id) {
   s.requests=store.receipts.filter(r=>r[0]===id).map(r=>({id:r[1],signature:r[2]}));
   queue.filter(q=>q.sessionId===id).forEach(q=>s.requests.push({id:q.vote.requestId,signature:q.vote.signature}));return s;
 }
-function fastView_(store,queue,id,participant,topic,round) {
+function fastView_(store,queue,id,participant,topic,round,resultsOnly) {
   const all=storeVotes_(store,queue),testing=new Set(store.lessons.filter(r=>r[8]&&JSON.parse(r[8]).testing===true).map(r=>r[0]));
   const votes=all.filter(v=>!testing.has(v.scope)),now=new Date().toISOString();let make;
-  if(id==='community')make=(i,r)=>PollCore.publicSnapshot(votes,participant,i,now,r);
-  else {const s=sessionFromStore_(store,queue,id);make=(i,r)=>PollCore.withAllResults(PollCore.learnerSnapshot(s,participant,i,r,now),votes);}
+  if(id==='community')make=(i,r)=>PollCore.publicSnapshot(votes,participant,i,now,r,resultsOnly);
+  else {const s=sessionFromStore_(store,queue,id);make=(i,r)=>PollCore.withAllResults(resultsOnly?PollCore.resultsSnapshot(s,i,r,now):PollCore.learnerSnapshot(s,participant,i,r,now),votes);}
   const view=make(topic===undefined?0:topic,round===undefined?1:round);
   view.topics=[0,1,2,3].map(i=>make(i,1));view.transportVersion=2;return view;
 }
@@ -344,6 +355,43 @@ function finishClassroomTest_() {
   console.log('確認用の授業を終了しました。授業の実回答は変更していません。');
 }
 
+/* Owner-only cleanup. Match identified test IDs, never class names/numeric codes. */
+function testLessonIds_(lessons) {
+  const legacy=new Set(['88597275-40fe-4f73-92e6-76b36e512057','6146b3a8-c7f9-4fa7-84ce-5873ce58b6db','e7c09133-9906-4a74-bc1d-0f7b8358565b','7e64abdd-11e4-480a-bc2a-f51b2f8553cc','495ac8b2-def6-49b5-b356-997b965d5b4e','1f98b2e3-02b7-4b0d-b26c-152cf3e55361','39658367-3154-4242-9615-f7b8a04af5a1','fea13b04-3a51-454e-bab4-b0ed21fa82fb']);
+  const ids=new Set();lessons.forEach(r=>{const meta=r[8]?JSON.parse(r[8]):{},id=r[0]||meta.id;if(id&&(legacy.has(id)||meta.testing===true||/^loadtest-/.test(id)))ids.add(id);});return ids;
+}
+function testCleanupPlan_(store) {
+  const ids=testLessonIds_(store.lessons),pick=(rows,meta)=>rows.map((data,i)=>({row:i+2,data})).filter(x=>ids.has(x.data[0]||(meta&&x.data[8]?JSON.parse(x.data[8]).id:'')));
+  return {ids:[...ids],lessons:pick(store.lessons,true),votes:pick(store.votes,false),receipts:pick(store.receipts,false)};
+}
+function archiveTestData_() {
+  const result=withLock_(()=>{
+    flushInboxLocked_(true);const t=tables_(),plan=testCleanupPlan_(loadStore_(t));
+    if(!plan.ids.length)return {lessons:0,votes:0,receipts:0,backups:[]};
+    const suffix=new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14),backups=[];
+    // All backups must be written and verified BEFORE deleting any source rows.
+    ['lessons','votes','receipts'].forEach(key=>{
+      const entries=plan[key];if(!entries.length)return;const source=t[key],width=source.getLastColumn(),name='退避_'+suffix+'_'+source.getName(),sh=t.ss.insertSheet(name);
+      // Sheets may coerce booleans/numbers when formatting copied cells. Keep an
+      // exact JSON row alongside the readable columns and verify that copy.
+      const originals=entries.map(x=>JSON.stringify(x.data)),data=[[...source.getRange(1,1,1,width).getValues()[0],'元データ（復元用JSON）'],...entries.map((x,i)=>[...x.data,originals[i]])];
+      sh.getRange(1,1,data.length,width+1).setNumberFormat('@');sh.getRange(1,1,data.length,width+1).setValues(data);
+      SpreadsheetApp.flush();if(JSON.stringify(sh.getRange(2,width+1,originals.length,1).getValues().map(r=>r[0]))!==JSON.stringify(originals))throw new Error('退避の確認ができなかったため削除しませんでした。');
+      sh.setFrozenRows(1);backups.push(name);
+    });
+    ['receipts','votes','lessons'].forEach(key=>{
+      const rows=plan[key].map(x=>x.row).sort((a,b)=>b-a);let start=null,count=0;
+      const remove=()=>{if(count)t[key].deleteRows(start,count);};
+      rows.forEach(row=>{if(start!==null&&row===start-1){start=row;count++;}else{remove();start=row;count=1;}});remove();
+    });
+    const p=pollProperties_();if(plan.ids.includes(p.getProperty('POLL_TEST_ID'))){['POLL_TEST_ID','POLL_TEST_KEY','POLL_TEST_CODE'].forEach(k=>p.deleteProperty(k));}
+    if(plan.ids.includes(p.getProperty('CURRENT_LESSON')))p.deleteProperty('CURRENT_LESSON');
+    SpreadsheetApp.flush();invalidate_('community');
+    return {lessons:plan.lessons.length,votes:plan.votes.length,receipts:plan.receipts.length,backups};
+  });
+  console.log(JSON.stringify(result));SpreadsheetApp.getUi().alert('テストデータの整理','授業：'+result.lessons+'件 ／ 回答：'+result.votes+'件 ／ 送信記録：'+result.receipts+'件\n元データは「退避_」で始まるシートに保存しています。実際の授業・全体投票の回答は変更しません。',SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
 var PollCore = (function(){
 /* Pure shared server rules: no browser, spreadsheet or account dependencies. */
 function pollError(message) { throw new Error(message); }
@@ -398,6 +446,10 @@ function learnerView(session, topic, round) {
 function learnerSnapshot(session, participant, topic, round, now) {
   return snapshot(learnerView(session, topic, round), participant, now, false);
 }
+function resultsSnapshot(session, topic, round, now) {
+  // Viewing an ended class is allowed; it never reopens voting or creates a voter.
+  return snapshot(learnerView({...session, active:true}, topic, round), null, now, true);
+}
 function submitLearnerVote(session, participant, input, now, id) {
   if (input.condition !== 'base') pollError('投票条件を確認してください。');
   return submitVote(learnerView(session, input.topic, input.round), participant, input, now, id);
@@ -433,12 +485,12 @@ function withAllResults(view, votes) {
   const group = round => { const list = matching.filter(v => v.round === round); return { total: list.length, counts: [0,1,2,3].map(c => list.filter(v => v.choice === c).length), reasons: list.filter(v => v.visible && v.reason).map(v => ({ id:v.id, choice:v.choice, reason:v.reason, at:v.at })) }; };
   return { ...view, all: view.visible ? { first:group(1), second:group(2) } : null };
 }
-function publicSnapshot(votes, participant, topic, now, round = 1) {
+function publicSnapshot(votes, participant, topic, now, round = 1, resultsOnly = false) {
   if (!Number.isInteger(topic) || topic < 0 || topic > 3) pollError('課題を選んでください。');
   const matching = votes.filter(v => v.topic === topic && v.condition === 'base');
   if (![1,2].includes(round)) pollError('投票回を確認してください。');
   const ownVotes = [1,2].map(r => matching.find(v => v.scope === 'community' && v.participant === participant && v.round === r));
-  const visible = Boolean(ownVotes[0]);
+  const visible = resultsOnly || Boolean(ownVotes[0]);
   const group = round => { const list = matching.filter(v => v.round === round); return { total: list.length, counts: [0,1,2,3].map(c => list.filter(v => v.choice === c).length), reasons: list.filter(v => v.visible && v.reason).map(v => ({ id: v.id, choice: v.choice, reason: v.reason, at: v.at })) }; };
   const own = vote => vote ? { id: vote.id, choice: vote.choice, reason: vote.reason, at: vote.at } : null;
   return { session: { id:'community', title:'全クラスの蓄積', topic, condition:'base', phase:round === 2 ? 'reconsider' : 'initial', scope:'all' }, now, visible, mine:{ first:own(ownVotes[0]), second:own(ownVotes[1]) }, first:visible ? group(1) : null, second:visible ? group(2) : null };
@@ -447,9 +499,9 @@ function submitPublicVote(session, participant, input, now, id) {
   if (input.sessionId !== 'community' || session.id !== 'community') pollError('全体投票の課題を確認してください。');
   return submitLearnerVote(session, participant, input, now, id);
 }
-const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, withAllResults, publicSnapshot, submitPublicVote };
+const PollCore = { newSession, snapshot, submitVote, learnerSnapshot, resultsSnapshot, submitLearnerVote, manage, roundFor, topicKey, validText, validCode, withAllResults, publicSnapshot, submitPublicVote };
 
-return {newSession,validText,snapshot,submitVote,learnerSnapshot,submitLearnerVote,manage,validCode,withAllResults,publicSnapshot,submitPublicVote};
+return {newSession,validText,snapshot,submitVote,learnerSnapshot,resultsSnapshot,submitLearnerVote,manage,validCode,withAllResults,publicSnapshot,submitPublicVote};
 }());
 
 /* Shared lesson content; copied into the Apps Script package by the packaging script. */

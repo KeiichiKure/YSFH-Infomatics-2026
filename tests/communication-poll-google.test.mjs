@@ -1,15 +1,46 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import {createHmac,randomUUID} from 'node:crypto';
 function mock(){
  let reads=0,writes=0,lockBlocked=false;const cacheValues=new Map();
- class Sheet{constructor(cols){this.values=[Array(cols).fill('header')];this.failAppend=false;}getLastRow(){return this.values.length;}getLastColumn(){return this.values[0].length;}appendRow(row){if(this.failAppend){this.failAppend=false;throw new Error('通信テスト');}writes++;this.values.push([...row]);}getRange(r,c,h=1,w=1){return {setNumberFormat:()=>{},getValues:()=>{reads++;return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>this.values[r-1+i]?.[c-1+j]??''));},setValues:rows=>{if(this.failAppend){this.failAppend=false;throw new Error('通信テスト');}writes++;rows.forEach((row,i)=>{this.values[r-1+i]||=[];row.forEach((v,j)=>this.values[r-1+i][c-1+j]=v);});}};}}
+ class Sheet{constructor(cols){this.name='';this.values=[Array(cols).fill('header')];this.failAppend=false;}getName(){return this.name;}setFrozenRows(){}deleteRows(row,count){writes++;this.values.splice(row-1,count);}getLastRow(){return this.values.length;}getLastColumn(){return this.values[0].length;}appendRow(row){if(this.failAppend){this.failAppend=false;throw new Error('通信テスト');}writes++;this.values.push([...row]);}getRange(r,c,h=1,w=1){return {setNumberFormat:()=>{},getValues:()=>{reads++;return Array.from({length:h},(_,i)=>Array.from({length:w},(_,j)=>this.values[r-1+i]?.[c-1+j]??''));},setValues:rows=>{if(this.failAppend){this.failAppend=false;throw new Error('通信テスト');}writes++;rows.forEach((row,i)=>{this.values[r-1+i]||=[];row.forEach((v,j)=>this.values[r-1+i][c-1+j]=v);});}};}}
  const sheets={'授業':new Sheet(9),'回答':new Sheet(11),'送信記録':new Sheet(3)},props=new Map([['BOUND_ID','new-sheet'],['SCRIPT_ID','new-script'],['SECRET','private-test-secret']]);let opens=0,locked=0;
- const ss={getId:()=> 'new-sheet',getSheetByName:name=>sheets[name]};
- const ctx={console,CacheService:{getScriptCache:()=>({get:k=>cacheValues.get(k)||null,put:(k,v)=>{assert(Buffer.byteLength(v)<100000);cacheValues.set(k,v);},removeAll:ks=>ks.forEach(k=>cacheValues.delete(k))})},SpreadsheetApp:{getActiveSpreadsheet:()=>null,openById:id=>{assert.equal(id,'new-sheet');opens++;return ss;},flush:()=>{}},PropertiesService:{getScriptProperties:()=>({getProperty:k=>props.get(k),setProperty:(k,v)=>props.set(k,v),getProperties:()=>Object.fromEntries(props),deleteProperty:k=>props.delete(k)})},ScriptApp:{getScriptId:()=> 'new-script'},LockService:{getScriptLock:()=>({waitLock:()=>{assert(!lockBlocked);locked++;},tryLock:ms=>{assert.equal(ms,1);if(lockBlocked||locked)return false;locked++;return true;},releaseLock:()=>{locked--;}})},Utilities:{getUuid:randomUUID,base64EncodeWebSafe:v=>Buffer.from(typeof v==='string'?v:v).toString('base64url'),base64DecodeWebSafe:v=>Buffer.from(v,'base64url'),computeHmacSha256Signature:(v,s)=>[...createHmac('sha256',s).update(v).digest()],newBlob:v=>({getDataAsString:()=>Buffer.from(v).toString('utf8'),getBytes:()=>[...Buffer.from(v)]})}};
+ Object.entries(sheets).forEach(([name,sh])=>sh.name=name);const ss={getId:()=> 'new-sheet',getSheetByName:name=>sheets[name],insertSheet:name=>{const sh=new Sheet(11);sh.name=name;sheets[name]=sh;return sh;}};
+ const ctx={console,CacheService:{getScriptCache:()=>({get:k=>cacheValues.get(k)||null,put:(k,v)=>{assert(Buffer.byteLength(v)<100000);cacheValues.set(k,v);},removeAll:ks=>ks.forEach(k=>cacheValues.delete(k))})},SpreadsheetApp:{getUi:()=>({alert:()=>{},ButtonSet:{OK:1}}),getActiveSpreadsheet:()=>null,openById:id=>{assert.equal(id,'new-sheet');opens++;return ss;},flush:()=>{}},PropertiesService:{getScriptProperties:()=>({getProperty:k=>props.get(k),setProperty:(k,v)=>props.set(k,v),getProperties:()=>Object.fromEntries(props),deleteProperty:k=>props.delete(k)})},ScriptApp:{getScriptId:()=> 'new-script'},LockService:{getScriptLock:()=>({waitLock:()=>{assert(!lockBlocked);locked++;},tryLock:ms=>{assert.equal(ms,1);if(lockBlocked||locked)return false;locked++;return true;},releaseLock:()=>{locked--;}})},Utilities:{getUuid:randomUUID,base64EncodeWebSafe:v=>Buffer.from(typeof v==='string'?v:v).toString('base64url'),base64DecodeWebSafe:v=>Buffer.from(v,'base64url'),computeHmacSha256Signature:(v,s)=>[...createHmac('sha256',s).update(v).digest()],newBlob:v=>({getDataAsString:()=>Buffer.from(v).toString('utf8'),getBytes:()=>[...Buffer.from(v)]})}};
  vm.createContext(ctx);vm.runInContext(fs.readFileSync('poll/google/Code.gs','utf8'),ctx);const s=ctx.PollCore.newSession('lesson','確認授業','TESTCODE',new Date().toISOString());ctx.writeLesson_({lessons:sheets['授業']},s);
  const flush=()=>ctx.withLock_(()=>ctx.flushInboxLocked_(true));
  return {ctx,sheets,props,flush,cacheValues,blockLock:value=>{lockBlocked=value;},writes:()=>writes,reads:()=>reads,opens:()=>opens,locked:()=>locked};
 }
 const payload=()=>({sessionId:'lesson',topic:0,condition:'base',round:1,choice:3,reason:'=IMPORTXML("example","x")',requestId:randomUUID()});
+test('未投票の閲覧者は4課題・初回・考え直しを見られ、票や識別子を作らない',()=>{
+ const m=mock(),j=m.ctx.joinPoll('TESTCODE','student');m.ctx.votePoll('lesson',payload(),j.token);m.flush();
+ const before=m.sheets['回答'].values.length,writes=m.writes(),viewer=m.ctx.joinResults('',0);assert.equal(viewer.snapshot.first.total,1);assert.equal(viewer.snapshot.mine.first,null);
+ for(let topic=0;topic<4;topic++){const view=m.ctx.readResults('community',viewer.token,topic,2);assert.equal(view.visible,true);assert.equal(view.mine.second,null);assert.equal(view.first.total,topic===0?1:0);assert(!JSON.stringify(view).includes('participant'));}
+ assert.equal(m.sheets['回答'].values.length,before);assert.equal(m.ctx.inbox_().length,0);assert.equal(m.writes(),writes);
+ assert.throws(()=>m.ctx.votePublicPoll({...payload(),sessionId:'community'},viewer.token),/閲覧専用/);assert.throws(()=>m.ctx.readResults('community',j.token,0,1));
+});
+test('授業コードで投票せずに閲覧し、全体比較できる。終了した授業も読める',()=>{
+ const m=mock();m.ctx.registerLessons_([{code:'2612',title:'1組'},{code:'2613',title:'2組'}],false);
+ const a=m.ctx.joinPoll('2612','a'),b=m.ctx.joinPoll('2613','b');
+ [a,b].forEach(j=>m.ctx.votePoll(j.snapshot.session.id,{...payload(),sessionId:j.snapshot.session.id},j.token));m.flush();
+ const s=m.ctx.loadLesson_(m.ctx.tables_(),a.snapshot.session.id);s.active=false;m.ctx.writeLesson_(m.ctx.tables_(),s,s._row);
+ const v=m.ctx.joinResults('2612',0);assert.equal(v.snapshot.first.total,1);assert.equal(v.snapshot.all.first.total,2);assert.equal(v.snapshot.mine.first,null);
+ assert.equal(m.ctx.readResults(s.id,v.token,3,2).second.total,0);assert.throws(()=>m.ctx.votePoll(s.id,{...payload(),sessionId:s.id},v.token),/閲覧専用/);
+ assert.throws(()=>m.ctx.joinResults('0000',0),/コード/);
+});
+test('隠し列だけ残ったテスト授業も退避して削除し、実授業と全体の票を保つ',()=>{
+ const m=mock(),t=m.ctx.tables_(),s=m.ctx.PollCore.newSession('loadtest-cleanup','確認','9999','now');s.testing=true;m.ctx.writeLesson_(t,s);
+ const testUser=m.ctx.joinPoll('9999','test'),real=m.ctx.joinPoll('TESTCODE','real');m.ctx.votePoll(s.id,{...payload(),sessionId:s.id},testUser.token);m.ctx.votePoll('lesson',payload(),real.token);m.flush();
+ const old=m.ctx.PollCore.newSession('1f98b2e3-02b7-4b0d-b26c-152cf3e55361','0061','0061','now');m.sheets['授業'].values.push(['','','','','','','','',JSON.stringify(old)]);
+ const before=m.ctx.joinResults('',0).snapshot.first.total;m.ctx.archiveTestData_();
+ assert.equal(m.ctx.testCleanupPlan_(m.ctx.loadStore_(t)).ids.length,0);assert.equal(m.sheets['回答'].values.length,2);assert.equal(m.sheets['回答'].values[1][0],'lesson');assert.equal(m.ctx.joinResults('',0).snapshot.first.total,before);
+ const archives=Object.values(m.sheets).filter(sh=>sh.name.startsWith('退避_'));assert.equal(archives.length,3);assert(archives.some(sh=>sh.name.endsWith('回答')&&sh.values[1][0]===s.id));
+ m.ctx.archiveTestData_();assert.equal(m.sheets['回答'].values.length,2);
+});
+test('退避の保存に失敗した場合は元のテスト行も削除しない',()=>{
+ const m=mock(),s=m.ctx.PollCore.newSession('loadtest-fail','確認','9999','now');s.testing=true;m.ctx.writeLesson_(m.ctx.tables_(),s);
+ const j=m.ctx.joinPoll('9999','test');m.ctx.votePoll(s.id,{...payload(),sessionId:s.id},j.token);m.flush();
+ const t=m.ctx.tables_(),insert=t.ss.insertSheet;t.ss.insertSheet=name=>{const sh=insert(name);if(name.endsWith('回答'))sh.failAppend=true;return sh;};
+ assert.throws(()=>m.ctx.archiveTestData_(),/通信/);assert.equal(m.sheets['回答'].values.length,2);assert(m.sheets['授業'].values.some(r=>r[0]===s.id));assert.equal(m.locked(),0);
+});
 test('40人の送信は書込ロック中も待たず受理し、まとめて2回の範囲書込で保存する',()=>{
  const m=mock(),joins=Array.from({length:40},(_,i)=>m.ctx.joinPoll('TESTCODE','load-'+i)),requests=joins.map((j,i)=>({...payload(),choice:i%4,reason:'同時送信 '+i}));
  const before={reads:m.reads(),writes:m.writes()};m.blockLock(true);

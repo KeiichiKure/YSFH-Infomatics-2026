@@ -57,11 +57,11 @@ function sessionFromStore_(store,queue,id) {
   s.requests=store.receipts.filter(r=>r[0]===id).map(r=>({id:r[1],signature:r[2]}));
   queue.filter(q=>q.sessionId===id).forEach(q=>s.requests.push({id:q.vote.requestId,signature:q.vote.signature}));return s;
 }
-function fastView_(store,queue,id,participant,topic,round) {
+function fastView_(store,queue,id,participant,topic,round,resultsOnly) {
   const all=storeVotes_(store,queue),testing=new Set(store.lessons.filter(r=>r[8]&&JSON.parse(r[8]).testing===true).map(r=>r[0]));
   const votes=all.filter(v=>!testing.has(v.scope)),now=new Date().toISOString();let make;
-  if(id==='community')make=(i,r)=>PollCore.publicSnapshot(votes,participant,i,now,r);
-  else {const s=sessionFromStore_(store,queue,id);make=(i,r)=>PollCore.withAllResults(PollCore.learnerSnapshot(s,participant,i,r,now),votes);}
+  if(id==='community')make=(i,r)=>PollCore.publicSnapshot(votes,participant,i,now,r,resultsOnly);
+  else {const s=sessionFromStore_(store,queue,id);make=(i,r)=>PollCore.withAllResults(resultsOnly?PollCore.resultsSnapshot(s,i,r,now):PollCore.learnerSnapshot(s,participant,i,r,now),votes);}
   const view=make(topic===undefined?0:topic,round===undefined?1:round);
   view.topics=[0,1,2,3].map(i=>make(i,1));view.transportVersion=2;return view;
 }
